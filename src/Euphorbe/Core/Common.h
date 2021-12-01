@@ -29,12 +29,15 @@ typedef double f64;
 // Platform detection
 #ifdef _WIN32
     #define EUPHORBE_WINDOWS
-#elif __linux__
-    #define EUPHORBE_LINUX
-#elif __apple__
-    #define EUPHORBE_APPLE
 #else
     #error "Platform not yet supported!"
+#endif
+
+// Platform includes
+
+#ifdef EUPHORBE_WINDOWS
+    #define WIN32_LEAN_AND_MEAN
+    #include <Windows.h>
 #endif
 
 #endif
