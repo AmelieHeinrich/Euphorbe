@@ -3,6 +3,7 @@
 
 #include <Euphorbe/Platform/Window.h>
 
+// Struct containing all the necessary information to create a Win32 window
 typedef struct E_WindowsWindow E_WindowsWindow;
 struct E_WindowsWindow
 {

@@ -9,6 +9,7 @@ struct E_Window
     u32 width;
     u32 height;
     const char* title;
+    // Platform handle for the window. See E_WindowsWindow (Euphorbe/Platform/Windows/WindowsWindow.h) for more details
     void* platform_data;
 };
 
