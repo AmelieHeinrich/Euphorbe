@@ -18,7 +18,7 @@ LRESULT CALLBACK WinProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
     {
         E_WindowsWindow* window = (E_WindowsWindow*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
         window->is_open = 0;
-        return 0;
+        break;
     }
 
     default:
@@ -68,7 +68,7 @@ void E_FreeWindowsWindow(E_WindowsWindow* window)
     free(window);
 }
 
-void E_UpdateWindowsWindow(E_WindowsWindow* window, i32* width, i32* height)
+void E_UpdateWindowsWindow(E_WindowsWindow* window)
 {
     MSG msg;
     while (PeekMessageA(&msg, window->hwnd, 0, 0, PM_REMOVE))
@@ -76,9 +76,4 @@ void E_UpdateWindowsWindow(E_WindowsWindow* window, i32* width, i32* height)
         TranslateMessage(&msg);
         DispatchMessageA(&msg);
     }
-
-    RECT rect;
-    GetClientRect(window->hwnd, &rect);
-    *width = rect.right - rect.left;
-    *height = rect.bottom - rect.top;
 }

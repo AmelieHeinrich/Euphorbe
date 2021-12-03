@@ -13,6 +13,6 @@ struct E_WindowsWindow
 
 E_WindowsWindow* E_CreateWindowsWindow(i32* width, i32* height, const char* title);
 void E_FreeWindowsWindow(E_WindowsWindow* window);
-void E_UpdateWindowsWindow(E_WindowsWindow* window, i32* width, i32* height);
+void E_UpdateWindowsWindow(E_WindowsWindow* window);
 
 #endif

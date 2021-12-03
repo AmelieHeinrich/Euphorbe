@@ -96,7 +96,7 @@ void E_Vk_MakeInstance()
     appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
     appInfo.pEngineName = "Euphorbe";
     appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-    appInfo.apiVersion = VK_API_VERSION_1_0;
+    appInfo.apiVersion = VK_API_VERSION_1_2;
 
     VkInstanceCreateInfo createInfo = {0};
     createInfo.pNext = NULL;
@@ -326,6 +326,60 @@ void E_Vk_MakeSync()
     assert(result == VK_SUCCESS);
 }
 
+void E_Vk_MakeCommand()
+{
+    VkCommandPoolCreateInfo poolInfo = { 0 };
+    poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+    poolInfo.queueFamilyIndex = rhi.physical_device.graphics_family;
+    poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+
+    VkResult result = vkCreateCommandPool(rhi.device.handle, &poolInfo, NULL, &rhi.command.graphics_command_pool);
+    assert(result == VK_SUCCESS);
+
+    rhi.command.command_buffers = malloc(sizeof(VkCommandBuffer) * FRAMES_IN_FLIGHT);
+
+    VkCommandBufferAllocateInfo allocInfo = { 0 };
+    allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    allocInfo.commandPool = rhi.command.graphics_command_pool;
+    allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    allocInfo.commandBufferCount = FRAMES_IN_FLIGHT;
+
+    result = vkAllocateCommandBuffers(rhi.device.handle, &allocInfo, rhi.command.command_buffers);
+    assert(result == VK_SUCCESS);
+}
+
+// Most useful function for dynamic rendering
+void E_Vk_Image_Memory_Barrier(VkCommandBuffer command_buffer, 
+                               VkImage image,
+                               VkAccessFlags src_access_mask,
+                               VkAccessFlags dst_access_mask,
+                               VkImageLayout old_layout,
+                               VkImageLayout new_layout,
+                               VkPipelineStageFlags src_stage_mask,
+                               VkPipelineStageFlags dst_stage_mask,
+                               VkImageSubresourceRange subresource_range)
+{
+    VkImageMemoryBarrier barrier = {0};
+    barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+    barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    barrier.srcAccessMask = src_access_mask;
+    barrier.dstAccessMask = dst_access_mask;
+    barrier.oldLayout = old_layout;
+    barrier.newLayout = new_layout;
+    barrier.image = image;
+    barrier.subresourceRange = subresource_range;
+
+    vkCmdPipelineBarrier(
+        command_buffer,
+        src_stage_mask,
+        dst_stage_mask,
+        0,
+        0, NULL,
+        0, NULL,
+        1, &barrier);
+}
+
 void E_Vk_RendererInit(E_Window* window)
 {
     rhi.window = window;
@@ -340,12 +394,14 @@ void E_Vk_RendererInit(E_Window* window)
     E_Vk_MakeDevice();
     E_Vk_MakeSwapchain();
     E_Vk_MakeSync();
+    E_Vk_MakeCommand();
 }
 
 void E_Vk_RendererShutdown()
 {
     vkDestroySemaphore(rhi.device.handle, rhi.sync.image_available_semaphore, NULL);
     vkDestroySemaphore(rhi.device.handle, rhi.sync.image_rendered_semaphore, NULL);
+    vkDestroyCommandPool(rhi.device.handle, rhi.command.graphics_command_pool, NULL);
 
     for (u32 i = 0; i < FRAMES_IN_FLIGHT; i++)
     {
@@ -366,10 +422,79 @@ void E_Vk_Begin()
 
     vkWaitForFences(rhi.device.handle, 1, &rhi.sync.fences[rhi.sync.image_index], VK_TRUE, UINT32_MAX);
     vkResetFences(rhi.device.handle, 1, &rhi.sync.fences[rhi.sync.image_index]);
+    vkResetCommandBuffer(rhi.command.command_buffers[rhi.sync.image_index], 0);
+
+    VkCommandBuffer commandBuffer = rhi.command.command_buffers[rhi.sync.image_index];
+
+    VkCommandBufferBeginInfo beginInfo = { 0 };
+    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    beginInfo.pInheritanceInfo = NULL;
+    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+    VkResult res = vkBeginCommandBuffer(commandBuffer, &beginInfo);
+    assert(res == VK_SUCCESS);
+
+    VkViewport viewport = { 0 };
+    viewport.width = (f32)rhi.window->width;
+    viewport.height = (f32)rhi.window->height;
+    viewport.x = 0.0f;
+    viewport.y = 0.0f;
+    viewport.minDepth = 0.0f;
+    viewport.maxDepth = 1.0f;
+
+    VkRect2D scissor = { 0 };
+    scissor.offset.x = 0;
+    scissor.offset.y = 0;
+    scissor.extent = rhi.swapchain.extent;
+
+    vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+    vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+
+    VkImageSubresourceRange range = {0};
+    range.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    range.baseMipLevel = 0;
+    range.levelCount = VK_REMAINING_MIP_LEVELS;
+    range.baseArrayLayer = 0;
+    range.layerCount = VK_REMAINING_ARRAY_LAYERS;
+
+    // Swapchain image layout
+    E_Vk_Image_Memory_Barrier(commandBuffer,
+        rhi.swapchain.images[rhi.sync.image_index],
+        0,
+        VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+        VK_IMAGE_LAYOUT_UNDEFINED,
+        VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+        VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 
+        range);
 }
 
 void E_Vk_End()
 {
+    VkCommandBuffer command_buffer = rhi.command.command_buffers[rhi.sync.image_index];
+
+    VkImageSubresourceRange range = { 0 };
+    range.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    range.baseMipLevel = 0;
+    range.levelCount = VK_REMAINING_MIP_LEVELS;
+    range.baseArrayLayer = 0;
+    range.layerCount = VK_REMAINING_ARRAY_LAYERS;
+
+    E_Vk_Image_Memory_Barrier(command_buffer,
+        rhi.swapchain.images[rhi.sync.image_index],
+        VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+        0,
+        VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+        VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+        VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+        range);
+
+    VkResult result = vkEndCommandBuffer(command_buffer);
+    assert(result == VK_SUCCESS);
+
+    // Submit
+
     VkSubmitInfo submitInfo = { 0 };
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
@@ -378,6 +503,8 @@ void E_Vk_End()
     submitInfo.waitSemaphoreCount = 1;
     submitInfo.pWaitSemaphores = waitSemaphores;
     submitInfo.pWaitDstStageMask = waitStages;
+    submitInfo.commandBufferCount = 1;
+    submitInfo.pCommandBuffers = &command_buffer;
 
     VkSemaphore signalSemaphores[] = { rhi.sync.image_rendered_semaphore };
     submitInfo.signalSemaphoreCount = 1;
@@ -385,7 +512,7 @@ void E_Vk_End()
 
     vkResetFences(rhi.device.handle, 1, &rhi.sync.fences[rhi.sync.image_index]);
 
-    VkResult result = vkQueueSubmit(rhi.device.graphics_queue, 1, &submitInfo, rhi.sync.fences[rhi.sync.image_index]);
+    result = vkQueueSubmit(rhi.device.graphics_queue, 1, &submitInfo, rhi.sync.fences[rhi.sync.image_index]);
     assert(result == VK_SUCCESS);
 
     VkPresentInfoKHR presentInfo = { 0 };
@@ -398,8 +525,7 @@ void E_Vk_End()
     presentInfo.pSwapchains = swapChains;
     presentInfo.pImageIndices = &rhi.sync.image_index;
 
-    result = vkQueuePresentKHR(rhi.device.graphics_queue, &presentInfo);
-    assert(result == VK_SUCCESS);
+    vkQueuePresentKHR(rhi.device.graphics_queue, &presentInfo);
 }
 
 void E_Vk_DeviceWait()

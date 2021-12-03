@@ -10,9 +10,13 @@ int main()
     while (E_IsWindowOpen(window))
     {
         E_WindowUpdate(window);
+
+        E_RendererBegin();
+        E_RendererEnd();
     }
 
     E_RendererWait();
+
     E_RendererShutdown();
     E_FreeWindow(window);
     return 0;

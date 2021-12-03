@@ -30,6 +30,7 @@ struct E_Vk_Data
         VkPhysicalDeviceProperties handle_props;
     } physical_device;
 
+    // Device data
     struct {
         VkDevice handle;
         VkQueue graphics_queue;
@@ -37,6 +38,7 @@ struct E_Vk_Data
         i32 extension_count;
     } device;
 
+    // Swapchain data
     struct {
         VkSwapchainKHR handle;
         VkImage* images;
@@ -45,12 +47,19 @@ struct E_Vk_Data
         VkExtent2D extent;
     } swapchain;
 
+    // Sync data
     struct {
         VkFence fences[FRAMES_IN_FLIGHT];
         VkSemaphore image_available_semaphore;
         VkSemaphore image_rendered_semaphore;
         i32 image_index;
     } sync;
+
+    // Command data
+    struct {
+        VkCommandBuffer* command_buffers;
+        VkCommandPool graphics_command_pool;
+    } command;
 };
 
 extern E_Vk_Data rhi;
