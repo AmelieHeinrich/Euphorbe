@@ -23,9 +23,9 @@ typedef double f64;
 
 // Useful defines
 #define ARRAY_SIZE(arr) sizeof(arr) / sizeof(arr[0])
-#define kilobytes(bytes) bytes * 1024
-#define megabytes(bytes) kilobytes(bytes) * 1024
-#define gigabytes(bytes) megabytes(bytes) * 1024
+#define KILOBYTES(bytes) bytes * 1024
+#define MEGABYTES(bytes) KILOBYTES(bytes) * 1024
+#define GIGABYTES(bytes) MEGABYTES(bytes) * 1024
 
 // Platform detection
 #ifdef _WIN32

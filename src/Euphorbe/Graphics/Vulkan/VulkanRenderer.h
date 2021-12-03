@@ -18,23 +18,22 @@ struct E_Vk_Data
         i32 extension_count;
     } instance;
 
-    // Device data
-    struct {
-        VkSurfaceKHR surface;
-        
-        // Physical Device Data
-        struct {
-            VkPhysicalDevice handle;
-            u32 graphics_family;
-            VkPhysicalDeviceProperties handle_props;
-        } physical_device;
+    // Window surface
+    VkSurfaceKHR surface;
 
-        // Logical device data
-        struct {
-            VkDevice handle;
-            VkQueue graphics_queue;
-        } device;
-    } device_data;
+    // Physical Device Data
+    struct {
+        VkPhysicalDevice handle;
+        u32 graphics_family;
+        VkPhysicalDeviceProperties handle_props;
+    } physical_device;
+
+    struct {
+        VkDevice handle;
+        VkQueue graphics_queue;
+        char* extensions[64];
+        i32 extension_count;
+    } device;
 };
 
 extern E_Vk_Data rhi;
