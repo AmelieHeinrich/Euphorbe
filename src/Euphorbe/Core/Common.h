@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <memory.h>
 #include <stdlib.h>
+#include <assert.h>
 
 // Typedefs
 typedef char i8;
@@ -21,7 +22,7 @@ typedef float f32;
 typedef double f64;
 
 // Useful defines
-#define ARRAY_SIZE(array) sizeof(arr) / sizeof(arr[0])
+#define ARRAY_SIZE(arr) sizeof(arr) / sizeof(arr[0])
 #define kilobytes(bytes) bytes * 1024
 #define megabytes(bytes) kilobytes(bytes) * 1024
 #define gigabytes(bytes) megabytes(bytes) * 1024

@@ -3,6 +3,7 @@
 #include <Euphorbe/Core/Common.h>
 #include <stdio.h>
 #include <time.h>
+#include <stdarg.h>
 
 #define RESET   "\033[0m"
 #define BLACK   "\033[30m"      /* Black */
@@ -22,32 +23,77 @@
 #define BOLDCYAN    "\033[1m\033[36m"      /* Bold Cyan */
 #define BOLDWHITE   "\033[1m\033[37m"      /* Bold White */
 
-void E_LogInfo(const char* message)
+void LogInfo(const char* message)
 {
     time_t now;
     time(&now);
     printf(RESET);
     printf(GREEN);
-    printf("%s [EUPHORBE] : %s\n", ctime(&now), message);
+    char* time_string = ctime(&now);
+    time_string[strcspn(time_string, "\n")] = 0;
+    printf("%s [EUPHORBE] : %s\n", time_string, message);
     printf(RESET);
 }
 
-void E_LogWarn(const char* message)
+void LogWarn(const char* message)
 {   
     time_t now;
     time(&now);
     printf(RESET);
     printf(YELLOW);
-    printf("%s [EUPHORBE] : %s\n", ctime(&now), message);
+    char* time_string = ctime(&now);
+    time_string[strcspn(time_string, "\n")] = 0;
+    printf("%s [EUPHORBE] : %s\n", time_string, message);
     printf(RESET);
 }
 
-void E_LogError(const char* message)
+void LogError(const char* message)
 {
     time_t now;
     time(&now);
     printf(RESET);
     printf(RED);
-    printf("%s [EUPHORBE] : %s\n", ctime(&now), message);
+    char* time_string = ctime(&now);
+    time_string[strcspn(time_string, "\n")] = 0;
+    printf("%s [EUPHORBE] : %s\n", time_string, message);
     printf(RESET);
+}
+
+void E_LogInfo(const char* message, ...)
+{
+    char buf[100];    
+    va_list vl;
+    va_start(vl, message);
+
+    vsnprintf(buf, sizeof(buf), message, vl);
+
+    va_end(vl);
+
+    LogInfo(buf);
+}
+
+void E_LogWarn(const char* message, ...)
+{
+    char buf[100];
+    va_list vl;
+    va_start(vl, message);
+
+    vsnprintf(buf, sizeof(buf), message, vl);
+
+    va_end(vl);
+
+    LogWarn(buf);
+}
+
+void E_LogError(const char* message, ...)
+{
+    char buf[100];
+    va_list vl;
+    va_start(vl, message);
+
+    vsnprintf(buf, sizeof(buf), message, vl);
+
+    va_end(vl);
+
+    LogError(buf);
 }

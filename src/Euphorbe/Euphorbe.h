@@ -8,4 +8,7 @@
 // Platform
 #include "Platform/Window.h"
 
+// Renderer
+#include "Graphics/Renderer.h"
+
 #endif
