@@ -532,3 +532,18 @@ void E_Vk_DeviceWait()
 {
     vkDeviceWaitIdle(rhi.device.handle);
 }
+
+void E_Vk_Resize(i32 width, i32 height)
+{
+    E_Vk_DeviceWait();
+
+    for (u32 i = 0; i < FRAMES_IN_FLIGHT; i++)
+        vkDestroyImageView(rhi.device.handle, rhi.swapchain.image_views[i], NULL);
+
+    vkDestroySwapchainKHR(rhi.device.handle, rhi.swapchain.handle, NULL);
+    free(rhi.swapchain.images);
+
+    E_Vk_MakeSwapchain();
+
+    E_LogInfo("Recreated swapchain with new dimensions: {%d, %d}", width, height);
+}

@@ -1,6 +1,7 @@
 #include "WindowsWindow.h"
 
 #include <Euphorbe/Core/Log.h>
+#include <Euphorbe/Graphics/Renderer.h>
 
 LRESULT CALLBACK WinProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
@@ -21,6 +22,18 @@ LRESULT CALLBACK WinProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
         break;
     }
 
+    case WM_SIZE:
+    {
+        i32 width = LOWORD(lparam);
+        i32 height = HIWORD(lparam);
+        E_WindowsWindow* window = (E_WindowsWindow*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
+        *window->width_pointer = width;
+        *window->height_pointer = height;
+
+        E_RendererResize(width, height);
+        break;
+    }
+
     default:
         return DefWindowProc(hwnd, msg, wparam, lparam);
     }
@@ -31,6 +44,8 @@ LRESULT CALLBACK WinProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 E_WindowsWindow* E_CreateWindowsWindow(i32* width, i32* height, const char* title)
 {
     E_WindowsWindow* result = malloc(sizeof(E_WindowsWindow));
+    result->width_pointer = width;
+    result->height_pointer = height;
 
     WNDCLASSA window_class = {0};
     window_class.lpfnWndProc = WinProc;
@@ -50,16 +65,19 @@ E_WindowsWindow* E_CreateWindowsWindow(i32* width, i32* height, const char* titl
     if (!result->hwnd)
         E_LogError("Failed to create HWND!");
 
+    result->is_open = 1;
+
     RECT rect;
     GetClientRect(result->hwnd, &rect);
     *width = rect.right - rect.left;
     *height = rect.bottom - rect.top;
 
-    result->is_open = 1;
-
-    ShowWindow(result->hwnd, SW_SHOW);
-
     return result;
+}
+
+void E_LaunchWindowsWindow(E_WindowsWindow* window)
+{
+    ShowWindow(window->hwnd, SW_SHOW);
 }
 
 void E_FreeWindowsWindow(E_WindowsWindow* window)

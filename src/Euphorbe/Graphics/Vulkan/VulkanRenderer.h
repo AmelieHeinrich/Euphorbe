@@ -71,4 +71,6 @@ void E_Vk_Begin();
 void E_Vk_End();
 void E_Vk_DeviceWait();
 
+void E_Vk_Resize(i32 width, i32 height);
+
 #endif

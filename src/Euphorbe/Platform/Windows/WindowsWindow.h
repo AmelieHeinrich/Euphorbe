@@ -9,9 +9,12 @@ struct E_WindowsWindow
 {
     HWND hwnd;
     b32 is_open;
+    i32* width_pointer;
+    i32* height_pointer;
 };
 
 E_WindowsWindow* E_CreateWindowsWindow(i32* width, i32* height, const char* title);
+void E_LaunchWindowsWindow(E_WindowsWindow* window);
 void E_FreeWindowsWindow(E_WindowsWindow* window);
 void E_UpdateWindowsWindow(E_WindowsWindow* window);
 

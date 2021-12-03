@@ -6,6 +6,7 @@ int main()
 {
     window = E_CreateWindow(1280, 720, "Euphorbe Editor");
     E_RendererInit(window);
+    E_LaunchWindow(window);
 
     while (E_IsWindowOpen(window))
     {

@@ -11,4 +11,7 @@ void E_RendererBegin();
 void E_RendererEnd();
 void E_RendererWait();
 
+// Handled automatically by the Window system. Do not call it in your program.
+void E_RendererResize(i32 width, i32 height);
+
 #endif

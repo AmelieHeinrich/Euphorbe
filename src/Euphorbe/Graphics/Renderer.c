@@ -38,3 +38,10 @@ void E_RendererWait()
     E_Vk_DeviceWait();
 #endif
 }
+
+void E_RendererResize(i32 width, i32 height)
+{
+#ifdef EUPHORBE_WINDOWS
+    E_Vk_Resize(width, height);
+#endif
+}

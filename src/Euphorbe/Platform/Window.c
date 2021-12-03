@@ -20,6 +20,13 @@ E_Window* E_CreateWindow(i32 width, i32 height, const char* title)
     return window;
 }
 
+void E_LaunchWindow(E_Window* window)
+{
+#ifdef EUPHORBE_WINDOWS
+    E_LaunchWindowsWindow(window->platform_data);
+#endif
+}
+
 void E_FreeWindow(E_Window* window)
 {
 #ifdef EUPHORBE_WINDOWS
