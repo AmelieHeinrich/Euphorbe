@@ -12,6 +12,7 @@ int main()
         E_WindowUpdate(window);
     }
 
+    E_RendererWait();
     E_RendererShutdown();
     E_FreeWindow(window);
     return 0;

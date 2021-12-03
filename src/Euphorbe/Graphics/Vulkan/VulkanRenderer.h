@@ -44,11 +44,22 @@ struct E_Vk_Data
         VkFormat image_format;
         VkExtent2D extent;
     } swapchain;
+
+    struct {
+        VkFence fences[FRAMES_IN_FLIGHT];
+        VkSemaphore image_available_semaphore;
+        VkSemaphore image_rendered_semaphore;
+        i32 image_index;
+    } sync;
 };
 
 extern E_Vk_Data rhi;
 
 void E_Vk_RendererInit(E_Window* window);
 void E_Vk_RendererShutdown();
+
+void E_Vk_Begin();
+void E_Vk_End();
+void E_Vk_DeviceWait();
 
 #endif

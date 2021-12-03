@@ -304,6 +304,28 @@ void E_Vk_MakeSwapchain()
     free(formats);
 }
 
+void E_Vk_MakeSync()
+{
+    VkResult result;
+
+    for (i32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
+        VkFenceCreateInfo fenceInfo = { 0 };
+        fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+        fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+
+        result = vkCreateFence(rhi.device.handle, &fenceInfo, NULL, &rhi.sync.fences[i]);
+        assert(result == VK_SUCCESS);
+    }
+
+    VkSemaphoreCreateInfo semaphoreInfo = { 0 };
+    semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+
+    result = vkCreateSemaphore(rhi.device.handle, &semaphoreInfo, NULL, &rhi.sync.image_available_semaphore);
+    assert(result == VK_SUCCESS);
+    result = vkCreateSemaphore(rhi.device.handle, &semaphoreInfo, NULL, &rhi.sync.image_rendered_semaphore);
+    assert(result == VK_SUCCESS);
+}
+
 void E_Vk_RendererInit(E_Window* window)
 {
     rhi.window = window;
@@ -317,16 +339,70 @@ void E_Vk_RendererInit(E_Window* window)
     E_Vk_MakePhysicalDevice();
     E_Vk_MakeDevice();
     E_Vk_MakeSwapchain();
+    E_Vk_MakeSync();
 }
 
 void E_Vk_RendererShutdown()
 {
+    vkDestroySemaphore(rhi.device.handle, rhi.sync.image_available_semaphore, NULL);
+    vkDestroySemaphore(rhi.device.handle, rhi.sync.image_rendered_semaphore, NULL);
+
     for (u32 i = 0; i < FRAMES_IN_FLIGHT; i++)
+    {
+        vkDestroyFence(rhi.device.handle, rhi.sync.fences[i], NULL);
         vkDestroyImageView(rhi.device.handle, rhi.swapchain.image_views[i], NULL);
+    }
 
     vkDestroySwapchainKHR(rhi.device.handle, rhi.swapchain.handle, NULL);
     free(rhi.swapchain.images);
     vkDestroyDevice(rhi.device.handle, NULL);
     vkDestroySurfaceKHR(rhi.instance.handle, rhi.surface, NULL);
     vkDestroyInstance(rhi.instance.handle, NULL);
+}
+
+void E_Vk_Begin()
+{
+    vkAcquireNextImageKHR(rhi.device.handle, rhi.swapchain.handle, UINT32_MAX, rhi.sync.image_available_semaphore, VK_NULL_HANDLE, &rhi.sync.image_index);
+
+    vkWaitForFences(rhi.device.handle, 1, &rhi.sync.fences[rhi.sync.image_index], VK_TRUE, UINT32_MAX);
+    vkResetFences(rhi.device.handle, 1, &rhi.sync.fences[rhi.sync.image_index]);
+}
+
+void E_Vk_End()
+{
+    VkSubmitInfo submitInfo = { 0 };
+    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+
+    VkSemaphore waitSemaphores[] = { rhi.sync.image_available_semaphore };
+    VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+    submitInfo.waitSemaphoreCount = 1;
+    submitInfo.pWaitSemaphores = waitSemaphores;
+    submitInfo.pWaitDstStageMask = waitStages;
+
+    VkSemaphore signalSemaphores[] = { rhi.sync.image_rendered_semaphore };
+    submitInfo.signalSemaphoreCount = 1;
+    submitInfo.pSignalSemaphores = signalSemaphores;
+
+    vkResetFences(rhi.device.handle, 1, &rhi.sync.fences[rhi.sync.image_index]);
+
+    VkResult result = vkQueueSubmit(rhi.device.graphics_queue, 1, &submitInfo, rhi.sync.fences[rhi.sync.image_index]);
+    assert(result == VK_SUCCESS);
+
+    VkPresentInfoKHR presentInfo = { 0 };
+    presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+    presentInfo.waitSemaphoreCount = 1;
+    presentInfo.pWaitSemaphores = signalSemaphores;
+
+    VkSwapchainKHR swapChains[] = { rhi.swapchain.handle };
+    presentInfo.swapchainCount = 1;
+    presentInfo.pSwapchains = swapChains;
+    presentInfo.pImageIndices = &rhi.sync.image_index;
+
+    result = vkQueuePresentKHR(rhi.device.graphics_queue, &presentInfo);
+    assert(result == VK_SUCCESS);
+}
+
+void E_Vk_DeviceWait()
+{
+    vkDeviceWaitIdle(rhi.device.handle);
 }
