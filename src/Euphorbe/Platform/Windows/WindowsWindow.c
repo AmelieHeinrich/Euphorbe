@@ -28,7 +28,7 @@ LRESULT CALLBACK WinProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
     return 0;
 }
 
-E_WindowsWindow* E_CreateWindowsWindow(i32 width, i32 height, const char* title)
+E_WindowsWindow* E_CreateWindowsWindow(i32* width, i32* height, const char* title)
 {
     E_WindowsWindow* result = malloc(sizeof(E_WindowsWindow));
 
@@ -43,12 +43,17 @@ E_WindowsWindow* E_CreateWindowsWindow(i32 width, i32 height, const char* title)
                                 title, 
                                 WS_OVERLAPPEDWINDOW, 
                                 CW_USEDEFAULT, CW_USEDEFAULT, 
-                                width, height, 
+                                *width, *height, 
                                 NULL, NULL, window_class.hInstance, 
                                 result);
 
     if (!result->hwnd)
         E_LogError("Failed to create HWND!");
+
+    RECT rect;
+    GetClientRect(result->hwnd, &rect);
+    *width = rect.right - rect.left;
+    *height = rect.bottom - rect.top;
 
     result->is_open = 1;
 
@@ -63,7 +68,7 @@ void E_FreeWindowsWindow(E_WindowsWindow* window)
     free(window);
 }
 
-void E_UpdateWindowsWindow(E_WindowsWindow* window)
+void E_UpdateWindowsWindow(E_WindowsWindow* window, i32* width, i32* height)
 {
     MSG msg;
     while (PeekMessageA(&msg, window->hwnd, 0, 0, PM_REMOVE))
@@ -71,4 +76,9 @@ void E_UpdateWindowsWindow(E_WindowsWindow* window)
         TranslateMessage(&msg);
         DispatchMessageA(&msg);
     }
+
+    RECT rect;
+    GetClientRect(window->hwnd, &rect);
+    *width = rect.right - rect.left;
+    *height = rect.bottom - rect.top;
 }

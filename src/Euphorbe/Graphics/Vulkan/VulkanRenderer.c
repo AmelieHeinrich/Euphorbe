@@ -235,9 +235,79 @@ void E_Vk_MakeDevice()
     vkGetDeviceQueue(rhi.device.handle, rhi.physical_device.graphics_family, 0, &rhi.device.graphics_queue);
 }
 
+void E_Vk_MakeSwapchain()
+{
+    rhi.swapchain.extent.width = rhi.window->width;
+    rhi.swapchain.extent.height = rhi.window->height;
+    assert(rhi.swapchain.extent.width != 0 && rhi.swapchain.extent.height != 0);
+
+    u32 queue_family_indices[] = { rhi.physical_device.graphics_family };
+
+    VkSurfaceCapabilitiesKHR capabilities;
+    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(rhi.physical_device.handle, rhi.surface, &capabilities);
+
+    u32 format_count;
+    vkGetPhysicalDeviceSurfaceFormatsKHR(rhi.physical_device.handle, rhi.surface, &format_count, NULL);
+    VkSurfaceFormatKHR* formats = malloc(sizeof(VkSurfaceFormatKHR) * format_count);
+    vkGetPhysicalDeviceSurfaceFormatsKHR(rhi.physical_device.handle, rhi.surface, &format_count, formats);
+
+    VkSwapchainCreateInfoKHR create_info = { 0 };
+    create_info.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+    create_info.surface = rhi.surface;
+    create_info.minImageCount = FRAMES_IN_FLIGHT;
+    create_info.imageFormat = formats[0].format;
+    create_info.imageColorSpace = formats[0].colorSpace;
+    create_info.imageExtent = rhi.swapchain.extent;
+    create_info.imageArrayLayers = 1;
+    create_info.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+    create_info.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    create_info.queueFamilyIndexCount = 1;
+    create_info.pQueueFamilyIndices = queue_family_indices;
+    create_info.preTransform = capabilities.currentTransform;
+    create_info.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+    create_info.presentMode = VK_PRESENT_MODE_FIFO_KHR;
+    create_info.clipped = VK_TRUE;
+    create_info.oldSwapchain = VK_NULL_HANDLE;
+
+    rhi.swapchain.image_format = create_info.imageFormat;
+
+    VkResult result = vkCreateSwapchainKHR(rhi.device.handle, &create_info, NULL, &rhi.swapchain.handle);
+    assert(result == VK_SUCCESS);
+
+    i32 image_count = 0;
+    vkGetSwapchainImagesKHR(rhi.device.handle, rhi.swapchain.handle, &image_count, NULL);
+    rhi.swapchain.images = malloc(sizeof(VkImage) * image_count);
+    vkGetSwapchainImagesKHR(rhi.device.handle, rhi.swapchain.handle, &image_count, rhi.swapchain.images);
+
+    for (u32 i = 0; i < FRAMES_IN_FLIGHT; i++)
+    {
+        VkImageViewCreateInfo iv_createInfo = { 0 };
+        iv_createInfo.flags = 0;
+        iv_createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+        iv_createInfo.image = rhi.swapchain.images[i];
+        iv_createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+        iv_createInfo.format = rhi.swapchain.image_format;
+        iv_createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+        iv_createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+        iv_createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+        iv_createInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+        iv_createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        iv_createInfo.subresourceRange.baseMipLevel = 0;
+        iv_createInfo.subresourceRange.levelCount = 1;
+        iv_createInfo.subresourceRange.baseArrayLayer = 0;
+        iv_createInfo.subresourceRange.layerCount = 1;
+
+        result = vkCreateImageView(rhi.device.handle, &iv_createInfo, NULL, &rhi.swapchain.image_views[i]);
+        assert(result == VK_SUCCESS);
+    }
+
+    free(formats);
+}
+
 void E_Vk_RendererInit(E_Window* window)
 {
     rhi.window = window;
+    assert(rhi.window);
     
     VkResult result = volkInitialize();
     assert(result == VK_SUCCESS);
@@ -246,10 +316,16 @@ void E_Vk_RendererInit(E_Window* window)
     E_Vk_MakeSurface();
     E_Vk_MakePhysicalDevice();
     E_Vk_MakeDevice();
+    E_Vk_MakeSwapchain();
 }
 
 void E_Vk_RendererShutdown()
 {
+    for (u32 i = 0; i < FRAMES_IN_FLIGHT; i++)
+        vkDestroyImageView(rhi.device.handle, rhi.swapchain.image_views[i], NULL);
+
+    vkDestroySwapchainKHR(rhi.device.handle, rhi.swapchain.handle, NULL);
+    free(rhi.swapchain.images);
     vkDestroyDevice(rhi.device.handle, NULL);
     vkDestroySurfaceKHR(rhi.instance.handle, rhi.surface, NULL);
     vkDestroyInstance(rhi.instance.handle, NULL);

@@ -1,6 +1,8 @@
 #ifndef EUPHORBE_VULKAN_RENDERER_H
 #define EUPHORBE_VULKAN_RENDERER_H
 
+#define FRAMES_IN_FLIGHT 3
+
 #include <Euphorbe/Graphics/Renderer.h>
 #include <volk.h>
 
@@ -34,6 +36,14 @@ struct E_Vk_Data
         char* extensions[64];
         i32 extension_count;
     } device;
+
+    struct {
+        VkSwapchainKHR handle;
+        VkImage* images;
+        VkImageView image_views[FRAMES_IN_FLIGHT];
+        VkFormat image_format;
+        VkExtent2D extent;
+    } swapchain;
 };
 
 extern E_Vk_Data rhi;

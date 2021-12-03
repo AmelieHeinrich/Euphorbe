@@ -6,13 +6,15 @@
 
 E_Window* E_CreateWindow(i32 width, i32 height, const char* title)
 {
+    assert(width != 0 && height != 0);
+
     E_Window* window = malloc(sizeof(E_Window));
     window->width = width;
     window->height = height;
     window->title = title;
 
 #ifdef EUPHORBE_WINDOWS
-    window->platform_data = E_CreateWindowsWindow(width, height, title);
+    window->platform_data = E_CreateWindowsWindow(&window->width, &window->height, title);
 #endif
 
     return window;
@@ -38,6 +40,6 @@ b32 E_IsWindowOpen(E_Window* window)
 void E_WindowUpdate(E_Window* window)
 {
 #ifdef EUPHORBE_WINDOWS
-    E_UpdateWindowsWindow(window->platform_data);
+    E_UpdateWindowsWindow(window->platform_data, &window->width, &window->height);
 #endif
 }
