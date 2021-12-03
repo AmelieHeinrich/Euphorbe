@@ -2,6 +2,7 @@
 
 #ifdef EUPHORBE_WINDOWS
     #include <vulkan/vulkan_win32.h>
+    #include <Euphorbe/Platform/Windows/WindowsWindow.h>
 #endif
 
 E_Vk_Data rhi;
@@ -76,9 +77,11 @@ void E_Vk_MakeInstance()
                 rhi.instance.extensions[rhi.instance.extension_count++] = VK_KHR_SURFACE_EXTENSION_NAME;
             }
 
+#ifdef EUPHORBE_WINDOWS
             if (!strcmp(VK_KHR_WIN32_SURFACE_EXTENSION_NAME, instance_extensions[i].extensionName)) {
                 rhi.instance.extensions[rhi.instance.extension_count++] = VK_KHR_WIN32_SURFACE_EXTENSION_NAME;
             }
+#endif
 
             assert(rhi.instance.extension_count < 64);
         }
@@ -117,6 +120,27 @@ void E_Vk_MakeInstance()
     volkLoadInstance(rhi.instance.handle);
 }
 
+void E_Vk_MakeSurface()
+{
+#ifdef EUPHORBE_WINDOWS
+    E_WindowsWindow* window = (E_WindowsWindow*)rhi.window->platform_data;
+    HWND hwnd = window->hwnd;
+
+    VkWin32SurfaceCreateInfoKHR surface_create_info = {0};
+    surface_create_info.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
+    surface_create_info.hinstance = GetModuleHandle(NULL);
+    surface_create_info.hwnd = hwnd;
+    surface_create_info.flags = 0;
+    surface_create_info.pNext = NULL;
+
+    // Load it myself because Volk is annoying
+    PFN_vkCreateWin32SurfaceKHR function_pointer = vkGetInstanceProcAddr(rhi.instance.handle, "vkCreateWin32SurfaceKHR");
+
+    VkResult result = function_pointer(rhi.instance.handle, &surface_create_info, NULL, &rhi.device_data.surface);
+    assert(result == VK_SUCCESS);
+#endif
+}
+
 void E_Vk_RendererInit(E_Window* window)
 {
     rhi.window = window;
@@ -125,9 +149,11 @@ void E_Vk_RendererInit(E_Window* window)
     assert(result == VK_SUCCESS);
 
     E_Vk_MakeInstance();
+    E_Vk_MakeSurface();
 }
 
 void E_Vk_RendererShutdown()
 {
+    vkDestroySurfaceKHR(rhi.instance.handle, rhi.device_data.surface, NULL);
     vkDestroyInstance(rhi.instance.handle, NULL);
 }
