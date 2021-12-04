@@ -11,6 +11,7 @@ struct E_WindowsWindow
     b32 is_open;
     i32* width_pointer;
     i32* height_pointer;
+    E_WindowResizeCallback resize_callback;
 };
 
 E_WindowsWindow* E_CreateWindowsWindow(i32* width, i32* height, const char* title);

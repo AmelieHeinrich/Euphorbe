@@ -30,7 +30,9 @@ LRESULT CALLBACK WinProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
         *window->width_pointer = width;
         *window->height_pointer = height;
 
-        E_RendererResize(width, height);
+        if (window->resize_callback != NULL)
+            window->resize_callback(width, height);
+
         break;
     }
 
@@ -46,6 +48,7 @@ E_WindowsWindow* E_CreateWindowsWindow(i32* width, i32* height, const char* titl
     E_WindowsWindow* result = malloc(sizeof(E_WindowsWindow));
     result->width_pointer = width;
     result->height_pointer = height;
+    result->resize_callback = NULL;
 
     WNDCLASSA window_class = {0};
     window_class.lpfnWndProc = WinProc;

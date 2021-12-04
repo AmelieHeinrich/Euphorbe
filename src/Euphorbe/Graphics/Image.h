@@ -58,5 +58,6 @@ E_Image* E_MakeImage(i32 width, i32 height, E_ImageFormat format);
 void E_FreeImage(E_Image* image);
 
 void E_ImageTransitionLayout(E_Image* image, E_ImageAccess srcAccess, E_ImageAccess dstAccess, E_ImageLayout old, E_ImageLayout new, E_ImagePipelineStage srcStage, E_ImagePipelineStage dstStage);
+void E_ImageResize(E_Image* image, i32 width, i32 height);
 
 #endif

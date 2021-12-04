@@ -36,7 +36,6 @@ void E_RendererStartRender(E_ImageAttachment* attachments, i32 attachment_count,
 void E_RendererEndRender();
 E_Image* E_GetSwapchainImage();
 
-// Handled automatically by the Window system. Do not call it in your program.
 void E_RendererResize(i32 width, i32 height);
 
 #endif

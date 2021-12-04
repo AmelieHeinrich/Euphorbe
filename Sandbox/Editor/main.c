@@ -1,20 +1,28 @@
 #include <Euphorbe/Euphorbe.h>
 
 E_Window* window;
+E_Image* depth_image;
+E_Image* swapchain_buffer;
+
+void ResizeCallback(i32 width, i32 height)
+{
+    E_RendererResize(width, height);
+    E_ImageResize(depth_image, width, height);
+}
 
 int main()
 {
     window = E_CreateWindow(1280, 720, "Euphorbe Editor");
     E_RendererInit(window);
-
-    E_Image* depth_image = E_MakeImage(1280, 720, E_ImageFormatD32_Float);
-
+    depth_image = E_MakeImage(1280, 720, E_ImageFormatD32_Float);
     E_LaunchWindow(window);
+
+    E_WindowSetResizeCallback(window, ResizeCallback);
 
     while (E_IsWindowOpen(window))
     {
         E_RendererBegin();
-        E_Image* swapchain_buffer = E_GetSwapchainImage();
+        swapchain_buffer = E_GetSwapchainImage();
 
         // Setup image transition
         E_ImageTransitionLayout(swapchain_buffer,

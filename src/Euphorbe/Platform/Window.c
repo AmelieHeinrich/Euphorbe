@@ -50,3 +50,11 @@ void E_WindowUpdate(E_Window* window)
     E_UpdateWindowsWindow(window->platform_data);
 #endif
 }
+
+void E_WindowSetResizeCallback(E_Window* window, E_WindowResizeCallback* callback)
+{
+#ifdef EUPHORBE_WINDOWS
+    E_WindowsWindow* win32 = (E_WindowsWindow*)window->platform_data;
+    win32->resize_callback = callback;
+#endif
+}

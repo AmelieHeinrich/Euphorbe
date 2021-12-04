@@ -49,3 +49,10 @@ void E_ImageTransitionLayout(E_Image* image, E_ImageAccess srcAccess, E_ImageAcc
     E_Vk_Image_Memory_Barrier(rhi.command.command_buffers[rhi.sync.image_index], vk_handle->image, srcAccess, dstAccess, old, new, srcStage, dstStage, range);
 #endif
 }
+
+void E_ImageResize(E_Image* image, i32 width, i32 height)
+{
+#ifdef EUPHORBE_WINDOWS
+    E_Vk_ResizeImage(image->rhi_handle, width, height);
+#endif
+}

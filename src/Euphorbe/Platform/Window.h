@@ -3,6 +3,8 @@
 
 #include <Euphorbe/Core/Common.h>
 
+typedef void (*E_WindowResizeCallback)(int, int);
+
 typedef struct E_Window E_Window;
 struct E_Window
 {
@@ -18,5 +20,8 @@ void E_LaunchWindow(E_Window* window);
 void E_FreeWindow(E_Window* window);
 b32 E_IsWindowOpen(E_Window* window);
 void E_WindowUpdate(E_Window* window);
+
+// Callbacks
+void E_WindowSetResizeCallback(E_Window* window, E_WindowResizeCallback* callback);
 
 #endif
