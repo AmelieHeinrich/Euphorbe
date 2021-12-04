@@ -348,6 +348,50 @@ void E_Vk_MakeCommand()
     assert(result == VK_SUCCESS);
 }
 
+void E_Vk_MakeAllocator()
+{
+    VmaAllocatorCreateInfo allocatorInfo = { 0 };
+    allocatorInfo.device = rhi.device.handle;
+    allocatorInfo.instance = rhi.instance.handle;
+    allocatorInfo.physicalDevice = rhi.physical_device.handle;
+    allocatorInfo.vulkanApiVersion = VK_API_VERSION_1_2;
+    VmaVulkanFunctions vulkanFunctions = {
+            vkGetPhysicalDeviceProperties,
+            vkGetPhysicalDeviceMemoryProperties,
+            vkAllocateMemory,
+            vkFreeMemory,
+            vkMapMemory,
+            vkUnmapMemory,
+            vkFlushMappedMemoryRanges,
+            vkInvalidateMappedMemoryRanges,
+            vkBindBufferMemory,
+            vkBindImageMemory,
+            vkGetBufferMemoryRequirements,
+            vkGetImageMemoryRequirements,
+            vkCreateBuffer,
+            vkDestroyBuffer,
+            vkCreateImage,
+            vkDestroyImage,
+            vkCmdCopyBuffer,
+#if VMA_DEDICATED_ALLOCATION || VMA_VULKAN_VERSION >= 1001000
+                vkGetBufferMemoryRequirements2,
+                vkGetImageMemoryRequirements2,
+#endif
+#if VMA_BIND_MEMORY2 || VMA_VULKAN_VERSION >= 1001000
+                vkBindBufferMemory2,
+                vkBindImageMemory2,
+#endif
+#if VMA_MEMORY_BUDGET || VMA_VULKAN_VERSION >= 1001000
+                vkGetPhysicalDeviceMemoryProperties2,
+#endif
+    };
+
+    allocatorInfo.pVulkanFunctions = &vulkanFunctions;
+
+    VkResult result = vmaCreateAllocator(&allocatorInfo, &rhi.allocator);
+    assert(result == VK_SUCCESS);
+}
+
 // Most useful function for dynamic rendering
 void E_Vk_Image_Memory_Barrier(VkCommandBuffer command_buffer, 
                                VkImage image,
@@ -395,6 +439,7 @@ void E_Vk_RendererInit(E_Window* window)
     E_Vk_MakeSwapchain();
     E_Vk_MakeSync();
     E_Vk_MakeCommand();
+    E_Vk_MakeAllocator();
 }
 
 void E_Vk_RendererShutdown()

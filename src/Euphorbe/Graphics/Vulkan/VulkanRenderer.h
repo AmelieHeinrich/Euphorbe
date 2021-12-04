@@ -6,6 +6,8 @@
 #include <Euphorbe/Graphics/Renderer.h>
 #include <volk.h>
 
+#include <vk_mem_alloc.h>
+
 typedef struct E_Vk_Data E_Vk_Data;
 struct E_Vk_Data
 {
@@ -60,6 +62,9 @@ struct E_Vk_Data
         VkCommandBuffer* command_buffers;
         VkCommandPool graphics_command_pool;
     } command;
+
+    // VMA
+    VmaAllocator allocator;
 };
 
 extern E_Vk_Data rhi;
@@ -72,5 +77,16 @@ void E_Vk_End();
 void E_Vk_DeviceWait();
 
 void E_Vk_Resize(i32 width, i32 height);
+
+// Most useful function for dynamic rendering
+void E_Vk_Image_Memory_Barrier(VkCommandBuffer command_buffer, 
+                               VkImage image,
+                               VkAccessFlags src_access_mask,
+                               VkAccessFlags dst_access_mask,
+                               VkImageLayout old_layout,
+                               VkImageLayout new_layout,
+                               VkPipelineStageFlags src_stage_mask,
+                               VkPipelineStageFlags dst_stage_mask,
+                               VkImageSubresourceRange subresource_range);
 
 #endif

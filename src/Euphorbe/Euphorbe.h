@@ -10,5 +10,6 @@
 
 // Renderer
 #include "Graphics/Renderer.h"
+#include "Graphics/Image.h"
 
 #endif
