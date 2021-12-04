@@ -18,7 +18,8 @@ enum E_ImageLayout
     E_ImageLayoutColor = 2,
     E_ImageLayoutDepth = 3,
     E_ImageLayoutTransferSource = 6,
-    E_ImageLayoutTransferDest = 7
+    E_ImageLayoutTransferDest = 7,
+    E_ImageLayoutSwapchainPresent = 1000001002
 };
 
 typedef enum E_ImageAccess E_ImageAccess;

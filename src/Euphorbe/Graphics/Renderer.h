@@ -34,6 +34,7 @@ void E_RendererWait();
 // Put all of your color + depth attachments in the array. Depth attachment must be at the end
 void E_RendererStartRender(E_ImageAttachment* attachments, i32 attachment_count, i32 has_depth);
 void E_RendererEndRender();
+E_Image* E_GetSwapchainImage();
 
 // Handled automatically by the Window system. Do not call it in your program.
 void E_RendererResize(i32 width, i32 height);

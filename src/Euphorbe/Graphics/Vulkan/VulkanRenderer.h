@@ -47,6 +47,7 @@ struct E_Vk_Data
         VkImageView image_views[FRAMES_IN_FLIGHT];
         VkFormat image_format;
         VkExtent2D extent;
+        E_Image** euphorbe_images;
     } swapchain;
 
     // Sync data
@@ -80,6 +81,8 @@ void E_Vk_Resize(i32 width, i32 height);
 
 void E_Vk_RendererStartRender(E_ImageAttachment* attachments, i32 attachment_count, i32 has_depth);
 void E_Vk_RendererEndRender();
+
+E_Image* E_Vk_GetSwapchainImage();
 
 // Most useful function for dynamic rendering
 void E_Vk_Image_Memory_Barrier(VkCommandBuffer command_buffer, 

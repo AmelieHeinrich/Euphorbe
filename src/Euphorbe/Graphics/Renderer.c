@@ -53,6 +53,13 @@ void E_RendererEndRender()
 #endif
 }
 
+E_Image* E_GetSwapchainImage()
+{
+#ifdef EUPHORBE_WINDOWS
+    E_Vk_GetSwapchainImage();
+#endif
+}
+
 void E_RendererResize(i32 width, i32 height)
 {
 #ifdef EUPHORBE_WINDOWS

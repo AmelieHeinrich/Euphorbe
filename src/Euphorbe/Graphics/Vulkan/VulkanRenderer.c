@@ -303,6 +303,22 @@ void E_Vk_MakeSwapchain()
         assert(result == VK_SUCCESS);
     }
 
+    rhi.swapchain.euphorbe_images = malloc(sizeof(E_Image) * FRAMES_IN_FLIGHT);
+    
+    for (int i = 0; i < FRAMES_IN_FLIGHT; i++)
+    {
+        rhi.swapchain.euphorbe_images[i] = malloc(sizeof(E_Image));
+        rhi.swapchain.euphorbe_images[i]->rhi_handle = malloc(sizeof(E_VulkanImage));
+        rhi.swapchain.euphorbe_images[i]->format = E_ImageFormatRGBA8;
+        rhi.swapchain.euphorbe_images[i]->width = rhi.window->width;
+        rhi.swapchain.euphorbe_images[i]->height = rhi.window->height;
+        
+        E_VulkanImage* image_handle = (E_VulkanImage*)rhi.swapchain.euphorbe_images[i]->rhi_handle;
+        image_handle->format = create_info.imageFormat;
+        image_handle->image = rhi.swapchain.images[i];
+        image_handle->image_view = rhi.swapchain.image_views[i];
+    }
+
     free(formats);
 }
 
@@ -452,9 +468,12 @@ void E_Vk_RendererShutdown()
 
     for (u32 i = 0; i < FRAMES_IN_FLIGHT; i++)
     {
+        free(rhi.swapchain.euphorbe_images[i]->rhi_handle);
+        free(rhi.swapchain.euphorbe_images[i]);
         vkDestroyFence(rhi.device.handle, rhi.sync.fences[i], NULL);
         vkDestroyImageView(rhi.device.handle, rhi.swapchain.image_views[i], NULL);
     }
+    free(rhi.swapchain.euphorbe_images);
 
     vkDestroySwapchainKHR(rhi.device.handle, rhi.swapchain.handle, NULL);
     free(rhi.swapchain.images);
@@ -496,46 +515,11 @@ void E_Vk_Begin()
 
     vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
     vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
-
-    VkImageSubresourceRange range = {0};
-    range.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    range.baseMipLevel = 0;
-    range.levelCount = VK_REMAINING_MIP_LEVELS;
-    range.baseArrayLayer = 0;
-    range.layerCount = VK_REMAINING_ARRAY_LAYERS;
-
-    // Swapchain image layout
-    E_Vk_Image_Memory_Barrier(commandBuffer,
-        rhi.swapchain.images[rhi.sync.image_index],
-        0,
-        VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-        VK_IMAGE_LAYOUT_UNDEFINED,
-        VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-        VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 
-        range);
 }
 
 void E_Vk_End()
 {
     VkCommandBuffer command_buffer = rhi.command.command_buffers[rhi.sync.image_index];
-
-    VkImageSubresourceRange range = { 0 };
-    range.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    range.baseMipLevel = 0;
-    range.levelCount = VK_REMAINING_MIP_LEVELS;
-    range.baseArrayLayer = 0;
-    range.layerCount = VK_REMAINING_ARRAY_LAYERS;
-
-    E_Vk_Image_Memory_Barrier(command_buffer,
-        rhi.swapchain.images[rhi.sync.image_index],
-        VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-        0,
-        VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-        VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-        VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
-        range);
 
     VkResult result = vkEndCommandBuffer(command_buffer);
     assert(result == VK_SUCCESS);
@@ -599,39 +583,26 @@ void E_Vk_RendererStartRender(E_ImageAttachment* attachments, i32 attachment_cou
     // Max attachment count is 64
     VkRenderingAttachmentInfoKHR color_attachments[64];
 
-    VkClearValue swapchain_clear_value = {0};
-    swapchain_clear_value.color.float32[0] = 0.1f;
-    swapchain_clear_value.color.float32[1] = 0.1f;
-    swapchain_clear_value.color.float32[2] = 0.1f;
-    swapchain_clear_value.color.float32[3] = 1.0f;
-
-    VkRenderingAttachmentInfoKHR swapchain_buffer_info = {0};
-    swapchain_buffer_info.sType                        = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR;
-    swapchain_buffer_info.imageView                    = rhi.swapchain.images[rhi.sync.image_index];        // color_attachment.image_view;
-	swapchain_buffer_info.imageLayout                  = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-	swapchain_buffer_info.resolveMode                  = VK_RESOLVE_MODE_NONE;
-	swapchain_buffer_info.loadOp                       = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	swapchain_buffer_info.storeOp                      = VK_ATTACHMENT_STORE_OP_STORE;
-	swapchain_buffer_info.clearValue                   = swapchain_clear_value;
-
     for (i32 i = 0; i < color_iterator; i++)
     {
-        E_VulkanImage* vk_image = (E_VulkanImage*)attachments[color_iterator].image->rhi_handle;
+        E_VulkanImage* vk_image = (E_VulkanImage*)attachments[i].image->rhi_handle;
 
         VkClearValue clear_value = {0};
-        clear_value.color.float32[0] = attachments[color_iterator].clear_value.r;
-        clear_value.color.float32[1] = attachments[color_iterator].clear_value.g;
-        clear_value.color.float32[2] = attachments[color_iterator].clear_value.b;
-        clear_value.color.float32[3] = attachments[color_iterator].clear_value.a;
+        clear_value.color.float32[0] = attachments[i].clear_value.r;
+        clear_value.color.float32[1] = attachments[i].clear_value.g;
+        clear_value.color.float32[2] = attachments[i].clear_value.b;
+        clear_value.color.float32[3] = attachments[i].clear_value.a;
 
         VkRenderingAttachmentInfoKHR color_attachment_info = {0};
         color_attachment_info.sType                        = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR;
 		color_attachment_info.imageView                    = vk_image->image_view;
-		color_attachment_info.imageLayout                  = attachments[color_iterator].layout;
+		color_attachment_info.imageLayout                  = attachments[i].layout;
 		color_attachment_info.resolveMode                  = VK_RESOLVE_MODE_NONE;
 		color_attachment_info.loadOp                       = VK_ATTACHMENT_LOAD_OP_CLEAR;
 		color_attachment_info.storeOp                      = VK_ATTACHMENT_STORE_OP_STORE;
 		color_attachment_info.clearValue                   = clear_value;
+
+        color_attachments[i] = color_attachment_info;
     }
 
     if (has_depth)
@@ -665,13 +636,23 @@ void E_Vk_RendererEndRender()
     vkCmdEndRenderingKHR(rhi.command.command_buffers[rhi.sync.image_index]);
 }
 
+E_Image* E_Vk_GetSwapchainImage()
+{
+    return rhi.swapchain.euphorbe_images[rhi.sync.image_index];
+}
+
 
 void E_Vk_Resize(i32 width, i32 height)
 {
     E_Vk_DeviceWait();
 
     for (u32 i = 0; i < FRAMES_IN_FLIGHT; i++)
+    {
+        free(rhi.swapchain.euphorbe_images[i]->rhi_handle);
+        free(rhi.swapchain.euphorbe_images[i]);
         vkDestroyImageView(rhi.device.handle, rhi.swapchain.image_views[i], NULL);
+    }
+    free(rhi.swapchain.euphorbe_images);
 
     vkDestroySwapchainKHR(rhi.device.handle, rhi.swapchain.handle, NULL);
     free(rhi.swapchain.images);
