@@ -78,6 +78,9 @@ void E_Vk_DeviceWait();
 
 void E_Vk_Resize(i32 width, i32 height);
 
+void E_Vk_RendererStartRender(E_ImageAttachment* attachments, i32 attachment_count, i32 has_depth);
+void E_Vk_RendererEndRender();
+
 // Most useful function for dynamic rendering
 void E_Vk_Image_Memory_Barrier(VkCommandBuffer command_buffer, 
                                VkImage image,

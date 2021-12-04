@@ -24,6 +24,15 @@ int main()
                                 E_ImagePipelineStageEarlyFragment | E_ImagePipelineStageLateFragment, 
                                 E_ImagePipelineStageEarlyFragment | E_ImagePipelineStageLateFragment);
 
+        E_ClearValue depth_clear = { 0 };
+
+        E_ImageAttachment attachments[] = {
+            { depth_image, E_ImageLayoutDepth, depth_clear }
+        };
+
+        E_RendererStartRender(attachments, 1, 1);
+        E_RendererEndRender();
+
         E_RendererEnd();
     }
 

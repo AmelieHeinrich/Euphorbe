@@ -5,6 +5,8 @@
     #include <Euphorbe/Platform/Windows/WindowsWindow.h>
 #endif
 
+#include "VulkanImage.h"
+
 E_Vk_Data rhi;
 
 static VkBool32 E_CheckLayers(u32 check_count, char **check_names,
@@ -577,6 +579,92 @@ void E_Vk_DeviceWait()
 {
     vkDeviceWaitIdle(rhi.device.handle);
 }
+
+void E_Vk_RendererStartRender(E_ImageAttachment* attachments, i32 attachment_count, i32 has_depth)
+{
+    int color_iterator = has_depth ? attachment_count - 1 : attachment_count;
+
+    VkRect2D render_area = {0};
+    render_area.extent.width = rhi.window->width;
+    render_area.extent.height = rhi.window->height;
+    render_area.offset.x = 0;
+    render_area.offset.y = 0;
+
+    VkRenderingInfoKHR rendering_info = {0};
+    rendering_info.sType = VK_STRUCTURE_TYPE_RENDERING_INFO_KHR;
+    rendering_info.renderArea = render_area;
+    rendering_info.colorAttachmentCount = color_iterator;
+    rendering_info.layerCount = 1;
+
+    // Max attachment count is 64
+    VkRenderingAttachmentInfoKHR color_attachments[64];
+
+    VkClearValue swapchain_clear_value = {0};
+    swapchain_clear_value.color.float32[0] = 0.1f;
+    swapchain_clear_value.color.float32[1] = 0.1f;
+    swapchain_clear_value.color.float32[2] = 0.1f;
+    swapchain_clear_value.color.float32[3] = 1.0f;
+
+    VkRenderingAttachmentInfoKHR swapchain_buffer_info = {0};
+    swapchain_buffer_info.sType                        = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR;
+    swapchain_buffer_info.imageView                    = rhi.swapchain.images[rhi.sync.image_index];        // color_attachment.image_view;
+	swapchain_buffer_info.imageLayout                  = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+	swapchain_buffer_info.resolveMode                  = VK_RESOLVE_MODE_NONE;
+	swapchain_buffer_info.loadOp                       = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	swapchain_buffer_info.storeOp                      = VK_ATTACHMENT_STORE_OP_STORE;
+	swapchain_buffer_info.clearValue                   = swapchain_clear_value;
+
+    for (i32 i = 0; i < color_iterator; i++)
+    {
+        E_VulkanImage* vk_image = (E_VulkanImage*)attachments[color_iterator].image->rhi_handle;
+
+        VkClearValue clear_value = {0};
+        clear_value.color.float32[0] = attachments[color_iterator].clear_value.r;
+        clear_value.color.float32[1] = attachments[color_iterator].clear_value.g;
+        clear_value.color.float32[2] = attachments[color_iterator].clear_value.b;
+        clear_value.color.float32[3] = attachments[color_iterator].clear_value.a;
+
+        VkRenderingAttachmentInfoKHR color_attachment_info = {0};
+        color_attachment_info.sType                        = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR;
+		color_attachment_info.imageView                    = vk_image->image_view;
+		color_attachment_info.imageLayout                  = attachments[color_iterator].layout;
+		color_attachment_info.resolveMode                  = VK_RESOLVE_MODE_NONE;
+		color_attachment_info.loadOp                       = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		color_attachment_info.storeOp                      = VK_ATTACHMENT_STORE_OP_STORE;
+		color_attachment_info.clearValue                   = clear_value;
+    }
+
+    if (has_depth)
+    {
+        E_VulkanImage* vk_image = (E_VulkanImage*)attachments[color_iterator].image->rhi_handle;
+
+        VkClearValue depth_clear_value = {0};
+        depth_clear_value.depthStencil.depth = attachments[color_iterator].clear_value.depth;
+        depth_clear_value.depthStencil.stencil = attachments[color_iterator].clear_value.stencil;
+
+        VkRenderingAttachmentInfoKHR depth_attachment = {0};
+        depth_attachment.sType                        = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR;
+        depth_attachment.imageView                    = vk_image->image_view;
+		depth_attachment.imageLayout                  = attachments[color_iterator].layout;
+		depth_attachment.resolveMode                  = VK_RESOLVE_MODE_NONE;
+		depth_attachment.loadOp                       = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		depth_attachment.storeOp                      = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		depth_attachment.clearValue                   = depth_clear_value;
+
+        rendering_info.pStencilAttachment = &depth_attachment;
+        rendering_info.pDepthAttachment = &depth_attachment;
+    }
+
+    rendering_info.pColorAttachments = color_attachments;
+
+    vkCmdBeginRenderingKHR(rhi.command.command_buffers[rhi.sync.image_index], &rendering_info);
+}
+
+void E_Vk_RendererEndRender()
+{
+    vkCmdEndRenderingKHR(rhi.command.command_buffers[rhi.sync.image_index]);
+}
+
 
 void E_Vk_Resize(i32 width, i32 height)
 {

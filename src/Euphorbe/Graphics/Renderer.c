@@ -39,6 +39,20 @@ void E_RendererWait()
 #endif
 }
 
+void E_RendererStartRender(E_ImageAttachment* attachments, i32 attachment_count, i32 has_depth)
+{
+#ifdef EUPHORBE_WINDOWS
+    E_Vk_RendererStartRender(attachments, attachment_count, has_depth);
+#endif
+}
+
+void E_RendererEndRender()
+{
+#ifdef EUPHORBE_WINDOWS
+    E_Vk_RendererEndRender();
+#endif
+}
+
 void E_RendererResize(i32 width, i32 height)
 {
 #ifdef EUPHORBE_WINDOWS
