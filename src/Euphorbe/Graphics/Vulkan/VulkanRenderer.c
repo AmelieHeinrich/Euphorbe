@@ -1,5 +1,7 @@
 #include "VulkanRenderer.h"
 
+#include <Euphorbe/Core/Log.h>
+
 #ifdef EUPHORBE_WINDOWS
     #include <vulkan/vulkan_win32.h>
     #include <Euphorbe/Platform/Windows/WindowsWindow.h>
@@ -53,7 +55,7 @@ void E_Vk_MakeInstance()
         validation_found = E_CheckLayers(ARRAY_SIZE(instance_validation_layers_alt1), instance_validation_layers, instance_layer_count, instance_layers);
 
         if (validation_found) {
-            rhi.instance.layer_count = ARRAY_SIZE(instance_validation_layers);
+            rhi.instance.layer_count = 1;
             rhi.instance.layers[0] = "VK_LAYER_KHRONOS_validation";
             validation_layer_count = 1;
         }
@@ -61,8 +63,6 @@ void E_Vk_MakeInstance()
         free(instance_layers);
     }
 
-     VkBool32 surfaceExtFound = 0;
-     VkBool32 platformSurfaceExtFound = 0;
      memset(rhi.instance.extensions, 0, sizeof(rhi.instance.extensions));
      result = vkEnumerateInstanceExtensionProperties(NULL, &instance_extension_count, NULL);
      assert(result == VK_SUCCESS);
@@ -91,32 +91,32 @@ void E_Vk_MakeInstance()
         free(instance_extensions);
     }
 
-    VkApplicationInfo appInfo = {0};
-    appInfo.pNext = NULL;
-    appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-    appInfo.pApplicationName = rhi.window->title;
-    appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
-    appInfo.pEngineName = "Euphorbe";
-    appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-    appInfo.apiVersion = VK_API_VERSION_1_2;
+    VkApplicationInfo app_info = {0};
+    app_info.pNext = NULL;
+    app_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+    app_info.pApplicationName = rhi.window->title;
+    app_info.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
+    app_info.pEngineName = "Euphorbe";
+    app_info.engineVersion = VK_MAKE_VERSION(1, 0, 0);
+    app_info.apiVersion = VK_API_VERSION_1_2;
 
-    VkInstanceCreateInfo createInfo = {0};
-    createInfo.pNext = NULL;
-    createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-    createInfo.pApplicationInfo = &appInfo;
+    VkInstanceCreateInfo create_info = {0};
+    create_info.pNext = NULL;
+    create_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+    create_info.pApplicationInfo = &app_info;
 
 #ifdef _DEBUG
-    createInfo.enabledLayerCount = rhi.instance.layer_count;
-    createInfo.ppEnabledLayerNames = (const char *const *)rhi.instance.layers;
+    create_info.enabledLayerCount = rhi.instance.layer_count;
+    create_info.ppEnabledLayerNames = (const char *const *)rhi.instance.layers;
 #else
-    createInfo.enabledLayerCount = 0; 
-    createInfo.ppEnabledLayerNames = NULL; 
+    create_info.enabledLayerCount = 0; 
+    create_info.ppEnabledLayerNames = NULL; 
 #endif
 
-    createInfo.enabledExtensionCount = rhi.instance.extension_count;
-    createInfo.ppEnabledExtensionNames = (const char *const *)rhi.instance.extensions;
+    create_info.enabledExtensionCount = rhi.instance.extension_count;
+    create_info.ppEnabledExtensionNames = (const char *const *)rhi.instance.extensions;
 
-    result = vkCreateInstance(&createInfo, NULL, &rhi.instance.handle);
+    result = vkCreateInstance(&create_info, NULL, &rhi.instance.handle);
     assert(result == VK_SUCCESS);
 
     volkLoadInstance(rhi.instance.handle);
@@ -127,6 +127,7 @@ void E_Vk_MakeSurface()
 #ifdef EUPHORBE_WINDOWS
     E_WindowsWindow* window = (E_WindowsWindow*)rhi.window->platform_data;
     HWND hwnd = window->hwnd;
+    assert(hwnd);
 
     VkWin32SurfaceCreateInfoKHR surface_create_info = {0};
     surface_create_info.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
@@ -136,7 +137,8 @@ void E_Vk_MakeSurface()
     surface_create_info.pNext = NULL;
 
     // Load it myself because Volk is annoying
-    PFN_vkCreateWin32SurfaceKHR function_pointer = vkGetInstanceProcAddr(rhi.instance.handle, "vkCreateWin32SurfaceKHR");
+    PFN_vkCreateWin32SurfaceKHR function_pointer = (PFN_vkCreateWin32SurfaceKHR)vkGetInstanceProcAddr(rhi.instance.handle, "vkCreateWin32SurfaceKHR");
+    assert(function_pointer);
 
     VkResult result = function_pointer(rhi.instance.handle, &surface_create_info, NULL, &rhi.surface);
     assert(result == VK_SUCCESS);
@@ -198,7 +200,7 @@ void E_Vk_MakeDevice()
     VkExtensionProperties* properties = malloc(sizeof(VkExtensionProperties) * extension_count);
     vkEnumerateDeviceExtensionProperties(rhi.physical_device.handle, NULL, &extension_count, properties);
     
-    for (int i = 0; i < extension_count; i++)
+    for (u32 i = 0; i < extension_count; i++)
     {
         E_LogInfo("Found device extension: %s", properties[i].extensionName);
 
@@ -283,36 +285,31 @@ void E_Vk_MakeSwapchain()
 
     for (u32 i = 0; i < FRAMES_IN_FLIGHT; i++)
     {
-        VkImageViewCreateInfo iv_createInfo = { 0 };
-        iv_createInfo.flags = 0;
-        iv_createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-        iv_createInfo.image = rhi.swapchain.images[i];
-        iv_createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-        iv_createInfo.format = rhi.swapchain.image_format;
-        iv_createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-        iv_createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-        iv_createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-        iv_createInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-        iv_createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-        iv_createInfo.subresourceRange.baseMipLevel = 0;
-        iv_createInfo.subresourceRange.levelCount = 1;
-        iv_createInfo.subresourceRange.baseArrayLayer = 0;
-        iv_createInfo.subresourceRange.layerCount = 1;
+        VkImageViewCreateInfo iv_create_info = { 0 };
+        iv_create_info.flags = 0;
+        iv_create_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+        iv_create_info.image = rhi.swapchain.images[i];
+        iv_create_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
+        iv_create_info.format = rhi.swapchain.image_format;
+        iv_create_info.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+        iv_create_info.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+        iv_create_info.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+        iv_create_info.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+        iv_create_info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        iv_create_info.subresourceRange.baseMipLevel = 0;
+        iv_create_info.subresourceRange.levelCount = 1;
+        iv_create_info.subresourceRange.baseArrayLayer = 0;
+        iv_create_info.subresourceRange.layerCount = 1;
 
-        result = vkCreateImageView(rhi.device.handle, &iv_createInfo, NULL, &rhi.swapchain.image_views[i]);
+        result = vkCreateImageView(rhi.device.handle, &iv_create_info, NULL, &rhi.swapchain.image_views[i]);
         assert(result == VK_SUCCESS);
-    }
 
-    rhi.swapchain.euphorbe_images = malloc(sizeof(E_Image) * FRAMES_IN_FLIGHT);
-    
-    for (int i = 0; i < FRAMES_IN_FLIGHT; i++)
-    {
         rhi.swapchain.euphorbe_images[i] = malloc(sizeof(E_Image));
         rhi.swapchain.euphorbe_images[i]->rhi_handle = malloc(sizeof(E_VulkanImage));
         rhi.swapchain.euphorbe_images[i]->format = E_ImageFormatRGBA8;
         rhi.swapchain.euphorbe_images[i]->width = rhi.window->width;
         rhi.swapchain.euphorbe_images[i]->height = rhi.window->height;
-        
+
         E_VulkanImage* image_handle = (E_VulkanImage*)rhi.swapchain.euphorbe_images[i]->rhi_handle;
         image_handle->format = create_info.imageFormat;
         image_handle->image = rhi.swapchain.images[i];
@@ -327,52 +324,52 @@ void E_Vk_MakeSync()
     VkResult result;
 
     for (i32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
-        VkFenceCreateInfo fenceInfo = { 0 };
-        fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-        fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+        VkFenceCreateInfo fence_info = { 0 };
+        fence_info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+        fence_info.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
-        result = vkCreateFence(rhi.device.handle, &fenceInfo, NULL, &rhi.sync.fences[i]);
+        result = vkCreateFence(rhi.device.handle, &fence_info, NULL, &rhi.sync.fences[i]);
         assert(result == VK_SUCCESS);
     }
 
-    VkSemaphoreCreateInfo semaphoreInfo = { 0 };
-    semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+    VkSemaphoreCreateInfo semaphore_info = { 0 };
+    semaphore_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
-    result = vkCreateSemaphore(rhi.device.handle, &semaphoreInfo, NULL, &rhi.sync.image_available_semaphore);
+    result = vkCreateSemaphore(rhi.device.handle, &semaphore_info, NULL, &rhi.sync.image_available_semaphore);
     assert(result == VK_SUCCESS);
-    result = vkCreateSemaphore(rhi.device.handle, &semaphoreInfo, NULL, &rhi.sync.image_rendered_semaphore);
+    result = vkCreateSemaphore(rhi.device.handle, &semaphore_info, NULL, &rhi.sync.image_rendered_semaphore);
     assert(result == VK_SUCCESS);
 }
 
 void E_Vk_MakeCommand()
 {
-    VkCommandPoolCreateInfo poolInfo = { 0 };
-    poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-    poolInfo.queueFamilyIndex = rhi.physical_device.graphics_family;
-    poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+    VkCommandPoolCreateInfo pool_info = { 0 };
+    pool_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+    pool_info.queueFamilyIndex = rhi.physical_device.graphics_family;
+    pool_info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 
-    VkResult result = vkCreateCommandPool(rhi.device.handle, &poolInfo, NULL, &rhi.command.graphics_command_pool);
+    VkResult result = vkCreateCommandPool(rhi.device.handle, &pool_info, NULL, &rhi.command.graphics_command_pool);
     assert(result == VK_SUCCESS);
 
     rhi.command.command_buffers = malloc(sizeof(VkCommandBuffer) * FRAMES_IN_FLIGHT);
 
-    VkCommandBufferAllocateInfo allocInfo = { 0 };
-    allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    allocInfo.commandPool = rhi.command.graphics_command_pool;
-    allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    allocInfo.commandBufferCount = FRAMES_IN_FLIGHT;
+    VkCommandBufferAllocateInfo alloc_info = { 0 };
+    alloc_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    alloc_info.commandPool = rhi.command.graphics_command_pool;
+    alloc_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    alloc_info.commandBufferCount = FRAMES_IN_FLIGHT;
 
-    result = vkAllocateCommandBuffers(rhi.device.handle, &allocInfo, rhi.command.command_buffers);
+    result = vkAllocateCommandBuffers(rhi.device.handle, &alloc_info, rhi.command.command_buffers);
     assert(result == VK_SUCCESS);
 }
 
 void E_Vk_MakeAllocator()
 {
-    VmaAllocatorCreateInfo allocatorInfo = { 0 };
-    allocatorInfo.device = rhi.device.handle;
-    allocatorInfo.instance = rhi.instance.handle;
-    allocatorInfo.physicalDevice = rhi.physical_device.handle;
-    allocatorInfo.vulkanApiVersion = VK_API_VERSION_1_2;
+    VmaAllocatorCreateInfo allocator_info = { 0 };
+    allocator_info.device = rhi.device.handle;
+    allocator_info.instance = rhi.instance.handle;
+    allocator_info.physicalDevice = rhi.physical_device.handle;
+    allocator_info.vulkanApiVersion = VK_API_VERSION_1_2;
     VmaVulkanFunctions vulkanFunctions = {
             vkGetPhysicalDeviceProperties,
             vkGetPhysicalDeviceMemoryProperties,
@@ -404,9 +401,9 @@ void E_Vk_MakeAllocator()
 #endif
     };
 
-    allocatorInfo.pVulkanFunctions = &vulkanFunctions;
+    allocator_info.pVulkanFunctions = &vulkanFunctions;
 
-    VkResult result = vmaCreateAllocator(&allocatorInfo, &rhi.allocator);
+    VkResult result = vmaCreateAllocator(&allocator_info, &rhi.allocator);
     assert(result == VK_SUCCESS);
 }
 
@@ -473,7 +470,6 @@ void E_Vk_RendererShutdown()
         vkDestroyFence(rhi.device.handle, rhi.sync.fences[i], NULL);
         vkDestroyImageView(rhi.device.handle, rhi.swapchain.image_views[i], NULL);
     }
-    free(rhi.swapchain.euphorbe_images);
 
     vkDestroySwapchainKHR(rhi.device.handle, rhi.swapchain.handle, NULL);
     free(rhi.swapchain.images);
@@ -492,12 +488,12 @@ void E_Vk_Begin()
 
     VkCommandBuffer commandBuffer = rhi.command.command_buffers[rhi.sync.image_index];
 
-    VkCommandBufferBeginInfo beginInfo = { 0 };
-    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    beginInfo.pInheritanceInfo = NULL;
-    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+    VkCommandBufferBeginInfo begin_info = { 0 };
+    begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    begin_info.pInheritanceInfo = NULL;
+    begin_info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
-    VkResult res = vkBeginCommandBuffer(commandBuffer, &beginInfo);
+    VkResult res = vkBeginCommandBuffer(commandBuffer, &begin_info);
     assert(res == VK_SUCCESS);
 
     VkViewport viewport = { 0 };
@@ -526,37 +522,37 @@ void E_Vk_End()
 
     // Submit
 
-    VkSubmitInfo submitInfo = { 0 };
-    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    VkSubmitInfo submit_info = { 0 };
+    submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
-    VkSemaphore waitSemaphores[] = { rhi.sync.image_available_semaphore };
-    VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
-    submitInfo.waitSemaphoreCount = 1;
-    submitInfo.pWaitSemaphores = waitSemaphores;
-    submitInfo.pWaitDstStageMask = waitStages;
-    submitInfo.commandBufferCount = 1;
-    submitInfo.pCommandBuffers = &command_buffer;
+    VkSemaphore wait_semaphores[] = { rhi.sync.image_available_semaphore };
+    VkPipelineStageFlags wait_stages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+    submit_info.waitSemaphoreCount = 1;
+    submit_info.pWaitSemaphores = wait_semaphores;
+    submit_info.pWaitDstStageMask = wait_stages;
+    submit_info.commandBufferCount = 1;
+    submit_info.pCommandBuffers = &command_buffer;
 
-    VkSemaphore signalSemaphores[] = { rhi.sync.image_rendered_semaphore };
-    submitInfo.signalSemaphoreCount = 1;
-    submitInfo.pSignalSemaphores = signalSemaphores;
+    VkSemaphore signal_semaphores[] = { rhi.sync.image_rendered_semaphore };
+    submit_info.signalSemaphoreCount = 1;
+    submit_info.pSignalSemaphores = signal_semaphores;
 
     vkResetFences(rhi.device.handle, 1, &rhi.sync.fences[rhi.sync.image_index]);
 
-    result = vkQueueSubmit(rhi.device.graphics_queue, 1, &submitInfo, rhi.sync.fences[rhi.sync.image_index]);
+    result = vkQueueSubmit(rhi.device.graphics_queue, 1, &submit_info, rhi.sync.fences[rhi.sync.image_index]);
     assert(result == VK_SUCCESS);
 
-    VkPresentInfoKHR presentInfo = { 0 };
-    presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-    presentInfo.waitSemaphoreCount = 1;
-    presentInfo.pWaitSemaphores = signalSemaphores;
+    VkPresentInfoKHR present_info = { 0 };
+    present_info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+    present_info.waitSemaphoreCount = 1;
+    present_info.pWaitSemaphores = signal_semaphores;
 
-    VkSwapchainKHR swapChains[] = { rhi.swapchain.handle };
-    presentInfo.swapchainCount = 1;
-    presentInfo.pSwapchains = swapChains;
-    presentInfo.pImageIndices = &rhi.sync.image_index;
+    VkSwapchainKHR swap_chains[] = { rhi.swapchain.handle };
+    present_info.swapchainCount = 1;
+    present_info.pSwapchains = swap_chains;
+    present_info.pImageIndices = &rhi.sync.image_index;
 
-    vkQueuePresentKHR(rhi.device.graphics_queue, &presentInfo);
+    vkQueuePresentKHR(rhi.device.graphics_queue, &present_info);
 }
 
 void E_Vk_DeviceWait()
@@ -564,9 +560,10 @@ void E_Vk_DeviceWait()
     vkDeviceWaitIdle(rhi.device.handle);
 }
 
+#pragma optimize("",off)
 void E_Vk_RendererStartRender(E_ImageAttachment* attachments, i32 attachment_count, i32 has_depth)
 {
-    int color_iterator = has_depth ? attachment_count - 1 : attachment_count;
+    i32 color_iterator = has_depth ? attachment_count - 1 : attachment_count;
 
     VkRect2D render_area = {0};
     render_area.extent.width = rhi.window->width;
@@ -583,7 +580,7 @@ void E_Vk_RendererStartRender(E_ImageAttachment* attachments, i32 attachment_cou
     // Max attachment count is 64
     VkRenderingAttachmentInfoKHR color_attachments[64];
 
-    for (i32 i = 0; i < color_iterator; i++)
+    for (u32 i = 0; i < color_iterator; i++)
     {
         E_VulkanImage* vk_image = (E_VulkanImage*)attachments[i].image->rhi_handle;
 
@@ -630,6 +627,7 @@ void E_Vk_RendererStartRender(E_ImageAttachment* attachments, i32 attachment_cou
 
     vkCmdBeginRenderingKHR(rhi.command.command_buffers[rhi.sync.image_index], &rendering_info);
 }
+#pragma optimize("",on)
 
 void E_Vk_RendererEndRender()
 {
@@ -641,7 +639,6 @@ E_Image* E_Vk_GetSwapchainImage()
     return rhi.swapchain.euphorbe_images[rhi.sync.image_index];
 }
 
-
 void E_Vk_Resize(i32 width, i32 height)
 {
     E_Vk_DeviceWait();
@@ -652,7 +649,6 @@ void E_Vk_Resize(i32 width, i32 height)
         free(rhi.swapchain.euphorbe_images[i]);
         vkDestroyImageView(rhi.device.handle, rhi.swapchain.image_views[i], NULL);
     }
-    free(rhi.swapchain.euphorbe_images);
 
     vkDestroySwapchainKHR(rhi.device.handle, rhi.swapchain.handle, NULL);
     free(rhi.swapchain.images);

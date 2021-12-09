@@ -56,7 +56,7 @@ void E_RendererEndRender()
 E_Image* E_GetSwapchainImage()
 {
 #ifdef EUPHORBE_WINDOWS
-    E_Vk_GetSwapchainImage();
+    return E_Vk_GetSwapchainImage();
 #endif
 }
 

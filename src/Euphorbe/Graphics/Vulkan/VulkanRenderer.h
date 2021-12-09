@@ -47,7 +47,7 @@ struct E_Vk_Data
         VkImageView image_views[FRAMES_IN_FLIGHT];
         VkFormat image_format;
         VkExtent2D extent;
-        E_Image** euphorbe_images;
+        E_Image* euphorbe_images[FRAMES_IN_FLIGHT];
     } swapchain;
 
     // Sync data

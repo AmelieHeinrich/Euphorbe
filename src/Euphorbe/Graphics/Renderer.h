@@ -12,8 +12,8 @@ struct E_ClearValue
     f32 g;
     f32 b;
     f32 a;
-    f32 depth;
-    f32 stencil;
+    u32 depth;
+    u32 stencil;
 };
 
 typedef struct E_ImageAttachment E_ImageAttachment;
