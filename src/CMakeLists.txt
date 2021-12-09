@@ -13,6 +13,7 @@ add_definitions(-DVK_NO_PROTOTYPES)
 add_library(Euphorbe ${EUPHORBE_HEADER} ${EUPHORBE_SOURCE})
 target_include_directories(Euphorbe PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ../ThirdParty/Vulkan-Headers/include ../ThirdParty/volk ../ThirdParty/vma ${VULKAN_PATH}/Include)
 target_link_libraries(Euphorbe PUBLIC volk)
+link_libraries(../ThirdParty/glslang/glslang)
 
 # Platform dependent settings
 if (WIN32)
