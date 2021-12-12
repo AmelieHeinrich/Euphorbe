@@ -3,6 +3,7 @@
 
 #define FRAMES_IN_FLIGHT 3
 
+#pragma warning(disable: 28251)
 #include <Euphorbe/Graphics/Renderer.h>
 #include <volk.h>
 

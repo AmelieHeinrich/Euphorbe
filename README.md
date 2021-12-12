@@ -24,7 +24,8 @@ cmake -G "Visual Studio 16 2019" -B build
 
 - [volk](https://github.com/zeux/volk)
 - [Vulkan-Headers](https://github.com/KhronosGroup/Vulkan-Headers)
-- [glslang](https://github.com/KhronosGroup/glslang)
+- [shaderc](https://github.com/google/shaderc)
+- [VMA](https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator)
 
 ## Additional information
 

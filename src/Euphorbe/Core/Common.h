@@ -37,6 +37,7 @@ typedef double f64;
 // Platform includes
 
 #ifdef EUPHORBE_WINDOWS
+    #pragma warning(disable: 5105)
     #define WIN32_LEAN_AND_MEAN
     #include <Windows.h>
 #endif

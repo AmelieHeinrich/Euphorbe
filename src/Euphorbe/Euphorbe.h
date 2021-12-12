@@ -11,5 +11,6 @@
 // Renderer
 #include "Graphics/Renderer.h"
 #include "Graphics/Image.h"
+#include "Graphics/ShaderCompiler.h"
 
 #endif

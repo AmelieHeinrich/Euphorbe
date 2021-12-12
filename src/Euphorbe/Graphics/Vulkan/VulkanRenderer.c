@@ -1,5 +1,7 @@
 #include "VulkanRenderer.h"
 
+#pragma warning(disable: 6835)
+
 #include <Euphorbe/Core/Log.h>
 
 #ifdef EUPHORBE_WINDOWS
@@ -69,26 +71,29 @@ void E_Vk_MakeInstance()
 
     if (instance_extension_count > 0) {
         VkExtensionProperties *instance_extensions = malloc(sizeof(VkExtensionProperties) * instance_extension_count);
-        result = vkEnumerateInstanceExtensionProperties(NULL, &instance_extension_count, instance_extensions);
-        assert(result == VK_SUCCESS);
+        if (instance_extensions)
+        {
+            result = vkEnumerateInstanceExtensionProperties(NULL, &instance_extension_count, instance_extensions);
+            assert(result == VK_SUCCESS);
 
-        for (u32 i = 0; i < instance_extension_count; i++) {
-            E_LogInfo("Found instance extension: %s", instance_extensions[i].extensionName);
+            for (u32 i = 0; i < instance_extension_count; i++) {
+                E_LogInfo("Found instance extension: %s", instance_extensions[i].extensionName);
 
-            if (!strcmp(VK_KHR_SURFACE_EXTENSION_NAME, instance_extensions[i].extensionName)) {
-                rhi.instance.extensions[rhi.instance.extension_count++] = VK_KHR_SURFACE_EXTENSION_NAME;
-            }
+                if (!strcmp(VK_KHR_SURFACE_EXTENSION_NAME, instance_extensions[i].extensionName)) {
+                    rhi.instance.extensions[rhi.instance.extension_count++] = VK_KHR_SURFACE_EXTENSION_NAME;
+                }
 
 #ifdef EUPHORBE_WINDOWS
-            if (!strcmp(VK_KHR_WIN32_SURFACE_EXTENSION_NAME, instance_extensions[i].extensionName)) {
-                rhi.instance.extensions[rhi.instance.extension_count++] = VK_KHR_WIN32_SURFACE_EXTENSION_NAME;
-            }
+                if (!strcmp(VK_KHR_WIN32_SURFACE_EXTENSION_NAME, instance_extensions[i].extensionName)) {
+                    rhi.instance.extensions[rhi.instance.extension_count++] = VK_KHR_WIN32_SURFACE_EXTENSION_NAME;
+                }
 #endif
 
-            assert(rhi.instance.extension_count < 64);
-        }
+                assert(rhi.instance.extension_count < 64);
+            }
 
-        free(instance_extensions);
+            free(instance_extensions);
+        }
     }
 
     VkApplicationInfo app_info = {0};
@@ -152,9 +157,12 @@ void E_Vk_MakePhysicalDevice()
     assert(device_count != 0);
 
     VkPhysicalDevice* devices = malloc(sizeof(VkPhysicalDevice) * device_count);
-    vkEnumeratePhysicalDevices(rhi.instance.handle, &device_count, devices);
-    rhi.physical_device.handle = devices[0];
-    free(devices);
+    if (devices)
+    {
+        vkEnumeratePhysicalDevices(rhi.instance.handle, &device_count, devices);
+        rhi.physical_device.handle = devices[0];
+        free(devices);
+    }
 
     vkGetPhysicalDeviceProperties(rhi.physical_device.handle, &rhi.physical_device.handle_props);
 
@@ -163,18 +171,21 @@ void E_Vk_MakePhysicalDevice()
     vkGetPhysicalDeviceQueueFamilyProperties(rhi.physical_device.handle, &queue_family_count, NULL);
 
     VkQueueFamilyProperties* queue_families = malloc(sizeof(VkQueueFamilyProperties) * queue_family_count);
-    vkGetPhysicalDeviceQueueFamilyProperties(rhi.physical_device.handle, &queue_family_count, queue_families);
-
-    for (u32 i = 0; i < queue_family_count; i++)
+    if (queue_families)
     {
-        if (queue_families[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)
+        vkGetPhysicalDeviceQueueFamilyProperties(rhi.physical_device.handle, &queue_family_count, queue_families);
+
+        for (u32 i = 0; i < queue_family_count; i++)
         {
-            rhi.physical_device.graphics_family = i;
-            break;
+            if (queue_families[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)
+            {
+                rhi.physical_device.graphics_family = i;
+                break;
+            }
         }
+
+        free(queue_families);
     }
-    
-    free(queue_families);
 }
 
 void E_Vk_MakeDevice()
@@ -183,7 +194,7 @@ void E_Vk_MakeDevice()
 
     f32 queuePriority = 1.0f;
 
-    VkDeviceQueueCreateInfo graphics_queue_create_info;
+    VkDeviceQueueCreateInfo graphics_queue_create_info = { 0 };
     graphics_queue_create_info.flags = 0;
     graphics_queue_create_info.pNext = NULL;
     graphics_queue_create_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
@@ -198,23 +209,26 @@ void E_Vk_MakeDevice()
     u32 extension_count = 0;
     vkEnumerateDeviceExtensionProperties(rhi.physical_device.handle, NULL, &extension_count, NULL);
     VkExtensionProperties* properties = malloc(sizeof(VkExtensionProperties) * extension_count);
-    vkEnumerateDeviceExtensionProperties(rhi.physical_device.handle, NULL, &extension_count, properties);
-    
-    for (u32 i = 0; i < extension_count; i++)
+    if (properties)
     {
-        E_LogInfo("Found device extension: %s", properties[i].extensionName);
+        vkEnumerateDeviceExtensionProperties(rhi.physical_device.handle, NULL, &extension_count, properties);
 
-        if (!strcmp(VK_KHR_SWAPCHAIN_EXTENSION_NAME, properties[i].extensionName)) {
-            rhi.device.extensions[rhi.device.extension_count++] = VK_KHR_SWAPCHAIN_EXTENSION_NAME;
-        }
+        for (u32 i = 0; i < extension_count; i++)
+        {
+            E_LogInfo("Found device extension: %s", properties[i].extensionName);
 
-        if (!strcmp(VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME, properties[i].extensionName)) {
-            rhi.device.extensions[rhi.device.extension_count++] = VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME;
+            if (!strcmp(VK_KHR_SWAPCHAIN_EXTENSION_NAME, properties[i].extensionName)) {
+                rhi.device.extensions[rhi.device.extension_count++] = VK_KHR_SWAPCHAIN_EXTENSION_NAME;
+            }
+
+            if (!strcmp(VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME, properties[i].extensionName)) {
+                rhi.device.extensions[rhi.device.extension_count++] = VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME;
+            }
         }
+        assert(rhi.device.extension_count == 2);
+
+        free(properties);
     }
-    assert(rhi.device.extension_count == 2);
-
-    free(properties);
 
     VkDeviceCreateInfo create_info = {0};
     create_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
@@ -259,8 +273,6 @@ void E_Vk_MakeSwapchain()
     create_info.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
     create_info.surface = rhi.surface;
     create_info.minImageCount = FRAMES_IN_FLIGHT;
-    create_info.imageFormat = formats[0].format;
-    create_info.imageColorSpace = formats[0].colorSpace;
     create_info.imageExtent = rhi.swapchain.extent;
     create_info.imageArrayLayers = 1;
     create_info.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
@@ -272,6 +284,12 @@ void E_Vk_MakeSwapchain()
     create_info.presentMode = VK_PRESENT_MODE_FIFO_KHR;
     create_info.clipped = VK_TRUE;
     create_info.oldSwapchain = VK_NULL_HANDLE;
+    if (formats)
+    {
+        create_info.imageFormat = formats[0].format;
+        create_info.imageColorSpace = formats[0].colorSpace;
+        free(formats);
+    }
 
     rhi.swapchain.image_format = create_info.imageFormat;
 
@@ -281,42 +299,43 @@ void E_Vk_MakeSwapchain()
     i32 image_count = 0;
     vkGetSwapchainImagesKHR(rhi.device.handle, rhi.swapchain.handle, &image_count, NULL);
     rhi.swapchain.images = malloc(sizeof(VkImage) * image_count);
-    vkGetSwapchainImagesKHR(rhi.device.handle, rhi.swapchain.handle, &image_count, rhi.swapchain.images);
-
-    for (u32 i = 0; i < FRAMES_IN_FLIGHT; i++)
+    if (rhi.swapchain.images)
     {
-        VkImageViewCreateInfo iv_create_info = { 0 };
-        iv_create_info.flags = 0;
-        iv_create_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-        iv_create_info.image = rhi.swapchain.images[i];
-        iv_create_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
-        iv_create_info.format = rhi.swapchain.image_format;
-        iv_create_info.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-        iv_create_info.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-        iv_create_info.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-        iv_create_info.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-        iv_create_info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-        iv_create_info.subresourceRange.baseMipLevel = 0;
-        iv_create_info.subresourceRange.levelCount = 1;
-        iv_create_info.subresourceRange.baseArrayLayer = 0;
-        iv_create_info.subresourceRange.layerCount = 1;
+        vkGetSwapchainImagesKHR(rhi.device.handle, rhi.swapchain.handle, &image_count, rhi.swapchain.images);
 
-        result = vkCreateImageView(rhi.device.handle, &iv_create_info, NULL, &rhi.swapchain.image_views[i]);
-        assert(result == VK_SUCCESS);
+        for (u32 i = 0; i < FRAMES_IN_FLIGHT; i++)
+        {
+            VkImageViewCreateInfo iv_create_info = { 0 };
+            iv_create_info.flags = 0;
+            iv_create_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+            iv_create_info.image = rhi.swapchain.images[i];
+            iv_create_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
+            iv_create_info.format = rhi.swapchain.image_format;
+            iv_create_info.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+            iv_create_info.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+            iv_create_info.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+            iv_create_info.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+            iv_create_info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+            iv_create_info.subresourceRange.baseMipLevel = 0;
+            iv_create_info.subresourceRange.levelCount = 1;
+            iv_create_info.subresourceRange.baseArrayLayer = 0;
+            iv_create_info.subresourceRange.layerCount = 1;
 
-        rhi.swapchain.euphorbe_images[i] = malloc(sizeof(E_Image));
-        rhi.swapchain.euphorbe_images[i]->rhi_handle = malloc(sizeof(E_VulkanImage));
-        rhi.swapchain.euphorbe_images[i]->format = E_ImageFormatRGBA8;
-        rhi.swapchain.euphorbe_images[i]->width = rhi.window->width;
-        rhi.swapchain.euphorbe_images[i]->height = rhi.window->height;
+            result = vkCreateImageView(rhi.device.handle, &iv_create_info, NULL, &rhi.swapchain.image_views[i]);
+            assert(result == VK_SUCCESS);
 
-        E_VulkanImage* image_handle = (E_VulkanImage*)rhi.swapchain.euphorbe_images[i]->rhi_handle;
-        image_handle->format = create_info.imageFormat;
-        image_handle->image = rhi.swapchain.images[i];
-        image_handle->image_view = rhi.swapchain.image_views[i];
+            rhi.swapchain.euphorbe_images[i] = malloc(sizeof(E_Image));
+            rhi.swapchain.euphorbe_images[i]->rhi_handle = malloc(sizeof(E_VulkanImage));
+            rhi.swapchain.euphorbe_images[i]->format = E_ImageFormatRGBA8;
+            rhi.swapchain.euphorbe_images[i]->width = rhi.window->width;
+            rhi.swapchain.euphorbe_images[i]->height = rhi.window->height;
+
+            E_VulkanImage* image_handle = (E_VulkanImage*)rhi.swapchain.euphorbe_images[i]->rhi_handle;
+            image_handle->format = create_info.imageFormat;
+            image_handle->image = rhi.swapchain.images[i];
+            image_handle->image_view = rhi.swapchain.image_views[i];
+        }
     }
-
-    free(formats);
 }
 
 void E_Vk_MakeSync()
@@ -578,7 +597,7 @@ void E_Vk_RendererStartRender(E_ImageAttachment* attachments, i32 attachment_cou
     rendering_info.layerCount = 1;
 
     // Max attachment count is 64
-    VkRenderingAttachmentInfoKHR color_attachments[64];
+    VkRenderingAttachmentInfoKHR color_attachments[64] = { 0 };
 
     for (u32 i = 0; i < color_iterator; i++)
     {
