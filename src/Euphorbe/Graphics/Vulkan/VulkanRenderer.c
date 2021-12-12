@@ -1,6 +1,6 @@
 #include "VulkanRenderer.h"
 
-#pragma warning(disable: 6835)
+#pragma warning(disable: 6385)
 
 #include <Euphorbe/Core/Log.h>
 
@@ -582,7 +582,7 @@ void E_Vk_DeviceWait()
 #pragma optimize("",off)
 void E_Vk_RendererStartRender(E_ImageAttachment* attachments, i32 attachment_count, i32 has_depth)
 {
-    i32 color_iterator = has_depth ? attachment_count - 1 : attachment_count;
+    u32 color_iterator = has_depth ? attachment_count - 1 : attachment_count;
 
     VkRect2D render_area = {0};
     render_area.extent.width = rhi.window->width;

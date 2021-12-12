@@ -6,6 +6,7 @@ file(GLOB_RECURSE EUPHORBE_HEADER ${CMAKE_CURRENT_SOURCE_DIR}/Euphorbe/*.h)
 file(GLOB_RECURSE EUPHORBE_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/Euphorbe/*.c ${CMAKE_CURRENT_SOURCE_DIR}/Euphorbe/*.cpp)
 
 find_package(Vulkan)
+set(THIRD_PARTY ${CMAKE_CURRENT_SOURCE_DIR}/../ThirdParty)
 
 # Project settings
 add_definitions(-D_CRT_SECURE_NO_WARNINGS)

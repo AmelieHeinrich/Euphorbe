@@ -12,7 +12,7 @@ struct E_ClearValue
     f32 g;
     f32 b;
     f32 a;
-    u32 depth;
+    f32 depth;
     u32 stencil;
 };
 
