@@ -27,9 +27,12 @@ char* E_ReadFile(const char* path, i32* output_size)
 	FILE* file = fopen(path, "rb");
 
 	if (!file)
-		E_LogError("FILE ERROR: Failed to open file!");
-
-	if (file)
+	{
+		E_LogError("FILE READ ERROR (path=%s)", path);
+		assert(false);
+		return NULL;
+	}
+	else
 	{
 		long currentpos = ftell(file);
 		fseek(file, 0, SEEK_END);
@@ -46,6 +49,14 @@ char* E_ReadFile(const char* path, i32* output_size)
 
 			*output_size = size;
 			return buffer;
+		}
+		else
+		{
+			fclose(file);
+			E_LogError("FILE READ ERROR: Failed to allocate file output buffer!");
+			*output_size = -1;
+			assert(false);
+			return NULL;
 		}
 	}
 
