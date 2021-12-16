@@ -5,6 +5,14 @@
 #include <Euphorbe/Platform/Window.h>
 #include "Image.h"
 
+typedef struct E_RendererInitSettings E_RendererInitSettings;
+struct E_RendererInitSettings
+{
+    i32 gpu_pool_size; // Default: 256mb
+    b32 log_found_layers; // Default: true
+    b32 log_renderer_events; // Default: true
+};
+
 typedef struct E_ClearValue E_ClearValue;
 struct E_ClearValue
 {
@@ -24,7 +32,7 @@ struct E_ImageAttachment
     E_ClearValue clear_value;
 };
 
-void E_RendererInit(E_Window* window);
+void E_RendererInit(E_Window* window, E_RendererInitSettings settings);
 void E_RendererShutdown();
 
 void E_RendererBegin();

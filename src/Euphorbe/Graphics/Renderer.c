@@ -4,10 +4,10 @@
     #include "Vulkan/VulkanRenderer.h"
 #endif
 
-void E_RendererInit(E_Window* window)
+void E_RendererInit(E_Window* window, E_RendererInitSettings settings)
 {
 #ifdef EUPHORBE_WINDOWS
-    E_Vk_RendererInit(window);
+    E_Vk_RendererInit(window, settings);
 #endif
 }
 

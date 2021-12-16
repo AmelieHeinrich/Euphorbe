@@ -46,36 +46,44 @@ LRESULT CALLBACK WinProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 E_WindowsWindow* E_CreateWindowsWindow(i32* width, i32* height, const char* title)
 {
     E_WindowsWindow* result = malloc(sizeof(E_WindowsWindow));
-    result->width_pointer = width;
-    result->height_pointer = height;
-    result->resize_callback = NULL;
+    if (result)
+    {
+        result->width_pointer = width;
+        result->height_pointer = height;
+        result->resize_callback = NULL;
 
-    WNDCLASSA window_class = {0};
-    window_class.lpfnWndProc = WinProc;
-    window_class.hInstance = GetModuleHandleA(NULL);
-    window_class.lpszClassName = "EuphorbeWindowClass";
-    
-    RegisterClassA(&window_class);
+        WNDCLASSA window_class = { 0 };
+        window_class.lpfnWndProc = WinProc;
+        window_class.hInstance = GetModuleHandleA(NULL);
+        window_class.lpszClassName = "EuphorbeWindowClass";
 
-    result->hwnd = CreateWindowA(window_class.lpszClassName, 
-                                title, 
-                                WS_OVERLAPPEDWINDOW, 
-                                CW_USEDEFAULT, CW_USEDEFAULT, 
-                                *width, *height, 
-                                NULL, NULL, window_class.hInstance, 
-                                result);
+        RegisterClassA(&window_class);
 
-    if (!result->hwnd)
-        E_LogError("Failed to create HWND!");
+        result->hwnd = CreateWindowA(window_class.lpszClassName,
+            title,
+            WS_OVERLAPPEDWINDOW,
+            CW_USEDEFAULT, CW_USEDEFAULT,
+            *width, *height,
+            NULL, NULL, window_class.hInstance,
+            result);
 
-    result->is_open = 1;
+        if (!result->hwnd)
+            E_LogError("Failed to create HWND!");
 
-    RECT rect;
-    GetClientRect(result->hwnd, &rect);
-    *width = rect.right - rect.left;
-    *height = rect.bottom - rect.top;
+        result->is_open = 1;
 
-    return result;
+        if (result->hwnd)
+        {
+            RECT rect;
+            GetClientRect(result->hwnd, &rect);
+            *width = rect.right - rect.left;
+            *height = rect.bottom - rect.top;
+        }
+
+        return result;
+    }
+
+    return NULL;
 }
 
 void E_LaunchWindowsWindow(E_WindowsWindow* window)

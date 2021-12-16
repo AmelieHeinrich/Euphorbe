@@ -12,6 +12,7 @@
 #include "VulkanImage.h"
 
 E_Vk_Data rhi;
+E_RendererInitSettings rhi_settings;
 
 static VkBool32 E_CheckLayers(u32 check_count, char **check_names,
                                   u32 layer_count,
@@ -19,7 +20,8 @@ static VkBool32 E_CheckLayers(u32 check_count, char **check_names,
     for (u32 i = 0; i < check_count; i++) {
         VkBool32 found = 0;
         for (u32 j = 0; j < layer_count; j++) {
-            E_LogInfo("Found instance layer: %s", layers[j].layerName);
+            if (rhi_settings.log_found_layers)
+                E_LogInfo("Found instance layer: %s", layers[j].layerName);
             if (strcmp(check_names[i], layers[j].layerName) == 0) {
                 found = 1;
                 break;
@@ -77,7 +79,8 @@ void E_Vk_MakeInstance()
             assert(result == VK_SUCCESS);
 
             for (u32 i = 0; i < instance_extension_count; i++) {
-                E_LogInfo("Found instance extension: %s", instance_extensions[i].extensionName);
+                if (rhi_settings.log_found_layers)
+                    E_LogInfo("RENDERER LAYERS: Found instance extension: %s", instance_extensions[i].extensionName);
 
                 if (!strcmp(VK_KHR_SURFACE_EXTENSION_NAME, instance_extensions[i].extensionName)) {
                     rhi.instance.extensions[rhi.instance.extension_count++] = VK_KHR_SURFACE_EXTENSION_NAME;
@@ -125,6 +128,9 @@ void E_Vk_MakeInstance()
     assert(result == VK_SUCCESS);
 
     volkLoadInstance(rhi.instance.handle);
+
+    if (rhi_settings.log_renderer_events)
+        E_LogInfo("RENDERER EVENT: Vulkan Instance created");
 }
 
 void E_Vk_MakeSurface()
@@ -147,6 +153,9 @@ void E_Vk_MakeSurface()
 
     VkResult result = function_pointer(rhi.instance.handle, &surface_create_info, NULL, &rhi.surface);
     assert(result == VK_SUCCESS);
+
+    if (rhi_settings.log_renderer_events)
+        E_LogInfo("RENDERER EVENT: Vulkan Surface created");
 #endif
 }
 
@@ -186,6 +195,9 @@ void E_Vk_MakePhysicalDevice()
 
         free(queue_families);
     }
+
+    if (rhi_settings.log_renderer_events)
+        E_LogInfo("RENDERER EVENT: Vulkan Physical Device found");
 }
 
 void E_Vk_MakeDevice()
@@ -215,7 +227,8 @@ void E_Vk_MakeDevice()
 
         for (u32 i = 0; i < extension_count; i++)
         {
-            E_LogInfo("Found device extension: %s", properties[i].extensionName);
+            if (rhi_settings.log_found_layers)
+                E_LogInfo("RENDERER LAYERS: Found device extension: %s", properties[i].extensionName);
 
             if (!strcmp(VK_KHR_SWAPCHAIN_EXTENSION_NAME, properties[i].extensionName)) {
                 rhi.device.extensions[rhi.device.extension_count++] = VK_KHR_SWAPCHAIN_EXTENSION_NAME;
@@ -251,6 +264,9 @@ void E_Vk_MakeDevice()
 
     volkLoadDevice(rhi.device.handle);
     vkGetDeviceQueue(rhi.device.handle, rhi.physical_device.graphics_family, 0, &rhi.device.graphics_queue);
+
+    if (rhi_settings.log_renderer_events)
+        E_LogInfo("RENDERER EVENT: Vulkan Device created");
 }
 
 void E_Vk_MakeSwapchain()
@@ -336,6 +352,9 @@ void E_Vk_MakeSwapchain()
             image_handle->image_view = rhi.swapchain.image_views[i];
         }
     }
+
+    if (rhi_settings.log_renderer_events)
+        E_LogInfo("RENDERER EVENT: Vulkan Swapchain created");
 }
 
 void E_Vk_MakeSync()
@@ -358,6 +377,9 @@ void E_Vk_MakeSync()
     assert(result == VK_SUCCESS);
     result = vkCreateSemaphore(rhi.device.handle, &semaphore_info, NULL, &rhi.sync.image_rendered_semaphore);
     assert(result == VK_SUCCESS);
+
+    if (rhi_settings.log_renderer_events)
+        E_LogInfo("RENDERER EVENT: Vulkan Sync Objects created");
 }
 
 void E_Vk_MakeCommand()
@@ -380,6 +402,9 @@ void E_Vk_MakeCommand()
 
     result = vkAllocateCommandBuffers(rhi.device.handle, &alloc_info, rhi.command.command_buffers);
     assert(result == VK_SUCCESS);
+
+    if (rhi_settings.log_renderer_events)
+        E_LogInfo("RENDERER EVENT: Vulkan Command Objects created");
 }
 
 void E_Vk_MakeAllocator()
@@ -424,6 +449,16 @@ void E_Vk_MakeAllocator()
 
     VkResult result = vmaCreateAllocator(&allocator_info, &rhi.allocator);
     assert(result == VK_SUCCESS);
+
+    VmaPoolCreateInfo pool_info = { 0 };
+    pool_info.blockSize = rhi_settings.gpu_pool_size;
+    pool_info.minBlockCount = 1;
+
+    result = vmaCreatePool(rhi.allocator, &pool_info, &rhi.gpu_pool);
+    assert(result == VK_SUCCESS);
+
+    if (rhi_settings.log_renderer_events)
+        E_LogInfo("RENDERER EVENT: Vulkan Allocator and Pools created");
 }
 
 // Most useful function for dynamic rendering
@@ -458,8 +493,13 @@ void E_Vk_Image_Memory_Barrier(VkCommandBuffer command_buffer,
         1, &barrier);
 }
 
-void E_Vk_RendererInit(E_Window* window)
+void E_Vk_RendererInit(E_Window* window, E_RendererInitSettings settings)
 {
+    rhi_settings = settings;
+
+    if (rhi_settings.gpu_pool_size <= 0)
+        rhi_settings.gpu_pool_size = MEGABYTES(256);
+
     rhi.window = window;
     assert(rhi.window);
     
@@ -474,10 +514,16 @@ void E_Vk_RendererInit(E_Window* window)
     E_Vk_MakeSync();
     E_Vk_MakeCommand();
     E_Vk_MakeAllocator();
+
+    if (rhi_settings.log_renderer_events)
+        E_LogInfo("RENDERER EVENT: Finished initialising the Vulkan renderer");
 }
 
 void E_Vk_RendererShutdown()
 {
+    vmaDestroyPool(rhi.allocator, rhi.gpu_pool);
+    vmaDestroyAllocator(rhi.allocator);
+
     vkDestroySemaphore(rhi.device.handle, rhi.sync.image_available_semaphore, NULL);
     vkDestroySemaphore(rhi.device.handle, rhi.sync.image_rendered_semaphore, NULL);
     vkDestroyCommandPool(rhi.device.handle, rhi.command.graphics_command_pool, NULL);
@@ -495,6 +541,9 @@ void E_Vk_RendererShutdown()
     vkDestroyDevice(rhi.device.handle, NULL);
     vkDestroySurfaceKHR(rhi.instance.handle, rhi.surface, NULL);
     vkDestroyInstance(rhi.instance.handle, NULL);
+
+    if (rhi_settings.log_renderer_events)
+        E_LogInfo("RENDERER EVENT: Terminated the Vulkan Renderer");
 }
 
 void E_Vk_Begin()
@@ -674,5 +723,6 @@ void E_Vk_Resize(i32 width, i32 height)
 
     E_Vk_MakeSwapchain();
 
-    E_LogInfo("Recreated swapchain with new dimensions: {%d, %d}", width, height);
+    if (rhi_settings.log_renderer_events)
+        E_LogInfo("RENDERER EVENT: Recreated swapchain with new dimensions: {%d, %d}", width, height);
 }

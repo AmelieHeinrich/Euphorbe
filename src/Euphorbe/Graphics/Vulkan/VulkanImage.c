@@ -51,51 +51,57 @@ E_VulkanImage* E_Vk_MakeImage(i32 width, i32 height, E_ImageFormat format)
 {
     E_VulkanImage* result = malloc(sizeof(E_VulkanImage));
 
-    result->format = EuphorbeToVulkan(format);
-    result->euphorbe_format = format;
+    // Only used to make the C6011 warning go away
+    if (result)
+    {
+        result->format = EuphorbeToVulkan(format);
+        result->euphorbe_format = format;
 
-    VkImageCreateInfo image_create_info = {0};
-    image_create_info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-    image_create_info.imageType = VK_IMAGE_TYPE_2D;
-    image_create_info.extent.width = width;
-    image_create_info.extent.height = height;
-    image_create_info.format = result->format;
-    image_create_info.extent.depth = 1;
-    image_create_info.mipLevels = 1;
-    image_create_info.arrayLayers = 1;
-    image_create_info.tiling = VK_IMAGE_TILING_OPTIMAL;
-    image_create_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    image_create_info.usage = EuphorbeFormatToVulkanUsage(format);
-    image_create_info.samples = VK_SAMPLE_COUNT_1_BIT;
-    image_create_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+        VkImageCreateInfo image_create_info = { 0 };
+        image_create_info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+        image_create_info.imageType = VK_IMAGE_TYPE_2D;
+        image_create_info.extent.width = width;
+        image_create_info.extent.height = height;
+        image_create_info.format = result->format;
+        image_create_info.extent.depth = 1;
+        image_create_info.mipLevels = 1;
+        image_create_info.arrayLayers = 1;
+        image_create_info.tiling = VK_IMAGE_TILING_OPTIMAL;
+        image_create_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        image_create_info.usage = EuphorbeFormatToVulkanUsage(format);
+        image_create_info.samples = VK_SAMPLE_COUNT_1_BIT;
+        image_create_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-    result->image_extent = image_create_info.extent;
+        result->image_extent = image_create_info.extent;
 
-    VmaAllocationCreateInfo allocation = { 0 };
-    allocation.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+        VmaAllocationCreateInfo allocation = { 0 };
+        allocation.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 
-    VkResult res = vmaCreateImage(rhi.allocator, &image_create_info, &allocation, &result->image, &result->allocation, &result->allocation_info);
-    assert(res == VK_SUCCESS);
+        VkResult res = vmaCreateImage(rhi.allocator, &image_create_info, &allocation, &result->image, &result->allocation, &result->allocation_info);
+        assert(res == VK_SUCCESS);
 
-    VkImageViewCreateInfo view_info = {0};
-    view_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-    view_info.image = result->image;
-    view_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
-    view_info.format = result->format;
-    view_info.subresourceRange.aspectMask = EuphorbeFormatToVulkanAspect(format);
-    view_info.subresourceRange.baseMipLevel = 0;
-    view_info.subresourceRange.levelCount = 1;
-    view_info.subresourceRange.baseArrayLayer = 0;
-    view_info.subresourceRange.layerCount = 1;
-    view_info.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-    view_info.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-    view_info.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-    view_info.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+        VkImageViewCreateInfo view_info = { 0 };
+        view_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+        view_info.image = result->image;
+        view_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
+        view_info.format = result->format;
+        view_info.subresourceRange.aspectMask = EuphorbeFormatToVulkanAspect(format);
+        view_info.subresourceRange.baseMipLevel = 0;
+        view_info.subresourceRange.levelCount = 1;
+        view_info.subresourceRange.baseArrayLayer = 0;
+        view_info.subresourceRange.layerCount = 1;
+        view_info.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+        view_info.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+        view_info.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+        view_info.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
 
-    res = vkCreateImageView(rhi.device.handle, &view_info, NULL, &result->image_view);
-    assert(res == VK_SUCCESS);
+        res = vkCreateImageView(rhi.device.handle, &view_info, NULL, &result->image_view);
+        assert(res == VK_SUCCESS);
 
-    return result;
+        return result;
+    }
+
+    return NULL;
 }
 
 void E_Vk_FreeImage(E_VulkanImage* image)

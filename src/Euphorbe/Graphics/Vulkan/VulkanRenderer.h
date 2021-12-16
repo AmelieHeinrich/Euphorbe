@@ -67,11 +67,13 @@ struct E_Vk_Data
 
     // VMA
     VmaAllocator allocator;
+    VmaPool gpu_pool;
 };
 
 extern E_Vk_Data rhi;
+extern E_RendererInitSettings rhi_settings;
 
-void E_Vk_RendererInit(E_Window* window);
+void E_Vk_RendererInit(E_Window* window, E_RendererInitSettings settings);
 void E_Vk_RendererShutdown();
 
 void E_Vk_Begin();

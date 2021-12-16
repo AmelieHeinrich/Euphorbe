@@ -42,8 +42,13 @@ void ResizeCallback(i32 width, i32 height)
 
 int main()
 {
+    E_RendererInitSettings settings = { 0 };
+    settings.gpu_pool_size = MEGABYTES(32);
+    settings.log_found_layers = 0;
+    settings.log_renderer_events = 1;
+
     window = E_CreateWindow(1280, 720, "Euphorbe Editor");
-    E_RendererInit(window);
+    E_RendererInit(window, settings);
     depth_image = E_MakeImage(1280, 720, E_ImageFormatD32_Float);
     E_LaunchWindow(window);
 
