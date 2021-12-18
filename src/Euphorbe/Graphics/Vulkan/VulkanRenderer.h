@@ -5,6 +5,7 @@
 
 #pragma warning(disable: 28251)
 #include <Euphorbe/Graphics/Renderer.h>
+#include <Euphorbe/Graphics/Vulkan/VulkanMaterial.h>
 #include <volk.h>
 
 #include <vk_mem_alloc.h>
@@ -84,6 +85,8 @@ void E_Vk_Resize(i32 width, i32 height);
 
 void E_Vk_RendererStartRender(E_ImageAttachment* attachments, i32 attachment_count, i32 has_depth);
 void E_Vk_RendererEndRender();
+
+void E_Vk_BindMaterial(E_VulkanMaterial* material);
 
 E_Image* E_Vk_GetSwapchainImage();
 

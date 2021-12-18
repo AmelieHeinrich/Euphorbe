@@ -6,9 +6,9 @@
 typedef enum E_ImageFormat E_ImageFormat;
 enum E_ImageFormat
 {
-    E_ImageFormatRGBA8,
-    E_ImageFormatD32_Float,
-    E_ImageFormatRGBA16
+    E_ImageFormatRGBA8 = 23,
+    E_ImageFormatRGBA16 = 90,
+    E_ImageFormatD32_Float = 126,
 };
 
 typedef enum E_ImageLayout E_ImageLayout;

@@ -60,6 +60,13 @@ E_Image* E_GetSwapchainImage()
 #endif
 }
 
+void E_BindMaterial(E_Material* material)
+{
+#ifdef EUPHORBE_WINDOWS
+    E_Vk_BindMaterial((E_VulkanMaterial*)material->rhi_handle);
+#endif
+}
+
 void E_RendererResize(i32 width, i32 height)
 {
 #ifdef EUPHORBE_WINDOWS

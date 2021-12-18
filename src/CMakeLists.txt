@@ -13,7 +13,7 @@ add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 add_definitions(-DVK_NO_PROTOTYPES)
 add_library(Euphorbe ${EUPHORBE_HEADER} ${EUPHORBE_SOURCE})
 
-target_include_directories(Euphorbe PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${THIRD_PARTY}/Vulkan-Headers/include ${THIRD_PARTY}/volk ${THIRD_PARTY}/vma $ENV{VULKAN_PATH}/Include)
+target_include_directories(Euphorbe PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${THIRD_PARTY}/Vulkan-Headers/include ${THIRD_PARTY}/volk ${THIRD_PARTY}/vma ${THIRD_PARTY}/spirv_reflect $ENV{VULKAN_PATH}/Include)
 target_link_libraries(Euphorbe PUBLIC volk)
 target_link_libraries(Euphorbe PUBLIC $ENV{VULKAN_SDK}/Lib/shaderc_combined.lib)
 

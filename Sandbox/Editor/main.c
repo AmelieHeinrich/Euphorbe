@@ -6,6 +6,7 @@ E_Image* swapchain_buffer;
 
 E_ResourceFile* vertex_shader;
 E_ResourceFile* fragment_shader;
+E_Material* material;
 
 void BeginRender()
 {
@@ -45,19 +46,37 @@ void ResizeCallback(i32 width, i32 height)
 
 int main()
 {
-    vertex_shader = E_LoadResource("Assets/VertexShader.glsl", E_ResourceTypeVertexShader);
-    fragment_shader = E_LoadResource("Assets/FragmentShader.glsl", E_ResourceTypeFragmentShader);
-
+    // Initialise Euphorbe
     E_RendererInitSettings settings = { 0 };
     settings.gpu_pool_size = MEGABYTES(32);
     settings.log_found_layers = 0;
     settings.log_renderer_events = 1;
+    settings.enable_debug = 1;
 
     window = E_CreateWindow(1280, 720, "Euphorbe Editor");
     E_RendererInit(window, settings);
-    depth_image = E_MakeImage(1280, 720, E_ImageFormatD32_Float);
-    E_LaunchWindow(window);
 
+    // Renderer assets
+    depth_image = E_MakeImage(1280, 720, E_ImageFormatD32_Float);
+    vertex_shader = E_LoadResource("Assets/VertexShader.glsl", E_ResourceTypeVertexShader);
+    fragment_shader = E_LoadResource("Assets/FragmentShader.glsl", E_ResourceTypeFragmentShader);
+
+    E_MaterialCreateInfo material_create_info = { 0 };
+    material_create_info.cull_mode = E_CullModeBack;
+    material_create_info.depth_op = E_CompareOPLess;
+    material_create_info.front_face = E_FrontFaceCW;
+    material_create_info.primitive_topology = E_PrimitiveTopologyTriangleList;
+    material_create_info.polygon_mode = E_PolygonModeFill;
+    material_create_info.vertex_shader = vertex_shader->as.shader;
+    material_create_info.fragment_shader = fragment_shader->as.shader;
+    material_create_info.render_info.color_attachment_count = 1;
+    material_create_info.render_info.depth_format = E_ImageFormatD32_Float;
+    material_create_info.render_info.color_formats[0] = E_ImageFormatRGBA8;
+
+    material = E_CreateMaterial(&material_create_info);
+
+    // Launch the window
+    E_LaunchWindow(window);
     E_WindowSetResizeCallback(window, ResizeCallback);
 
     while (E_IsWindowOpen(window))
@@ -75,6 +94,7 @@ int main()
         };
 
         E_RendererStartRender(attachments, 2, 1);
+        E_BindMaterial(material);
         E_RendererEndRender();
 
         //
@@ -84,6 +104,7 @@ int main()
 
     E_RendererWait();
     
+    E_FreeMaterial(material);
     E_FreeResource(vertex_shader);
     E_FreeResource(fragment_shader);
     E_FreeImage(depth_image);

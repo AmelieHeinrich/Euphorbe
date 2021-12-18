@@ -2,21 +2,6 @@
 
 #include "VulkanRenderer.h"
 
-VkFormat EuphorbeToVulkan(E_ImageFormat format)
-{
-    switch (format)
-    {
-    case E_ImageFormatD32_Float:
-        return VK_FORMAT_D32_SFLOAT;
-    case E_ImageFormatRGBA8:
-        return VK_FORMAT_R8G8B8A8_UNORM;
-    case E_ImageFormatRGBA16:
-        return VK_FORMAT_R16G16B16_SFLOAT;
-    }
-
-    return 0;
-}
-
 VkImageUsageFlags EuphorbeFormatToVulkanUsage(E_ImageFormat format)
 {
     switch (format)
@@ -54,7 +39,7 @@ E_VulkanImage* E_Vk_MakeImage(i32 width, i32 height, E_ImageFormat format)
     // Only used to make the C6011 warning go away
     if (result)
     {
-        result->format = EuphorbeToVulkan(format);
+        result->format = (VkFormat)format;
         result->euphorbe_format = format;
 
         VkImageCreateInfo image_create_info = { 0 };

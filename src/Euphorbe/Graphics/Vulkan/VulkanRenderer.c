@@ -112,17 +112,18 @@ void E_Vk_MakeInstance()
     create_info.pNext = NULL;
     create_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
     create_info.pApplicationInfo = &app_info;
-
-#ifdef _DEBUG
-    create_info.enabledLayerCount = rhi.instance.layer_count;
-    create_info.ppEnabledLayerNames = (const char *const *)rhi.instance.layers;
-#else
-    create_info.enabledLayerCount = 0; 
-    create_info.ppEnabledLayerNames = NULL; 
-#endif
-
     create_info.enabledExtensionCount = rhi.instance.extension_count;
     create_info.ppEnabledExtensionNames = (const char *const *)rhi.instance.extensions;
+    if (rhi_settings.enable_debug)
+    {
+        create_info.enabledLayerCount = rhi.instance.layer_count;
+        create_info.ppEnabledLayerNames = (const char* const*)rhi.instance.layers;
+    }
+    else
+    {
+        create_info.enabledLayerCount = 0;
+        create_info.ppEnabledLayerNames = NULL;
+    }
 
     result = vkCreateInstance(&create_info, NULL, &rhi.instance.handle);
     assert(result == VK_SUCCESS);
@@ -218,6 +219,10 @@ void E_Vk_MakeDevice()
     features.samplerAnisotropy = 1;
     features.fillModeNonSolid = 1;
 
+    VkPhysicalDeviceDynamicRenderingFeaturesKHR dynamic_features = { 0 };
+    dynamic_features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES_KHR;
+    dynamic_features.dynamicRendering = 1;
+
     u32 extension_count = 0;
     vkEnumerateDeviceExtensionProperties(rhi.physical_device.handle, NULL, &extension_count, NULL);
     VkExtensionProperties* properties = malloc(sizeof(VkExtensionProperties) * extension_count);
@@ -243,6 +248,10 @@ void E_Vk_MakeDevice()
         free(properties);
     }
 
+    VkPhysicalDeviceDynamicRenderingFeaturesKHR dynamic_rendering_features = { 0 };
+    dynamic_rendering_features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES_KHR;
+    dynamic_rendering_features.dynamicRendering = VK_TRUE;
+
     VkDeviceCreateInfo create_info = {0};
     create_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
     create_info.queueCreateInfoCount = 1;
@@ -251,13 +260,17 @@ void E_Vk_MakeDevice()
     create_info.enabledExtensionCount = rhi.device.extension_count;
     create_info.ppEnabledExtensionNames = (const char* const*)rhi.device.extensions;
 
-#ifdef _DEBUG
-    create_info.enabledLayerCount = rhi.instance.layer_count;
-    create_info.ppEnabledLayerNames = (const char* const*)rhi.instance.layers;
-#else
-    create_info.enabledLayerCount = 0;
-    create_info.ppEnabledLayerNames = NULL;
-#endif
+    if (rhi_settings.enable_debug)
+    {
+        create_info.enabledLayerCount = rhi.instance.layer_count;
+        create_info.ppEnabledLayerNames = (const char* const*)rhi.instance.layers;
+    }
+    else
+    {
+        create_info.enabledLayerCount = 0;
+        create_info.ppEnabledLayerNames = NULL;
+    }
+    create_info.pNext = &dynamic_rendering_features;
 
     VkResult result = vkCreateDevice(rhi.physical_device.handle, &create_info, NULL, &rhi.device.handle);
     assert(result == VK_SUCCESS);
@@ -700,6 +713,11 @@ void E_Vk_RendererStartRender(E_ImageAttachment* attachments, i32 attachment_cou
 void E_Vk_RendererEndRender()
 {
     vkCmdEndRenderingKHR(rhi.command.command_buffers[rhi.sync.image_index]);
+}
+
+void E_Vk_BindMaterial(E_VulkanMaterial* material)
+{
+    vkCmdBindPipeline(rhi.command.command_buffers[rhi.sync.image_index], VK_PIPELINE_BIND_POINT_GRAPHICS, material->pipeline);
 }
 
 E_Image* E_Vk_GetSwapchainImage()

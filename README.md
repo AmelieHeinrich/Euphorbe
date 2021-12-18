@@ -28,6 +28,7 @@ Make sure to copy the Assets directory into build/Sandbox
 - [Vulkan-Headers](https://github.com/KhronosGroup/Vulkan-Headers)
 - [shaderc](https://github.com/google/shaderc)
 - [VMA](https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator)
+- [SPIRV-Reflect](https://github.com/KhronosGroup/SPIRV-Reflect)
 
 ## Additional information
 
