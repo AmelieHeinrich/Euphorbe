@@ -20,6 +20,8 @@ git clone --recursive https://github.com/Sausty/Euphorbe
 cmake -G "Visual Studio 16 2019" -B build
 ```
 
+Make sure to copy the Assets directory into build/Sandbox
+
 ## Dependencies
 
 - [volk](https://github.com/zeux/volk)

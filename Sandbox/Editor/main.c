@@ -4,6 +4,9 @@ E_Window* window;
 E_Image* depth_image;
 E_Image* swapchain_buffer;
 
+E_ResourceFile* vertex_shader;
+E_ResourceFile* fragment_shader;
+
 void BeginRender()
 {
     E_RendererBegin();
@@ -42,6 +45,9 @@ void ResizeCallback(i32 width, i32 height)
 
 int main()
 {
+    vertex_shader = E_LoadResource("Assets/VertexShader.glsl", E_ResourceTypeVertexShader);
+    fragment_shader = E_LoadResource("Assets/FragmentShader.glsl", E_ResourceTypeFragmentShader);
+
     E_RendererInitSettings settings = { 0 };
     settings.gpu_pool_size = MEGABYTES(32);
     settings.log_found_layers = 0;
@@ -58,6 +64,8 @@ int main()
     {
         BeginRender();
 
+        // Render loop
+
         E_ClearValue color_clear = { 0.1f, 0.2f, 0.3f, 1.0f, 0, 0 };
         E_ClearValue depth_clear = { 0 };
 
@@ -65,8 +73,6 @@ int main()
             { swapchain_buffer, E_ImageLayoutColor, color_clear },
             { depth_image, E_ImageLayoutDepth, depth_clear }
         };
-
-        // Render loop
 
         E_RendererStartRender(attachments, 2, 1);
         E_RendererEndRender();
@@ -77,7 +83,11 @@ int main()
     }
 
     E_RendererWait();
+    
+    E_FreeResource(vertex_shader);
+    E_FreeResource(fragment_shader);
     E_FreeImage(depth_image);
+
     E_RendererShutdown();
     E_FreeWindow(window);
     return 0;

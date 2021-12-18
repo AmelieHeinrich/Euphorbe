@@ -13,4 +13,7 @@
 #include "Graphics/Image.h"
 #include "Graphics/ShaderCompiler.h"
 
+// Resource
+#include "Resource/Resource.h"
+
 #endif

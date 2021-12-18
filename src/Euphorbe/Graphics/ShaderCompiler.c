@@ -55,7 +55,7 @@ char* E_ReadFile(const char* path, i32* output_size)
 			fclose(file);
 			E_LogError("FILE READ ERROR: Failed to allocate file output buffer!");
 			*output_size = -1;
-			assert(false);
+			assert(0);
 			return NULL;
 		}
 	}
@@ -63,7 +63,7 @@ char* E_ReadFile(const char* path, i32* output_size)
 	return NULL;
 }
 
-const u8* E_CompileSPIRV(char* source, i32 source_size, E_ShaderType shader_type, i64* output_spirv_size)
+void E_CompileShader(char* source, i32 source_size, E_Shader* shader)
 {
 	shaderc_compiler_t compiler = shaderc_compiler_initialize();
 	shaderc_compile_options_t options = shaderc_compile_options_initialize();
@@ -72,7 +72,7 @@ const u8* E_CompileSPIRV(char* source, i32 source_size, E_ShaderType shader_type
 	shaderc_compile_options_set_target_env(options, shaderc_target_env_vulkan, 0);
 	shaderc_compile_options_set_optimization_level(options, shaderc_optimization_level_size);
 
-	shaderc_compilation_result_t result = shaderc_compile_into_spv(compiler, source, source_size, E_ShaderKindToShaderC(shader_type), "shader", "main", options);
+	shaderc_compilation_result_t result = shaderc_compile_into_spv(compiler, source, source_size, E_ShaderKindToShaderC(shader->type), "shader", "main", options);
 	
 	shaderc_compilation_status status = shaderc_result_get_compilation_status(result);
 	if (status != shaderc_compilation_status_success)
@@ -81,10 +81,8 @@ const u8* E_CompileSPIRV(char* source, i32 source_size, E_ShaderType shader_type
 		assert(false);
 	}
 	
-	const u8* buffer = shaderc_result_get_bytes(result);
-	*output_spirv_size = shaderc_result_get_length(result);
+	shader->code = (u8*)shaderc_result_get_bytes(result);
+	shader->code_size = shaderc_result_get_length(result);
 
 	shaderc_compiler_release(compiler);
-
-	return buffer;
 }
