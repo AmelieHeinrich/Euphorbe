@@ -1,5 +1,7 @@
 #include <Euphorbe/Euphorbe.h>
 
+#include <cimgui.h>
+
 E_Window* window;
 E_Image* depth_image;
 E_Image* swapchain_buffer;
@@ -120,6 +122,7 @@ int main()
             E_ImagePipelineStageBottom);
 
         E_BeginGUI();
+        igShowDemoWindow(NULL);
         E_EndGUI();
 
         EndRender();

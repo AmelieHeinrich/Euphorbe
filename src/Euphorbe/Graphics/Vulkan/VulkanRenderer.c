@@ -890,8 +890,6 @@ void E_Vk_BeginGUI()
     ImGui_ImplWin32_NewFrame();
     ImGui_ImplVulkan_NewFrame();
     igNewFrame();
-    
-    igShowDemoWindow(NULL);
 }
 
 void E_Vk_EndGUI()
