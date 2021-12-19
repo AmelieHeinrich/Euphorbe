@@ -254,7 +254,7 @@ E_VulkanMaterial* E_Vk_CreateMaterial(E_MaterialCreateInfo* create_info)
     rasterizer.rasterizerDiscardEnable = VK_FALSE;
     rasterizer.polygonMode = (VkPolygonMode)create_info->polygon_mode;
     rasterizer.lineWidth = 1.0f;
-    rasterizer.cullMode = (VkCullModeFlags)create_info->cull_mode;
+    rasterizer.cullMode = (VkCullModeFlagBits)create_info->cull_mode;
     rasterizer.frontFace = (VkFrontFace)create_info->front_face;
     rasterizer.depthBiasEnable = VK_FALSE;
 
@@ -291,6 +291,7 @@ E_VulkanMaterial* E_Vk_CreateMaterial(E_MaterialCreateInfo* create_info)
     VkPipelineLayoutCreateInfo pipeline_layout_info = {0};
     pipeline_layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
     pipeline_layout_info.pushConstantRangeCount = 0;
+    pipeline_layout_info.setLayoutCount = 0;
 
     VkResult res = vkCreatePipelineLayout(rhi.device.handle, &pipeline_layout_info, NULL, &result->pipeline_layout);
     assert(res == VK_SUCCESS);
@@ -300,6 +301,7 @@ E_VulkanMaterial* E_Vk_CreateMaterial(E_MaterialCreateInfo* create_info)
     rendering_create_info.colorAttachmentCount = create_info->render_info.color_attachment_count;
     rendering_create_info.depthAttachmentFormat = create_info->render_info.depth_format;
     rendering_create_info.pColorAttachmentFormats = (VkFormat*)create_info->render_info.color_formats;
+    rendering_create_info.pNext = VK_NULL_HANDLE;
 
     VkGraphicsPipelineCreateInfo pipeline_info = {0};
     pipeline_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;

@@ -22,10 +22,10 @@ enum E_PolygonMode
 typedef enum E_CullMode E_CullMode;
 enum E_CullMode
 {
-    E_CullModeNone,
-    E_CullModeFront,
-    E_CullModeBack,
-    E_CullModeFrontAndBack
+    E_CullModeNone = 0,
+    E_CullModeFront = 0x00000001,
+    E_CullModeBack = 0x00000002,
+    E_CullModeFrontAndBack = 0x00000003
 };
 
 typedef enum E_FrontFace E_FrontFace;
@@ -45,7 +45,7 @@ enum E_CompareOP
     E_CompareOPGreater = 4,
     E_CompareOPNotEqual = 5,
     E_CompareOPGreaterEqual = 6,
-    E_CompareOPAlways
+    E_CompareOPAlways = 7
 };
 
 typedef struct E_MaterialRenderInfo E_MaterialRenderInfo;

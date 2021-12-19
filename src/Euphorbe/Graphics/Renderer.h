@@ -3,13 +3,14 @@
 
 #include <Euphorbe/Core/Log.h>
 #include <Euphorbe/Platform/Window.h>
+
 #include "Image.h"
 #include "Material.h"
+#include "Buffer.h"
 
 typedef struct E_RendererInitSettings E_RendererInitSettings;
 struct E_RendererInitSettings
 {
-    i32 gpu_pool_size; // Default: 256mb
     b32 log_found_layers; // Default: true
     b32 log_renderer_events; // Default: true
     b32 enable_debug; // Default: false
@@ -48,6 +49,11 @@ E_Image* E_GetSwapchainImage();
 
 //
 void E_BindMaterial(E_Material* material);
+void E_BindBuffer(E_Buffer* buffer);
+
+//
+void E_Draw(u32 first, u32 count);
+void E_DrawIndexed(u32 first, u32 count);
 
 void E_RendererResize(i32 width, i32 height);
 

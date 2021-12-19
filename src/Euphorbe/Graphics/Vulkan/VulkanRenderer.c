@@ -11,6 +11,8 @@
 
 #include "VulkanImage.h"
 
+#define CURRENT_CMD_BUF rhi.command.command_buffers[rhi.sync.image_index]
+
 E_Vk_Data rhi;
 E_RendererInitSettings rhi_settings;
 
@@ -463,15 +465,8 @@ void E_Vk_MakeAllocator()
     VkResult result = vmaCreateAllocator(&allocator_info, &rhi.allocator);
     assert(result == VK_SUCCESS);
 
-    VmaPoolCreateInfo pool_info = { 0 };
-    pool_info.blockSize = rhi_settings.gpu_pool_size;
-    pool_info.minBlockCount = 1;
-
-    result = vmaCreatePool(rhi.allocator, &pool_info, &rhi.gpu_pool);
-    assert(result == VK_SUCCESS);
-
     if (rhi_settings.log_renderer_events)
-        E_LogInfo("RENDERER EVENT: Vulkan Allocator and Pools created");
+        E_LogInfo("RENDERER EVENT: Vulkan Allocator created");
 }
 
 // Most useful function for dynamic rendering
@@ -510,9 +505,6 @@ void E_Vk_RendererInit(E_Window* window, E_RendererInitSettings settings)
 {
     rhi_settings = settings;
 
-    if (rhi_settings.gpu_pool_size <= 0)
-        rhi_settings.gpu_pool_size = MEGABYTES(256);
-
     rhi.window = window;
     assert(rhi.window);
     
@@ -534,7 +526,6 @@ void E_Vk_RendererInit(E_Window* window, E_RendererInitSettings settings)
 
 void E_Vk_RendererShutdown()
 {
-    vmaDestroyPool(rhi.allocator, rhi.gpu_pool);
     vmaDestroyAllocator(rhi.allocator);
 
     vkDestroySemaphore(rhi.device.handle, rhi.sync.image_available_semaphore, NULL);
@@ -565,40 +556,20 @@ void E_Vk_Begin()
 
     vkWaitForFences(rhi.device.handle, 1, &rhi.sync.fences[rhi.sync.image_index], VK_TRUE, UINT32_MAX);
     vkResetFences(rhi.device.handle, 1, &rhi.sync.fences[rhi.sync.image_index]);
-    vkResetCommandBuffer(rhi.command.command_buffers[rhi.sync.image_index], 0);
-
-    VkCommandBuffer commandBuffer = rhi.command.command_buffers[rhi.sync.image_index];
+    vkResetCommandBuffer(CURRENT_CMD_BUF, 0);
 
     VkCommandBufferBeginInfo begin_info = { 0 };
     begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
     begin_info.pInheritanceInfo = NULL;
     begin_info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
-    VkResult res = vkBeginCommandBuffer(commandBuffer, &begin_info);
+    VkResult res = vkBeginCommandBuffer(CURRENT_CMD_BUF, &begin_info);
     assert(res == VK_SUCCESS);
-
-    VkViewport viewport = { 0 };
-    viewport.width = (f32)rhi.window->width;
-    viewport.height = (f32)rhi.window->height;
-    viewport.x = 0.0f;
-    viewport.y = 0.0f;
-    viewport.minDepth = 0.0f;
-    viewport.maxDepth = 1.0f;
-
-    VkRect2D scissor = { 0 };
-    scissor.offset.x = 0;
-    scissor.offset.y = 0;
-    scissor.extent = rhi.swapchain.extent;
-
-    vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
-    vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 }
 
 void E_Vk_End()
 {
-    VkCommandBuffer command_buffer = rhi.command.command_buffers[rhi.sync.image_index];
-
-    VkResult result = vkEndCommandBuffer(command_buffer);
+    VkResult result = vkEndCommandBuffer(CURRENT_CMD_BUF);
     assert(result == VK_SUCCESS);
 
     // Submit
@@ -612,7 +583,7 @@ void E_Vk_End()
     submit_info.pWaitSemaphores = wait_semaphores;
     submit_info.pWaitDstStageMask = wait_stages;
     submit_info.commandBufferCount = 1;
-    submit_info.pCommandBuffers = &command_buffer;
+    submit_info.pCommandBuffers = &CURRENT_CMD_BUF;
 
     VkSemaphore signal_semaphores[] = { rhi.sync.image_rendered_semaphore };
     submit_info.signalSemaphoreCount = 1;
@@ -706,18 +677,61 @@ void E_Vk_RendererStartRender(E_ImageAttachment* attachments, i32 attachment_cou
 
     rendering_info.pColorAttachments = color_attachments;
 
-    vkCmdBeginRenderingKHR(rhi.command.command_buffers[rhi.sync.image_index], &rendering_info);
+    vkCmdBeginRenderingKHR(CURRENT_CMD_BUF, &rendering_info);
+
+    VkViewport viewport = { 0 };
+    viewport.width = (f32)rhi.window->width;
+    viewport.height = (f32)rhi.window->height;
+    viewport.x = 0.0f;
+    viewport.y = 0.0f;
+    viewport.minDepth = 0.0f;
+    viewport.maxDepth = 1.0f;
+
+    VkRect2D scissor = { 0 };
+    scissor.offset.x = 0;
+    scissor.offset.y = 0;
+    scissor.extent = rhi.swapchain.extent;
+
+    vkCmdSetViewport(CURRENT_CMD_BUF, 0, 1, &viewport);
+    vkCmdSetScissor(CURRENT_CMD_BUF, 0, 1, &scissor);
 }
 #pragma optimize("",on)
 
 void E_Vk_RendererEndRender()
 {
-    vkCmdEndRenderingKHR(rhi.command.command_buffers[rhi.sync.image_index]);
+    vkCmdEndRenderingKHR(CURRENT_CMD_BUF);
 }
 
 void E_Vk_BindMaterial(E_VulkanMaterial* material)
 {
-    vkCmdBindPipeline(rhi.command.command_buffers[rhi.sync.image_index], VK_PIPELINE_BIND_POINT_GRAPHICS, material->pipeline);
+    vkCmdBindPipeline(CURRENT_CMD_BUF, VK_PIPELINE_BIND_POINT_GRAPHICS, material->pipeline);
+}
+
+void E_Vk_BindBuffer(E_VulkanBuffer* buffer, E_BufferUsage usage)
+{
+    switch (usage)
+    {
+    case E_BufferUsageVertex:
+        VkDeviceSize offsets[] = { 0 };
+        VkBuffer buffers[] = { buffer->buffer };
+        vkCmdBindVertexBuffers(CURRENT_CMD_BUF, 0, 1, buffers, offsets);
+        break;
+    case E_BufferUsageIndex:
+        vkCmdBindIndexBuffer(CURRENT_CMD_BUF, buffer->buffer, 0, VK_INDEX_TYPE_UINT32);
+        break;
+    default:
+        return;
+    }
+}
+
+void E_Vk_Draw(u32 first, u32 count)
+{
+    vkCmdDraw(CURRENT_CMD_BUF, count, 1, first, 0);
+}
+
+void E_Vk_DrawIndexed(u32 first, u32 count)
+{
+    vkCmdDrawIndexed(CURRENT_CMD_BUF, count, 1, first, 0, 0);
 }
 
 E_Image* E_Vk_GetSwapchainImage()

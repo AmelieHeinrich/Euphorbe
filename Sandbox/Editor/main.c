@@ -7,6 +7,20 @@ E_Image* swapchain_buffer;
 E_ResourceFile* vertex_shader;
 E_ResourceFile* fragment_shader;
 E_Material* material;
+E_Buffer* vertex_buffer;
+E_Buffer* index_buffer;
+
+static f32 vertices[] = {
+    -0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f,
+     0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f,
+     0.5f,  0.5f, 0.0f, 0.0f, 0.0f, 1.0f,
+    -0.5f,  0.5f, 0.0f, 1.0f, 0.0f, 1.0f
+};
+
+static u32 indices[] = {
+    0, 1, 2,
+    2, 3, 0
+};
 
 void BeginRender()
 {
@@ -48,7 +62,6 @@ int main()
 {
     // Initialise Euphorbe
     E_RendererInitSettings settings = { 0 };
-    settings.gpu_pool_size = MEGABYTES(32);
     settings.log_found_layers = 0;
     settings.log_renderer_events = 1;
     settings.enable_debug = 1;
@@ -57,13 +70,19 @@ int main()
     E_RendererInit(window, settings);
 
     // Renderer assets
-    depth_image = E_MakeImage(1280, 720, E_ImageFormatD32_Float);
+    depth_image = E_MakeImage(window->width, window->height, E_ImageFormatD32_Float);
     vertex_shader = E_LoadResource("Assets/VertexShader.glsl", E_ResourceTypeVertexShader);
     fragment_shader = E_LoadResource("Assets/FragmentShader.glsl", E_ResourceTypeFragmentShader);
 
+    vertex_buffer = E_CreateVertexBuffer(sizeof(vertices));
+    E_SetBufferData(vertex_buffer, vertices, sizeof(vertices));
+
+    index_buffer = E_CreateIndexBuffer(sizeof(indices));
+    E_SetBufferData(index_buffer, indices, sizeof(indices));
+
     E_MaterialCreateInfo material_create_info = { 0 };
     material_create_info.cull_mode = E_CullModeBack;
-    material_create_info.depth_op = E_CompareOPLess;
+    material_create_info.depth_op = E_CompareOPAlways;
     material_create_info.front_face = E_FrontFaceCW;
     material_create_info.primitive_topology = E_PrimitiveTopologyTriangleList;
     material_create_info.polygon_mode = E_PolygonModeFill;
@@ -85,8 +104,8 @@ int main()
 
         // Render loop
 
-        E_ClearValue color_clear = { 0.1f, 0.2f, 0.3f, 1.0f, 0, 0 };
-        E_ClearValue depth_clear = { 0 };
+        E_ClearValue color_clear = { 0.1f, 0.1f, 0.1f, 1.0f, 0.0f, 0 };
+        E_ClearValue depth_clear = { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0 };
 
         E_ImageAttachment attachments[2] = {
             { swapchain_buffer, E_ImageLayoutColor, color_clear },
@@ -95,6 +114,9 @@ int main()
 
         E_RendererStartRender(attachments, 2, 1);
         E_BindMaterial(material);
+        E_BindBuffer(vertex_buffer);
+        E_BindBuffer(index_buffer);
+        E_DrawIndexed(0, 6);
         E_RendererEndRender();
 
         //
@@ -104,6 +126,8 @@ int main()
 
     E_RendererWait();
     
+    E_FreeBuffer(index_buffer);
+    E_FreeBuffer(vertex_buffer);
     E_FreeMaterial(material);
     E_FreeResource(vertex_shader);
     E_FreeResource(fragment_shader);

@@ -6,6 +6,7 @@
 #pragma warning(disable: 28251)
 #include <Euphorbe/Graphics/Renderer.h>
 #include <Euphorbe/Graphics/Vulkan/VulkanMaterial.h>
+#include <Euphorbe/Graphics/Vulkan/VulkanBuffer.h>
 #include <volk.h>
 
 #include <vk_mem_alloc.h>
@@ -68,7 +69,6 @@ struct E_Vk_Data
 
     // VMA
     VmaAllocator allocator;
-    VmaPool gpu_pool;
 };
 
 extern E_Vk_Data rhi;
@@ -87,6 +87,10 @@ void E_Vk_RendererStartRender(E_ImageAttachment* attachments, i32 attachment_cou
 void E_Vk_RendererEndRender();
 
 void E_Vk_BindMaterial(E_VulkanMaterial* material);
+void E_Vk_BindBuffer(E_VulkanBuffer* buffer, E_BufferUsage usage);
+
+void E_Vk_Draw(u32 first, u32 count);
+void E_Vk_DrawIndexed(u32 first, u32 count);
 
 E_Image* E_Vk_GetSwapchainImage();
 

@@ -67,6 +67,27 @@ void E_BindMaterial(E_Material* material)
 #endif
 }
 
+void E_BindBuffer(E_Buffer* buffer)
+{
+#ifdef EUPHORBE_WINDOWS
+    E_Vk_BindBuffer((E_VulkanBuffer*)buffer->rhi_handle, buffer->usage);
+#endif
+}
+
+void E_Draw(u32 first, u32 count)
+{
+#ifdef EUPHORBE_WINDOWS
+    E_Vk_Draw(first, count);
+#endif
+}
+
+void E_DrawIndexed(u32 first, u32 count)
+{
+#ifdef EUPHORBE_WINDOWS
+    E_Vk_DrawIndexed(first, count);
+#endif
+}
+
 void E_RendererResize(i32 width, i32 height)
 {
 #ifdef EUPHORBE_WINDOWS
