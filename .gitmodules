@@ -4,3 +4,6 @@
 [submodule "ThirdParty/Vulkan-Headers"]
 	path = ThirdParty/Vulkan-Headers
 	url = https://github.com/KhronosGroup/Vulkan-Headers
+[submodule "ThirdParty/cimgui"]
+	path = ThirdParty/cimgui
+	url = https://github.com/Sausty/cimgui

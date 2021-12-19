@@ -48,6 +48,10 @@ void E_RendererEndRender();
 E_Image* E_GetSwapchainImage();
 
 //
+void E_BeginGUI();
+void E_EndGUI();
+
+//
 void E_BindMaterial(E_Material* material);
 void E_BindBuffer(E_Buffer* buffer);
 

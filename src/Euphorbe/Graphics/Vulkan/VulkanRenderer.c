@@ -11,6 +11,10 @@
 
 #include "VulkanImage.h"
 
+#define CIMGUI_DEFINE_ENUMS_AND_STRUCTS
+#include <cimgui.h>
+#include <generator/output/cimgui_impl.h>
+
 #define CURRENT_CMD_BUF rhi.command.command_buffers[rhi.sync.image_index]
 
 E_Vk_Data rhi;
@@ -31,6 +35,42 @@ static VkBool32 E_CheckLayers(u32 check_count, char **check_names,
         }
     }
     return 1;
+}
+
+VkCommandBuffer E_Vk_SingleTimeCommands()
+{
+    VkCommandBufferAllocateInfo alloc_info = {0};
+    alloc_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    alloc_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    alloc_info.commandPool = rhi.command.graphics_command_pool;
+    alloc_info.commandBufferCount = 1;
+
+    VkCommandBuffer command_buffer;
+    VkResult result = vkAllocateCommandBuffers(rhi.device.handle, &alloc_info, &command_buffer);
+    assert(result == VK_SUCCESS);
+
+    VkCommandBufferBeginInfo begin_info = {0};
+    begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    begin_info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+    result = vkBeginCommandBuffer(command_buffer, &begin_info);
+    assert(result == VK_SUCCESS);
+
+    return command_buffer;
+}
+
+void E_Vk_EndSingleTimeCommands(VkCommandBuffer cmd_buf)
+{
+    VkResult result = vkEndCommandBuffer(cmd_buf);
+    assert(result == VK_SUCCESS);
+
+    VkSubmitInfo submit_info = {0};
+    submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    submit_info.commandBufferCount = 1;
+    submit_info.pCommandBuffers = &cmd_buf;
+
+    vkQueueSubmit(rhi.device.graphics_queue, 1, &submit_info, VK_NULL_HANDLE);
+    vkQueueWaitIdle(rhi.device.graphics_queue);
 }
 
 void E_Vk_MakeInstance()
@@ -501,6 +541,126 @@ void E_Vk_Image_Memory_Barrier(VkCommandBuffer command_buffer,
         1, &barrier);
 }
 
+void E_Vk_ImGuiCheckError(VkResult err)
+{
+    if (err == 0)
+        return;
+    E_LogError("VULKAN IMGUI ERROR: VkResult = %d", err);
+    if (err < 0)
+        abort();
+}
+
+void E_Vk_ImGuiVulkanLoader(const char* function_name, void* data)
+{
+    return vkGetInstanceProcAddr(rhi.instance.handle, function_name);
+}
+
+void E_Vk_InitImGui()
+{
+    // Descriptor Pool
+
+    VkDescriptorPoolSize pool_sizes[11] =
+    {
+        { VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
+        { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },
+        { VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000 },
+        { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000 },
+        { VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000 },
+        { VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000 },
+        { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000 },
+        { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000 },
+        { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000 },
+        { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000 },
+        { VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000 }
+    };
+
+    VkDescriptorPoolCreateInfo pool_info = {0};
+    pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+    pool_info.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
+    pool_info.maxSets = 1000;
+    pool_info.poolSizeCount = 11;
+    pool_info.pPoolSizes = pool_sizes;
+
+    VkResult result = vkCreateDescriptorPool(rhi.device.handle, &pool_info, NULL, &rhi.imgui.descriptor_pool);
+
+    // Render Pass
+
+    VkAttachmentDescription color_attachment = {0};
+    color_attachment.format = rhi.swapchain.image_format;
+    color_attachment.samples = VK_SAMPLE_COUNT_1_BIT;
+    color_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    color_attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+    color_attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    color_attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    color_attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    color_attachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+    VkAttachmentReference color_attachment_ref = {0};
+    color_attachment_ref.attachment = 0;
+    color_attachment_ref.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+    VkSubpassDescription subpass = {0};
+    subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+    subpass.colorAttachmentCount = 1;
+    subpass.pColorAttachments = &color_attachment_ref;
+
+    VkSubpassDependency dependency = {0};
+    dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+    dependency.dstSubpass = 0;
+    dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    dependency.srcAccessMask = 0;
+    dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
+    VkRenderPassCreateInfo render_pass_info = {0};
+    render_pass_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+    render_pass_info.attachmentCount = 1;
+    render_pass_info.pAttachments = &color_attachment;
+    render_pass_info.subpassCount = 1;
+    render_pass_info.pSubpasses = &subpass;
+    render_pass_info.dependencyCount = 1;
+    render_pass_info.pDependencies = &dependency;
+
+    result = vkCreateRenderPass(rhi.device.handle, &render_pass_info, NULL, &rhi.imgui.render_pass);
+    assert(result == VK_SUCCESS);
+
+    //
+
+    ImGui_ImplVulkan_InitInfo init_info = { 0 };
+    init_info.Device = rhi.device.handle;
+    init_info.MinImageCount = FRAMES_IN_FLIGHT;
+    init_info.ImageCount = FRAMES_IN_FLIGHT;
+    init_info.PhysicalDevice = rhi.physical_device.handle;
+    init_info.Queue = rhi.device.graphics_queue;
+    init_info.QueueFamily = rhi.physical_device.graphics_family;
+    init_info.Instance = rhi.instance.handle;
+    init_info.DescriptorPool = rhi.imgui.descriptor_pool;
+    init_info.CheckVkResultFn = E_Vk_ImGuiCheckError;
+
+    ImGui_ImplVulkan_LoadFunctions(E_Vk_ImGuiVulkanLoader, NULL);
+    ImGui_ImplVulkan_Init(&init_info, rhi.imgui.render_pass);
+
+    VkCommandBuffer stc = E_Vk_SingleTimeCommands();
+    ImGui_ImplVulkan_CreateFontsTexture(stc);
+    E_Vk_EndSingleTimeCommands(stc);
+    ImGui_ImplVulkan_DestroyFontUploadObjects();
+
+    for (u32 i = 0; i < FRAMES_IN_FLIGHT; i++)
+    {
+        VkFramebufferCreateInfo fb_create_info = { 0 };
+        fb_create_info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+        fb_create_info.attachmentCount = 1;
+        fb_create_info.pAttachments = &rhi.swapchain.image_views[i];
+        fb_create_info.renderPass = rhi.imgui.render_pass;
+        fb_create_info.width = rhi.swapchain.extent.width;
+        fb_create_info.height = rhi.swapchain.extent.height;
+        fb_create_info.layers = 1;
+
+        result = vkCreateFramebuffer(rhi.device.handle, &fb_create_info, NULL, &rhi.imgui.swapchain_framebuffers[i]);
+        assert(result == VK_SUCCESS);
+    }
+}
+
 void E_Vk_RendererInit(E_Window* window, E_RendererInitSettings settings)
 {
     rhi_settings = settings;
@@ -519,6 +679,7 @@ void E_Vk_RendererInit(E_Window* window, E_RendererInitSettings settings)
     E_Vk_MakeSync();
     E_Vk_MakeCommand();
     E_Vk_MakeAllocator();
+    E_Vk_InitImGui();
 
     if (rhi_settings.log_renderer_events)
         E_LogInfo("RENDERER EVENT: Finished initialising the Vulkan renderer");
@@ -526,6 +687,14 @@ void E_Vk_RendererInit(E_Window* window, E_RendererInitSettings settings)
 
 void E_Vk_RendererShutdown()
 {
+    ImGui_ImplVulkan_Shutdown();
+
+    for (u32 i = 0; i < FRAMES_IN_FLIGHT; i++)
+        vkDestroyFramebuffer(rhi.device.handle, rhi.imgui.swapchain_framebuffers[i], NULL);
+
+    vkDestroyRenderPass(rhi.device.handle, rhi.imgui.render_pass, NULL);
+    vkDestroyDescriptorPool(rhi.device.handle, rhi.imgui.descriptor_pool, NULL);
+
     vmaDestroyAllocator(rhi.allocator);
 
     vkDestroySemaphore(rhi.device.handle, rhi.sync.image_available_semaphore, NULL);
@@ -702,6 +871,37 @@ void E_Vk_RendererEndRender()
     vkCmdEndRenderingKHR(CURRENT_CMD_BUF);
 }
 
+void E_Vk_BeginGUI()
+{
+    VkClearValue clear_value = { 0 };
+
+    VkRenderPassBeginInfo render_pass_info = { 0 };
+    render_pass_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    render_pass_info.renderPass = rhi.imgui.render_pass;
+    render_pass_info.framebuffer = rhi.imgui.swapchain_framebuffers[rhi.sync.image_index];
+    render_pass_info.renderArea.offset.x = 0;
+    render_pass_info.renderArea.offset.y = 0;
+    render_pass_info.renderArea.extent = rhi.swapchain.extent;
+    render_pass_info.clearValueCount = 1;
+    render_pass_info.pClearValues = &clear_value;
+
+    vkCmdBeginRenderPass(CURRENT_CMD_BUF, &render_pass_info, VK_SUBPASS_CONTENTS_INLINE);
+
+    ImGui_ImplVulkan_NewFrame();
+    ImGui_ImplWin32_NewFrame();
+    igNewFrame();
+    
+    igShowDemoWindow(NULL);
+}
+
+void E_Vk_EndGUI()
+{
+    igRender();
+    ImGui_ImplVulkan_RenderDrawData(igGetDrawData(), CURRENT_CMD_BUF, VK_NULL_HANDLE);
+
+    vkCmdEndRenderPass(CURRENT_CMD_BUF);
+}
+
 void E_Vk_BindMaterial(E_VulkanMaterial* material)
 {
     vkCmdBindPipeline(CURRENT_CMD_BUF, VK_PIPELINE_BIND_POINT_GRAPHICS, material->pipeline);
@@ -748,12 +948,28 @@ void E_Vk_Resize(i32 width, i32 height)
         free(rhi.swapchain.euphorbe_images[i]->rhi_handle);
         free(rhi.swapchain.euphorbe_images[i]);
         vkDestroyImageView(rhi.device.handle, rhi.swapchain.image_views[i], NULL);
+        vkDestroyFramebuffer(rhi.device.handle, rhi.imgui.swapchain_framebuffers[i], NULL);
     }
 
     vkDestroySwapchainKHR(rhi.device.handle, rhi.swapchain.handle, NULL);
     free(rhi.swapchain.images);
 
     E_Vk_MakeSwapchain();
+
+    for (u32 i = 0; i < FRAMES_IN_FLIGHT; i++)
+    {
+        VkFramebufferCreateInfo fb_create_info = { 0 };
+        fb_create_info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+        fb_create_info.attachmentCount = 1;
+        fb_create_info.pAttachments = &rhi.swapchain.image_views[i];
+        fb_create_info.renderPass = rhi.imgui.render_pass;
+        fb_create_info.width = rhi.swapchain.extent.width;
+        fb_create_info.height = rhi.swapchain.extent.height;
+        fb_create_info.layers = 1;
+
+        VkResult result = vkCreateFramebuffer(rhi.device.handle, &fb_create_info, NULL, &rhi.imgui.swapchain_framebuffers[i]);
+        assert(result == VK_SUCCESS);
+    }
 
     if (rhi_settings.log_renderer_events)
         E_LogInfo("RENDERER EVENT: Recreated swapchain with new dimensions: {%d, %d}", width, height);

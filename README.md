@@ -29,6 +29,7 @@ Make sure to copy the Assets directory into build/Sandbox
 - [shaderc](https://github.com/google/shaderc)
 - [VMA](https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator)
 - [SPIRV-Reflect](https://github.com/KhronosGroup/SPIRV-Reflect)
+- [cimgui](https://github.com/Sausty/cimgui)
 
 ## Additional information
 

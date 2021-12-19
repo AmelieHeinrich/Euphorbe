@@ -3,8 +3,20 @@
 #include <Euphorbe/Core/Log.h>
 #include <Euphorbe/Graphics/Renderer.h>
 
+#define CIMGUI_DEFINE_ENUMS_AND_STRUCTS
+#define IMGUI_HAS_DOCK
+#include <cimgui.h>
+#include <generator/cimgui_template.h>
+#include <vulkan/vulkan.h>
+#include <generator/output/cimgui_impl.h>
+
+extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
 LRESULT CALLBACK WinProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
+    if (ImGui_ImplWin32_WndProcHandler(hwnd, msg, wparam, lparam))
+        return 1;
+
     switch (msg)
     {
     case WM_CREATE:
@@ -80,6 +92,11 @@ E_WindowsWindow* E_CreateWindowsWindow(i32* width, i32* height, const char* titl
             *height = rect.bottom - rect.top;
         }
 
+        igCreateContext(NULL);
+        igStyleColorsDark(NULL);
+
+        ImGui_ImplWin32_Init(result->hwnd);
+
         return result;
     }
 
@@ -93,6 +110,8 @@ void E_LaunchWindowsWindow(E_WindowsWindow* window)
 
 void E_FreeWindowsWindow(E_WindowsWindow* window)
 {
+    ImGui_ImplWin32_Shutdown();
+
     DestroyWindow(window->hwnd);
     free(window);
 }

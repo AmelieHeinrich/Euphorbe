@@ -67,6 +67,13 @@ struct E_Vk_Data
         VkCommandPool graphics_command_pool;
     } command;
 
+    // ImGui
+    struct {
+        VkDescriptorPool descriptor_pool;
+        VkRenderPass render_pass;
+        VkFramebuffer swapchain_framebuffers[FRAMES_IN_FLIGHT];
+    } imgui;
+
     // VMA
     VmaAllocator allocator;
 };
@@ -85,6 +92,9 @@ void E_Vk_Resize(i32 width, i32 height);
 
 void E_Vk_RendererStartRender(E_ImageAttachment* attachments, i32 attachment_count, i32 has_depth);
 void E_Vk_RendererEndRender();
+
+void E_Vk_BeginGUI();
+void E_Vk_EndGUI();
 
 void E_Vk_BindMaterial(E_VulkanMaterial* material);
 void E_Vk_BindBuffer(E_VulkanBuffer* buffer, E_BufferUsage usage);

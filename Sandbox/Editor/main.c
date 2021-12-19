@@ -26,28 +26,10 @@ void BeginRender()
 {
     E_RendererBegin();
     swapchain_buffer = E_GetSwapchainImage();
-
-    // Setup image transition
-    E_ImageTransitionLayout(swapchain_buffer,
-        0, E_ImageAccessColorWrite,
-        E_ImageLayoutUndefined, E_ImageLayoutColor,
-        E_ImagePipelineStageTop,
-        E_ImagePipelineStageColorOutput);
-
-    E_ImageTransitionLayout(depth_image,
-        0, E_ImageAccessDepthWrite,
-        E_ImageLayoutUndefined, E_ImageLayoutDepth,
-        E_ImagePipelineStageEarlyFragment | E_ImagePipelineStageLateFragment,
-        E_ImagePipelineStageEarlyFragment | E_ImagePipelineStageLateFragment);
 }
 
 void EndRender()
 {
-    E_ImageTransitionLayout(swapchain_buffer,
-        E_ImageAccessColorWrite, 0,
-        E_ImageLayoutColor, E_ImageLayoutSwapchainPresent,
-        E_ImagePipelineStageColorOutput,
-        E_ImagePipelineStageBottom);
     E_RendererEnd();
     E_WindowUpdate(window);
 }
@@ -112,6 +94,18 @@ int main()
             { depth_image, E_ImageLayoutDepth, depth_clear }
         };
 
+        E_ImageTransitionLayout(swapchain_buffer,
+            0, E_ImageAccessColorWrite,
+            E_ImageLayoutUndefined, E_ImageLayoutColor,
+            E_ImagePipelineStageTop,
+            E_ImagePipelineStageColorOutput);
+
+        E_ImageTransitionLayout(depth_image,
+            0, E_ImageAccessDepthWrite,
+            E_ImageLayoutUndefined, E_ImageLayoutDepth,
+            E_ImagePipelineStageEarlyFragment | E_ImagePipelineStageLateFragment,
+            E_ImagePipelineStageEarlyFragment | E_ImagePipelineStageLateFragment);
+
         E_RendererStartRender(attachments, 2, 1);
         E_BindMaterial(material);
         E_BindBuffer(vertex_buffer);
@@ -119,7 +113,14 @@ int main()
         E_DrawIndexed(0, 6);
         E_RendererEndRender();
 
-        //
+        E_ImageTransitionLayout(swapchain_buffer,
+            E_ImageAccessColorWrite, 0,
+            E_ImageLayoutColor, E_ImageLayoutSwapchainPresent,
+            E_ImagePipelineStageColorOutput,
+            E_ImagePipelineStageBottom);
+
+        E_BeginGUI();
+        E_EndGUI();
 
         EndRender();
     }

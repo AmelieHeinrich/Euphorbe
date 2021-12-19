@@ -60,6 +60,20 @@ E_Image* E_GetSwapchainImage()
 #endif
 }
 
+void E_BeginGUI()
+{
+#ifdef EUPHORBE_WINDOWS
+    E_Vk_BeginGUI();
+#endif
+}
+
+void E_EndGUI()
+{
+#ifdef EUPHORBE_WINDOWS
+    E_Vk_EndGUI();
+#endif
+}
+
 void E_BindMaterial(E_Material* material)
 {
 #ifdef EUPHORBE_WINDOWS
