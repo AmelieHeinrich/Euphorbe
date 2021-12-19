@@ -12,12 +12,13 @@ Note that only MSVC is supported to build Euphorbe!
 
 **1. Download the repository**
 ```bat
-git clone --recursive https://github.com/Sausty/Euphorbe
+git clone https://github.com/Sausty/Euphorbe
+install.bat
 ```
 
 **2. Generate the project**
 ```bat
-cmake -G "Visual Studio 16 2019" -B build
+cmake -G "Visual Studio 17 2022" -B build
 ```
 
 Make sure to copy the Assets directory into build/Sandbox

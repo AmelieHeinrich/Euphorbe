@@ -9,6 +9,7 @@ find_package(Vulkan)
 set(THIRD_PARTY ${CMAKE_CURRENT_SOURCE_DIR}/../ThirdParty)
 
 # Project settings
+add_definitions(-DCIMGUI_DEFINE_ENUMS_AND_STRUCTS)
 add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 add_definitions(-DVK_NO_PROTOTYPES)
 add_library(Euphorbe ${EUPHORBE_HEADER} ${EUPHORBE_SOURCE})

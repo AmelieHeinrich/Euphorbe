@@ -627,14 +627,14 @@ void E_Vk_InitImGui()
     //
 
     ImGui_ImplVulkan_InitInfo init_info = { 0 };
+    init_info.Instance = rhi.instance.handle;
+    init_info.PhysicalDevice = rhi.physical_device.handle;
     init_info.Device = rhi.device.handle;
+    init_info.QueueFamily = rhi.physical_device.graphics_family;
+    init_info.Queue = rhi.device.graphics_queue;
+    init_info.DescriptorPool = rhi.imgui.descriptor_pool;
     init_info.MinImageCount = FRAMES_IN_FLIGHT;
     init_info.ImageCount = FRAMES_IN_FLIGHT;
-    init_info.PhysicalDevice = rhi.physical_device.handle;
-    init_info.Queue = rhi.device.graphics_queue;
-    init_info.QueueFamily = rhi.physical_device.graphics_family;
-    init_info.Instance = rhi.instance.handle;
-    init_info.DescriptorPool = rhi.imgui.descriptor_pool;
     init_info.CheckVkResultFn = E_Vk_ImGuiCheckError;
 
     ImGui_ImplVulkan_LoadFunctions(E_Vk_ImGuiVulkanLoader, NULL);
@@ -887,8 +887,8 @@ void E_Vk_BeginGUI()
 
     vkCmdBeginRenderPass(CURRENT_CMD_BUF, &render_pass_info, VK_SUBPASS_CONTENTS_INLINE);
 
-    ImGui_ImplVulkan_NewFrame();
     ImGui_ImplWin32_NewFrame();
+    ImGui_ImplVulkan_NewFrame();
     igNewFrame();
     
     igShowDemoWindow(NULL);
@@ -898,7 +898,6 @@ void E_Vk_EndGUI()
 {
     igRender();
     ImGui_ImplVulkan_RenderDrawData(igGetDrawData(), CURRENT_CMD_BUF, VK_NULL_HANDLE);
-
     vkCmdEndRenderPass(CURRENT_CMD_BUF);
 }
 

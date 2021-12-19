@@ -93,6 +93,10 @@ E_WindowsWindow* E_CreateWindowsWindow(i32* width, i32* height, const char* titl
         }
 
         igCreateContext(NULL);
+
+        ImGuiIO* io = igGetIO();
+        io->ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+
         igStyleColorsDark(NULL);
 
         ImGui_ImplWin32_Init(result->hwnd);
