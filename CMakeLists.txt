@@ -23,4 +23,4 @@ target_compile_definitions(imgui_impl PRIVATE VK_NO_PROTOTYPES)
 
 # Main Projects
 add_subdirectory(src)
-add_subdirectory(Sandbox)
+add_subdirectory(Editor)

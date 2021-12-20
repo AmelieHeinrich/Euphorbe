@@ -2,8 +2,7 @@
 cmake_minimum_required(VERSION 3.8)
 
 # Get source files
-file(GLOB_RECURSE EUPHORBE_HEADER ${CMAKE_CURRENT_SOURCE_DIR}/Euphorbe/*.h)
-file(GLOB_RECURSE EUPHORBE_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/Euphorbe/*.c ${CMAKE_CURRENT_SOURCE_DIR}/Euphorbe/*.cpp)
+file(GLOB_RECURSE EUPHORBE_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/Euphorbe/*.h ${CMAKE_CURRENT_SOURCE_DIR}/Euphorbe/*.c ${CMAKE_CURRENT_SOURCE_DIR}/Euphorbe/*.cpp)
 
 find_package(Vulkan)
 set(THIRD_PARTY ${CMAKE_CURRENT_SOURCE_DIR}/../ThirdParty)
@@ -12,7 +11,7 @@ set(THIRD_PARTY ${CMAKE_CURRENT_SOURCE_DIR}/../ThirdParty)
 add_definitions(-DCIMGUI_DEFINE_ENUMS_AND_STRUCTS)
 add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 add_definitions(-DVK_NO_PROTOTYPES)
-add_library(Euphorbe ${EUPHORBE_HEADER} ${EUPHORBE_SOURCE})
+add_library(Euphorbe ${EUPHORBE_SOURCE})
 
 target_include_directories(Euphorbe PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} 
                                            ${THIRD_PARTY}/Vulkan-Headers/include 
@@ -33,3 +32,5 @@ if (WIN32)
     set(VOLK_STATIC_DEFINES VK_USE_PLATFORM_WIN32_KHR)
     add_definitions(-DVK_USE_PLATFORM_WIN32_KHR)
 endif()
+
+source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${EUPHORBE_SOURCE})

@@ -21,8 +21,6 @@ install.bat
 cmake -G "Visual Studio 17 2022" -B build
 ```
 
-Make sure to copy the Assets directory into build/Sandbox
-
 ## Dependencies
 
 - [volk](https://github.com/zeux/volk)
