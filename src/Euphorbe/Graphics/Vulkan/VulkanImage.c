@@ -2,6 +2,8 @@
 
 #include "VulkanRenderer.h"
 
+#include <cimgui_impl.h>
+
 VkImageUsageFlags EuphorbeFormatToVulkanUsage(E_ImageFormat format)
 {
     switch (format)
@@ -9,9 +11,9 @@ VkImageUsageFlags EuphorbeFormatToVulkanUsage(E_ImageFormat format)
     case E_ImageFormatD32_Float:
         return VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
     case E_ImageFormatRGBA8:
-        return VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+        return VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
     case E_ImageFormatRGBA16:
-        return VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+        return VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
     }
 
     return 0;
@@ -83,6 +85,35 @@ E_VulkanImage* E_Vk_MakeImage(i32 width, i32 height, E_ImageFormat format)
         res = vkCreateImageView(rhi.device.handle, &view_info, NULL, &result->image_view);
         assert(res == VK_SUCCESS);
 
+        VkSamplerCreateInfo sampler_info = {0};
+        sampler_info.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+        sampler_info.magFilter = VK_FILTER_LINEAR;
+        sampler_info.minFilter = VK_FILTER_LINEAR;
+        sampler_info.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+        sampler_info.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+        sampler_info.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+        sampler_info.anisotropyEnable = VK_TRUE;
+        sampler_info.maxAnisotropy = rhi.physical_device.handle_props.limits.maxSamplerAnisotropy;
+        sampler_info.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+        sampler_info.unnormalizedCoordinates = VK_FALSE;
+        sampler_info.compareEnable = VK_FALSE;
+        sampler_info.compareOp = VK_COMPARE_OP_ALWAYS;
+        sampler_info.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+
+        res = vkCreateSampler(rhi.device.handle, &sampler_info, NULL, &result->sampler);
+        assert(res == VK_SUCCESS);
+
+        VkDescriptorSetLayout set_layout = ImGui_ImplVulkan_GetDescriptorSetLayout();
+
+        VkDescriptorSetAllocateInfo alloc_info = { 0 };
+        alloc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+        alloc_info.descriptorSetCount = 1;
+        alloc_info.pSetLayouts = &set_layout;
+        alloc_info.descriptorPool = rhi.imgui.descriptor_pool;
+
+        res = vkAllocateDescriptorSets(rhi.device.handle, &alloc_info, &result->gui_descriptor_set);
+        assert(res == VK_SUCCESS);
+
         return result;
     }
 
@@ -91,13 +122,15 @@ E_VulkanImage* E_Vk_MakeImage(i32 width, i32 height, E_ImageFormat format)
 
 void E_Vk_FreeImage(E_VulkanImage* image)
 {
+    vkDestroySampler(rhi.device.handle, image->sampler, NULL);
     vkDestroyImageView(rhi.device.handle, image->image_view, NULL);
     vmaDestroyImage(rhi.allocator, image->image, image->allocation);
 }
 
 void E_Vk_ResizeImage(E_VulkanImage* image, i32 width, i32 height)
 {
-    E_Vk_FreeImage(image);
+    vkDestroyImageView(rhi.device.handle, image->image_view, NULL);
+    vmaDestroyImage(rhi.allocator, image->image, image->allocation);
 
     VkImageCreateInfo image_create_info = { 0 };
     image_create_info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -139,4 +172,16 @@ void E_Vk_ResizeImage(E_VulkanImage* image, i32 width, i32 height)
 
     res = vkCreateImageView(rhi.device.handle, &view_info, NULL, &image->image_view);
     assert(res == VK_SUCCESS);
+}
+
+void E_Vk_DrawImageToGUI(E_VulkanImage* image)
+{
+    ImVec2 size = { image->image_extent.width, image->image_extent.height };
+
+    ImVec2 uv0 = { 0, 0 };
+    ImVec2 uv1 = { 1, 1 };
+    ImVec4 color = { 0.0f };
+
+    ImGui_ImplVulkan_AddTexture(image->image_view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, image->sampler, image->gui_descriptor_set);
+    igImage(image->gui_descriptor_set, size, uv0, uv1, color, color);
 }

@@ -17,6 +17,8 @@ enum E_ImageLayout
     E_ImageLayoutUndefined = 0,
     E_ImageLayoutColor = 2,
     E_ImageLayoutDepth = 3,
+    E_ImageLayoutDepthReadOnly = 4,
+    E_ImageLayoutShaderRead = 5,
     E_ImageLayoutTransferSource = 6,
     E_ImageLayoutTransferDest = 7,
     E_ImageLayoutSwapchainPresent = 1000001002
@@ -26,6 +28,8 @@ typedef enum E_ImageAccess E_ImageAccess;
 enum E_ImageAccess
 {
     E_ImageAccessNone = 0x00000000,
+    E_ImageAccessShaderRead = 0x00000020,
+    E_ImageAccessShaderWrite = 0x00000040,
     E_ImageAccessColorRead = 0x00000080,
     E_ImageAccessColorWrite = 0x00000100,
     E_ImageAccessDepthRead = 0x00000200,
@@ -38,6 +42,8 @@ typedef enum E_ImagePipelineStage E_ImagePipelineStage;
 enum E_ImagePipelineStage
 {   
     E_ImagePipelineStageTop = 0x00000001,
+    E_ImagePipelineStageVertexShader = 0x00000008,
+    E_ImagePipelineStageFragmentShader = 0x00000080,
     E_ImagePipelineStageBottom = 0x00002000,
     E_ImagePipelineStageColorOutput = 0x00000400,
     E_ImagePipelineStageTransfer = 0x00001000,
@@ -59,5 +65,7 @@ void E_FreeImage(E_Image* image);
 
 void E_ImageTransitionLayout(E_Image* image, E_ImageAccess srcAccess, E_ImageAccess dstAccess, E_ImageLayout old, E_ImageLayout new, E_ImagePipelineStage srcStage, E_ImagePipelineStage dstStage);
 void E_ImageResize(E_Image* image, i32 width, i32 height);
+
+void E_ImageDrawToGUI(E_Image* image);
 
 #endif

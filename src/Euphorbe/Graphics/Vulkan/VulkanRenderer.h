@@ -23,6 +23,7 @@ struct E_Vk_Data
         char* extensions[64];
         i32 layer_count;
         i32 extension_count;
+        VkDebugUtilsMessengerEXT debug_messenger;
     } instance;
 
     // Window surface

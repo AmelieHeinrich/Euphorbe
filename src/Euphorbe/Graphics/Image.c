@@ -56,3 +56,10 @@ void E_ImageResize(E_Image* image, i32 width, i32 height)
     E_Vk_ResizeImage(image->rhi_handle, width, height);
 #endif
 }
+
+void E_ImageDrawToGUI(E_Image* image)
+{
+#ifdef EUPHORBE_WINDOWS
+    E_Vk_DrawImageToGUI(image->rhi_handle);
+#endif
+}

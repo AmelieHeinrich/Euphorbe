@@ -113,7 +113,7 @@ int main()
     }
 
     E_RendererWait();
-    
+
     E_FreeBuffer(index_buffer);
     E_FreeBuffer(vertex_buffer);
     E_FreeMaterial(material);

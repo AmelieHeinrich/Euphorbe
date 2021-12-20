@@ -13,7 +13,7 @@
 
 #define CIMGUI_DEFINE_ENUMS_AND_STRUCTS
 #include <cimgui.h>
-#include <generator/output/cimgui_impl.h>
+#include <cimgui_impl.h>
 
 #define CURRENT_CMD_BUF rhi.command.command_buffers[rhi.sync.image_index]
 
@@ -35,6 +35,13 @@ static VkBool32 E_CheckLayers(u32 check_count, char **check_names,
         }
     }
     return 1;
+}
+
+static VKAPI_ATTR VkBool32 VKAPI_CALL E_Vk_DebugMessenger(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData) {
+    if (messageSeverity == VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
+        printf("%s\n", pCallbackData->pMessage);
+
+    return VK_FALSE;
 }
 
 VkCommandBuffer E_Vk_SingleTimeCommands()
@@ -128,6 +135,10 @@ void E_Vk_MakeInstance()
                     rhi.instance.extensions[rhi.instance.extension_count++] = VK_KHR_SURFACE_EXTENSION_NAME;
                 }
 
+                if (!strcmp(VK_EXT_DEBUG_UTILS_EXTENSION_NAME, instance_extensions[i].extensionName)) {
+                    rhi.instance.extensions[rhi.instance.extension_count++] = VK_EXT_DEBUG_UTILS_EXTENSION_NAME;
+                }
+
 #ifdef EUPHORBE_WINDOWS
                 if (!strcmp(VK_KHR_WIN32_SURFACE_EXTENSION_NAME, instance_extensions[i].extensionName)) {
                     rhi.instance.extensions[rhi.instance.extension_count++] = VK_KHR_WIN32_SURFACE_EXTENSION_NAME;
@@ -172,8 +183,18 @@ void E_Vk_MakeInstance()
 
     volkLoadInstance(rhi.instance.handle);
 
+    // Create debug messenger
+    VkDebugUtilsMessengerCreateInfoEXT debug_messenger_info = { 0 };
+    debug_messenger_info.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+    debug_messenger_info.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+    debug_messenger_info.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+    debug_messenger_info.pfnUserCallback = E_Vk_DebugMessenger;
+
+    result = vkCreateDebugUtilsMessengerEXT(rhi.instance.handle, &debug_messenger_info, NULL, &rhi.instance.debug_messenger);
+    assert(result == VK_SUCCESS);
+
     if (rhi_settings.log_renderer_events)
-        E_LogInfo("RENDERER EVENT: Vulkan Instance created");
+        E_LogInfo("RENDERER EVENT: Vulkan Instance and debug messenger created");
 }
 
 void E_Vk_MakeSurface()
@@ -550,11 +571,6 @@ void E_Vk_ImGuiCheckError(VkResult err)
         abort();
 }
 
-void E_Vk_ImGuiVulkanLoader(const char* function_name, void* data)
-{
-    return vkGetInstanceProcAddr(rhi.instance.handle, function_name);
-}
-
 void E_Vk_InitImGui()
 {
     // Descriptor Pool
@@ -588,7 +604,7 @@ void E_Vk_InitImGui()
     VkAttachmentDescription color_attachment = {0};
     color_attachment.format = rhi.swapchain.image_format;
     color_attachment.samples = VK_SAMPLE_COUNT_1_BIT;
-    color_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    color_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
     color_attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
     color_attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
     color_attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
@@ -633,11 +649,12 @@ void E_Vk_InitImGui()
     init_info.QueueFamily = rhi.physical_device.graphics_family;
     init_info.Queue = rhi.device.graphics_queue;
     init_info.DescriptorPool = rhi.imgui.descriptor_pool;
-    init_info.MinImageCount = FRAMES_IN_FLIGHT;
+    init_info.MinImageCount = 2;
     init_info.ImageCount = FRAMES_IN_FLIGHT;
+    init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
+    init_info.Subpass = VK_NULL_HANDLE;
     init_info.CheckVkResultFn = E_Vk_ImGuiCheckError;
 
-    ImGui_ImplVulkan_LoadFunctions(E_Vk_ImGuiVulkanLoader, NULL);
     ImGui_ImplVulkan_Init(&init_info, rhi.imgui.render_pass);
 
     VkCommandBuffer stc = E_Vk_SingleTimeCommands();
@@ -713,6 +730,7 @@ void E_Vk_RendererShutdown()
     free(rhi.swapchain.images);
     vkDestroyDevice(rhi.device.handle, NULL);
     vkDestroySurfaceKHR(rhi.instance.handle, rhi.surface, NULL);
+    vkDestroyDebugUtilsMessengerEXT(rhi.instance.handle, rhi.instance.debug_messenger, NULL);
     vkDestroyInstance(rhi.instance.handle, NULL);
 
     if (rhi_settings.log_renderer_events)
@@ -846,8 +864,6 @@ void E_Vk_RendererStartRender(E_ImageAttachment* attachments, i32 attachment_cou
 
     rendering_info.pColorAttachments = color_attachments;
 
-    vkCmdBeginRenderingKHR(CURRENT_CMD_BUF, &rendering_info);
-
     VkViewport viewport = { 0 };
     viewport.width = (f32)rhi.window->width;
     viewport.height = (f32)rhi.window->height;
@@ -863,6 +879,8 @@ void E_Vk_RendererStartRender(E_ImageAttachment* attachments, i32 attachment_cou
 
     vkCmdSetViewport(CURRENT_CMD_BUF, 0, 1, &viewport);
     vkCmdSetScissor(CURRENT_CMD_BUF, 0, 1, &scissor);
+
+    vkCmdBeginRenderingKHR(CURRENT_CMD_BUF, &rendering_info);
 }
 #pragma optimize("",on)
 
@@ -887,8 +905,8 @@ void E_Vk_BeginGUI()
 
     vkCmdBeginRenderPass(CURRENT_CMD_BUF, &render_pass_info, VK_SUBPASS_CONTENTS_INLINE);
 
-    ImGui_ImplWin32_NewFrame();
     ImGui_ImplVulkan_NewFrame();
+    ImGui_ImplWin32_NewFrame();
     igNewFrame();
 }
 
@@ -896,6 +914,13 @@ void E_Vk_EndGUI()
 {
     igRender();
     ImGui_ImplVulkan_RenderDrawData(igGetDrawData(), CURRENT_CMD_BUF, VK_NULL_HANDLE);
+
+    if (igGetIO()->ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+    {
+        igUpdatePlatformWindows();
+        igRenderPlatformWindowsDefault(NULL, NULL);
+    }
+
     vkCmdEndRenderPass(CURRENT_CMD_BUF);
 }
 

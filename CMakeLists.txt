@@ -16,8 +16,12 @@ add_subdirectory(ThirdParty/volk)
 add_subdirectory(ThirdParty/cimgui)
 
 # ImGui impl
-add_library(imgui_impl STATIC ThirdParty/cimgui/imgui/backends/imgui_impl_win32.cpp ThirdParty/cimgui/imgui/backends/imgui_impl_vulkan.cpp)
-target_include_directories(imgui_impl PRIVATE ThirdParty/cimgui/imgui $ENV{VULKAN_SDK}/Include)
+add_library(imgui_impl STATIC ThirdParty/cimgui/imgui/backends/imgui_impl_win32.h 
+							  ThirdParty/cimgui/imgui/backends/imgui_impl_win32.cpp 
+							  ThirdParty/imgui_backends/imgui_impl_vulkan.h 
+							  ThirdParty/imgui_backends/imgui_impl_vulkan.cpp
+							  ThirdParty/imgui_backends/cimgui_impl.h)
+target_include_directories(imgui_impl PRIVATE ThirdParty/cimgui/imgui $ENV{VULKAN_SDK}/Include ThirdParty/volk)
 target_compile_definitions(imgui_impl PRIVATE IMGUI_IMPL_API=extern\ \"C\")
 target_compile_definitions(imgui_impl PRIVATE VK_NO_PROTOTYPES)
 

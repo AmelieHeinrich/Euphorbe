@@ -3,7 +3,7 @@
 	DepthOperation = "Always"
 	FrontFace = "CW"
 	PrimitiveTopology = "TriangleList"
-	PolygonMode = "Line"
+	PolygonMode = "Fill"
 
 [RenderInfo]
 	ColorAttachmentCount = 1

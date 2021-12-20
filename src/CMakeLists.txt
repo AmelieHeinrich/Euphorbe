@@ -20,7 +20,7 @@ target_include_directories(Euphorbe PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
                                            ${THIRD_PARTY}/spirv_reflect 
                                            ${THIRD_PARTY}/cimgui 
                                            ${THIRD_PARTY}/cimgui/imgui
-                                           ${THIRD_PARTY}/cimgui/imgui/backends
+                                           ${THIRD_PARTY}/imgui_backends
                                            ${THIRD_PARTY}/tomlc99
                                            $ENV{VULKAN_SDK}/Include)
 
