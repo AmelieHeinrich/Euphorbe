@@ -29,6 +29,7 @@ cmake -G "Visual Studio 17 2022" -B build
 - [VMA](https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator)
 - [SPIRV-Reflect](https://github.com/KhronosGroup/SPIRV-Reflect)
 - [cimgui](https://github.com/Sausty/cimgui)
+- [tomlc99](https://github.com/cktan/tomlc99)
 
 ## Additional information
 

@@ -1,0 +1,15 @@
+[MaterialProperties]
+	CullMode = "Back"
+	DepthOperation = "Always"
+	FrontFace = "CW"
+	PrimitiveTopology = "TriangleList"
+	PolygonMode = "Line"
+
+[RenderInfo]
+	ColorAttachmentCount = 1
+	DepthFormat = "D32_Float"
+	ColorFormats = ["RGBA8"]
+
+[Shaders]
+	Vertex = "Assets/Shaders/VertexShader.glsl"
+	Fragment = "Assets/Shaders/FragmentShader.glsl"

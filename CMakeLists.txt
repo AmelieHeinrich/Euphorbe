@@ -21,6 +21,9 @@ target_include_directories(imgui_impl PRIVATE ThirdParty/cimgui/imgui $ENV{VULKA
 target_compile_definitions(imgui_impl PRIVATE IMGUI_IMPL_API=extern\ \"C\")
 target_compile_definitions(imgui_impl PRIVATE VK_NO_PROTOTYPES)
 
+# Toml C99
+add_library(TOML STATIC ThirdParty/tomlc99/toml.h ThirdParty/tomlc99/toml.c)
+
 # Main Projects
 add_subdirectory(src)
 add_subdirectory(Editor)

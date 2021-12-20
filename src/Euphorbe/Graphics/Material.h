@@ -1,6 +1,8 @@
 #ifndef EUPHORBE_MATERIAL_H
 #define EUPHORBE_MATERIAL_H
 
+#include <Euphorbe/Resource/Resource.h>
+
 #include "Image.h"
 #include "ShaderCompiler.h"
 
@@ -41,7 +43,7 @@ enum E_CompareOP
     E_CompareOPNever = 0,
     E_CompareOPLess = 1,
     E_CompareOPEqual = 2,
-    E_CompareOPLessOrEqual = 3,
+    E_CompareOPLessEqual = 3,
     E_CompareOPGreater = 4,
     E_CompareOPNotEqual = 5,
     E_CompareOPGreaterEqual = 6,
@@ -66,8 +68,8 @@ struct E_MaterialCreateInfo
     E_CompareOP depth_op;
     E_MaterialRenderInfo render_info;
 
-    E_Shader* vertex_shader;
-    E_Shader* fragment_shader;
+    E_ResourceFile* vertex_shader;
+    E_ResourceFile* fragment_shader;
 };
 
 typedef struct E_Material E_Material;
@@ -75,10 +77,12 @@ struct E_Material
 {
     E_MaterialCreateInfo* material_create_info;
     void* rhi_handle; // E_VulkanMaterial for example
+    b32 loaded_from_file;
 };
 
 // WARNING: Vertex shader MUST contain input variables!
 E_Material* E_CreateMaterial(E_MaterialCreateInfo* create_info);
+E_Material* E_CreateMaterialFromFile(const char* path);
 void E_FreeMaterial(E_Material* material);
 
 #endif

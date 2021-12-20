@@ -6,8 +6,6 @@ E_Window* window;
 E_Image* depth_image;
 E_Image* swapchain_buffer;
 
-E_ResourceFile* vertex_shader;
-E_ResourceFile* fragment_shader;
 E_Material* material;
 E_Buffer* vertex_buffer;
 E_Buffer* index_buffer;
@@ -55,8 +53,6 @@ int main()
 
     // Renderer assets
     depth_image = E_MakeImage(window->width, window->height, E_ImageFormatD32_Float);
-    vertex_shader = E_LoadResource("Assets/VertexShader.glsl", E_ResourceTypeVertexShader);
-    fragment_shader = E_LoadResource("Assets/FragmentShader.glsl", E_ResourceTypeFragmentShader);
 
     vertex_buffer = E_CreateVertexBuffer(sizeof(vertices));
     E_SetBufferData(vertex_buffer, vertices, sizeof(vertices));
@@ -64,19 +60,7 @@ int main()
     index_buffer = E_CreateIndexBuffer(sizeof(indices));
     E_SetBufferData(index_buffer, indices, sizeof(indices));
 
-    E_MaterialCreateInfo material_create_info = { 0 };
-    material_create_info.cull_mode = E_CullModeBack;
-    material_create_info.depth_op = E_CompareOPAlways;
-    material_create_info.front_face = E_FrontFaceCW;
-    material_create_info.primitive_topology = E_PrimitiveTopologyTriangleList;
-    material_create_info.polygon_mode = E_PolygonModeFill;
-    material_create_info.vertex_shader = vertex_shader->as.shader;
-    material_create_info.fragment_shader = fragment_shader->as.shader;
-    material_create_info.render_info.color_attachment_count = 1;
-    material_create_info.render_info.depth_format = E_ImageFormatD32_Float;
-    material_create_info.render_info.color_formats[0] = E_ImageFormatRGBA8;
-
-    material = E_CreateMaterial(&material_create_info);
+    material = E_CreateMaterialFromFile("Assets/Materials/RectangleMaterial.toml");
 
     // Launch the window
     E_WindowSetResizeCallback(window, ResizeCallback);
@@ -133,8 +117,6 @@ int main()
     E_FreeBuffer(index_buffer);
     E_FreeBuffer(vertex_buffer);
     E_FreeMaterial(material);
-    E_FreeResource(vertex_shader);
-    E_FreeResource(fragment_shader);
     E_FreeImage(depth_image);
 
     E_RendererShutdown();

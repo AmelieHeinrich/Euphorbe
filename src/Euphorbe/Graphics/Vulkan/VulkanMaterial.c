@@ -153,15 +153,18 @@ E_VulkanMaterial* E_Vk_CreateMaterial(E_MaterialCreateInfo* create_info)
     VkShaderModule vertex_module;
     VkShaderModule fragment_module;
 
-    E_Vk_MakeShaderModule(&vertex_module, create_info->vertex_shader->code, create_info->vertex_shader->code_size);
-    E_Vk_MakeShaderModule(&fragment_module, create_info->fragment_shader->code, create_info->fragment_shader->code_size);
+    E_Shader* vertex_shader = create_info->vertex_shader->as.shader;
+    E_Shader* fragment_shader = create_info->fragment_shader->as.shader;
+
+    E_Vk_MakeShaderModule(&vertex_module, vertex_shader->code, vertex_shader->code_size);
+    E_Vk_MakeShaderModule(&fragment_module, fragment_shader->code, fragment_shader->code_size);
 
     SpvReflectShaderModule vs_reflect, fs_reflect;
 
-    SpvReflectResult reflect_result = spvReflectCreateShaderModule(create_info->vertex_shader->code_size, create_info->vertex_shader->code, &vs_reflect);
+    SpvReflectResult reflect_result = spvReflectCreateShaderModule(vertex_shader->code_size, vertex_shader->code, &vs_reflect);
     assert(reflect_result == SPV_REFLECT_RESULT_SUCCESS);
     
-    reflect_result = spvReflectCreateShaderModule(create_info->fragment_shader->code_size, create_info->fragment_shader->code, &fs_reflect);
+    reflect_result = spvReflectCreateShaderModule(fragment_shader->code_size, fragment_shader->code, &fs_reflect);
     assert(reflect_result == SPV_REFLECT_RESULT_SUCCESS);
 
     VkPipelineShaderStageCreateInfo vert_shader_stage_info = {0};
