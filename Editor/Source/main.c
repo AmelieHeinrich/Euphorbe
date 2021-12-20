@@ -79,8 +79,8 @@ int main()
     material = E_CreateMaterial(&material_create_info);
 
     // Launch the window
-    E_LaunchWindow(window);
     E_WindowSetResizeCallback(window, ResizeCallback);
+    E_LaunchWindow(window);
 
     while (E_IsWindowOpen(window))
     {
@@ -122,7 +122,7 @@ int main()
             E_ImagePipelineStageBottom);
 
         E_BeginGUI();
-        igShowDemoWindow(NULL);
+        E_LogDraw();
         E_EndGUI();
 
         EndRender();

@@ -23,6 +23,8 @@
 #define BOLDCYAN    "\033[1m\033[36m"      /* Bold Cyan */
 #define BOLDWHITE   "\033[1m\033[37m"      /* Bold White */
 
+E_LogGUI log_gui;
+
 void LogInfo(const char* message)
 {
     time_t now;
@@ -31,7 +33,10 @@ void LogInfo(const char* message)
     printf(GREEN);
     char* time_string = ctime(&now);
     time_string[strcspn(time_string, "\n")] = 0;
-    printf("%s [EUPHORBE] : %s\n", time_string, message);
+    char final_string[255] = { 0 };
+    sprintf(final_string, "%s [EUPHORBE] : %s\n", time_string, message);
+    ImGuiTextBuffer_append(&log_gui.text_buffer, final_string, NULL);
+    printf("%s", final_string);
     printf(RESET);
 }
 
@@ -43,7 +48,10 @@ void LogWarn(const char* message)
     printf(YELLOW);
     char* time_string = ctime(&now);
     time_string[strcspn(time_string, "\n")] = 0;
-    printf("%s [EUPHORBE] : %s\n", time_string, message);
+    char final_string[255] = {0};
+    sprintf(final_string, "%s [EUPHORBE] : %s\n", time_string, message);
+    ImGuiTextBuffer_append(&log_gui.text_buffer, final_string, NULL);
+    printf("%s", final_string);
     printf(RESET);
 }
 
@@ -55,7 +63,10 @@ void LogError(const char* message)
     printf(RED);
     char* time_string = ctime(&now);
     time_string[strcspn(time_string, "\n")] = 0;
-    printf("%s [EUPHORBE] : %s\n", time_string, message);
+    char final_string[255] = { 0 };
+    sprintf(final_string, "%s [EUPHORBE] : %s\n", time_string, message);
+    ImGuiTextBuffer_append(&log_gui.text_buffer, final_string, NULL);
+    printf("%s", final_string);
     printf(RESET);
 }
 
@@ -96,4 +107,30 @@ void E_LogError(const char* message, ...)
     va_end(vl);
 
     LogError(buf);
+}
+
+void E_LogDraw()
+{
+    ImVec2 next_window_size = { 500, 400 };
+    ImVec2 null_vec = { 0, 0 };
+    ImVec2 style_size = { 0, 1 };
+
+    igSetNextWindowSize(next_window_size, ImGuiCond_FirstUseEver);
+    igBegin("Log", NULL, ImGuiWindowFlags_None);
+    if (igButton("Clear", null_vec))
+        ImGuiTextBuffer_clear(&log_gui.text_buffer);
+    igSameLine(0.0f, 5.0f);
+    b32 copy = igButton("Copy", null_vec);
+    igSeparator();
+    igBeginChild_Str("Scrolling", null_vec, 0, ImGuiWindowFlags_None);
+
+    igPushStyleVar_Vec2(ImGuiStyleVar_ItemSpacing, style_size);
+    if (copy) igLogToClipboard(0);
+    igTextUnformatted(ImGuiTextBuffer_begin(&log_gui.text_buffer), NULL);
+    if (log_gui.scroll_to_bottom)
+        igSetScrollHereY(1.0f);
+    log_gui.scroll_to_bottom = 0;
+    igPopStyleVar(1);
+    igEndChild();
+    igEnd();
 }
