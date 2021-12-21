@@ -14,6 +14,7 @@ struct E_RendererInitSettings
     b32 log_found_layers; // Default: true
     b32 log_renderer_events; // Default: true
     b32 enable_debug; // Default: false
+    b32 gui_should_clear; // If viewport is in a gui window
 };
 
 typedef struct E_ClearValue E_ClearValue;

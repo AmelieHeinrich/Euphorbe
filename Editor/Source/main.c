@@ -3,6 +3,7 @@
 #include <cimgui.h>
 
 E_Window* window;
+E_Image* render_buffer;
 E_Image* depth_image;
 E_Image* swapchain_buffer;
 
@@ -45,6 +46,7 @@ void EndRender()
 void ResizeCallback(i32 width, i32 height)
 {
     E_RendererResize(width, height);
+    E_ImageResize(render_buffer, width, height);
     E_ImageResize(depth_image, width, height);
 }
 
@@ -55,11 +57,13 @@ int main()
     settings.log_found_layers = 0;
     settings.log_renderer_events = 1;
     settings.enable_debug = 1;
+    settings.gui_should_clear = 1;
 
     window = E_CreateWindow(1280, 720, "Euphorbe Editor");
     E_RendererInit(window, settings);
 
     // Renderer assets
+    render_buffer = E_MakeImage(window->width, window->height, E_ImageFormatRGBA8);
     depth_image = E_MakeImage(window->width, window->height, E_ImageFormatD32_Float);
 
     vertex_buffer = E_CreateVertexBuffer(sizeof(vertices));
@@ -68,7 +72,7 @@ int main()
     index_buffer = E_CreateIndexBuffer(sizeof(indices));
     E_SetBufferData(index_buffer, indices, sizeof(indices));
 
-    V3 color = { 0.0f, 0.0f, 0.0f };
+    V3 color = V3Zero();
     uniform_buffer = E_CreateUniformBuffer(sizeof(ColorUniform));
     E_SetBufferData(uniform_buffer, &color, sizeof(color));
 
@@ -96,14 +100,14 @@ int main()
         E_ClearValue depth_clear = { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0 };
 
         E_ImageAttachment attachments[2] = {
-            { swapchain_buffer, E_ImageLayoutColor, color_clear },
+            { render_buffer, E_ImageLayoutColor, color_clear },
             { depth_image, E_ImageLayoutDepth, depth_clear }
         };
 
-        E_ImageTransitionLayout(swapchain_buffer,
-            0, E_ImageAccessColorWrite,
-            E_ImageLayoutUndefined, E_ImageLayoutColor,
-            E_ImagePipelineStageTop,
+        E_ImageTransitionLayout(render_buffer,
+            E_ImageAccessShaderRead, E_ImageAccessColorWrite,
+            E_ImageLayoutUndefined, E_ImageLayoutShaderRead,
+            E_ImagePipelineStageFragmentShader,
             E_ImagePipelineStageColorOutput);
 
         E_ImageTransitionLayout(depth_image,
@@ -123,11 +127,11 @@ int main()
 
         E_RendererEndRender();
 
-        E_ImageTransitionLayout(swapchain_buffer,
-            E_ImageAccessColorWrite, 0,
-            E_ImageLayoutColor, E_ImageLayoutSwapchainPresent,
+        E_ImageTransitionLayout(render_buffer,
+            E_ImageAccessColorWrite, E_ImageAccessShaderRead,
+            E_ImageLayoutShaderRead, E_ImageLayoutColor,
             E_ImagePipelineStageColorOutput,
-            E_ImagePipelineStageBottom);
+            E_ImagePipelineStageFragmentShader);
 
         E_BeginGUI();
         
@@ -136,7 +140,12 @@ int main()
 
         // Color
         igBegin("Color Panel", NULL, ImGuiWindowFlags_None);
-        igSliderFloat3("Color", color.data, 0.0f, 1.0f, NULL, ImGuiSliderFlags_None);
+        igColorPicker3("Color Picker", color.data, ImGuiColorEditFlags_DisplayHex | ImGuiColorEditFlags_DisplayRGB);
+        igEnd();
+
+        // Viewport
+        igBegin("Viewport", NULL, ImGuiWindowFlags_None);
+        E_ImageDrawToGUI(render_buffer);
         igEnd();
 
         E_EndGUI();
@@ -152,6 +161,7 @@ int main()
     E_FreeBuffer(vertex_buffer);
     E_FreeMaterial(material);
     E_FreeImage(depth_image);
+    E_FreeImage(render_buffer);
 
     E_RendererShutdown();
     E_FreeWindow(window);

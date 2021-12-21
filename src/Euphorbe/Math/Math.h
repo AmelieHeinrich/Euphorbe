@@ -91,11 +91,11 @@ inline f32 V2LengthSquared(V2 left) {
 }
 
 inline f32 V2Length(V2 left) {
-	return sqrt(V2LengthSquared(left));
+	return (f32)sqrt(V2LengthSquared(left));
 }
 
 inline void V2Normalize(V2* left) {
-	const f32 length = vec2_length(*left);
+	const f32 length = V2Length(*left);
 	left->x /= length;
 	left->y /= length;
 }
@@ -202,7 +202,7 @@ inline f32 V3LenghtSquared(V3 left) {
 }
 
 inline f32 V3Length(V3 left) {
-	return sqrt(V3LenghtSquared(left));
+	return (f32)sqrt(V3LenghtSquared(left));
 }
 
 inline void V3Normalize(V3* vector) {
