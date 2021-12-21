@@ -597,6 +597,9 @@ void E_Vk_InitImGui()
     pool_info.pPoolSizes = pool_sizes;
 
     VkResult result = vkCreateDescriptorPool(rhi.device.handle, &pool_info, NULL, &rhi.imgui.descriptor_pool);
+    assert(result == VK_SUCCESS);
+    result = vkCreateDescriptorPool(rhi.device.handle, &pool_info, NULL, &rhi.global_descriptor_pool);
+    assert(result == VK_SUCCESS);
 
     // Render Pass
 
@@ -710,6 +713,7 @@ void E_Vk_RendererShutdown()
 
     vkDestroyRenderPass(rhi.device.handle, rhi.imgui.render_pass, NULL);
     vkDestroyDescriptorPool(rhi.device.handle, rhi.imgui.descriptor_pool, NULL);
+    vkDestroyDescriptorPool(rhi.device.handle, rhi.global_descriptor_pool, NULL);
 
     vmaDestroyAllocator(rhi.allocator);
 
@@ -904,6 +908,7 @@ void E_Vk_BeginGUI()
 
     vkCmdBeginRenderPass(CURRENT_CMD_BUF, &render_pass_info, VK_SUBPASS_CONTENTS_INLINE);
 
+    vkResetDescriptorPool(rhi.device.handle, rhi.imgui.descriptor_pool, 0);
     ImGui_ImplVulkan_NewFrame();
     ImGui_ImplWin32_NewFrame();
     igNewFrame();

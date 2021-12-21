@@ -375,7 +375,7 @@ E_VulkanMaterialInstance* E_Vk_CreateMaterialInstance(E_VulkanMaterial* material
 
     VkDescriptorSetAllocateInfo allocate_info = { 0 };
     allocate_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-    allocate_info.descriptorPool = rhi.imgui.descriptor_pool;
+    allocate_info.descriptorPool = rhi.global_descriptor_pool;
     allocate_info.descriptorSetCount = 1;
     allocate_info.pSetLayouts = &material->set_layout;
 
@@ -428,6 +428,6 @@ void E_Vk_MaterialInstanceWriteImage(E_VulkanMaterialInstance* instance, E_Descr
 
 void E_Vk_FreeMaterialInstance(E_VulkanMaterialInstance* instance)
 {
-    vkFreeDescriptorSets(rhi.device.handle, rhi.imgui.descriptor_pool, 1, &instance->set);
+    vkFreeDescriptorSets(rhi.device.handle, rhi.global_descriptor_pool, 1, &instance->set);
     free(instance);
 }

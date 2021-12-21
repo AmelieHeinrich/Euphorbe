@@ -75,6 +75,9 @@ struct E_Vk_Data
         VkFramebuffer swapchain_framebuffers[FRAMES_IN_FLIGHT];
     } imgui;
 
+    // Other
+    VkDescriptorPool global_descriptor_pool;
+
     // VMA
     VmaAllocator allocator;
 };
