@@ -177,7 +177,7 @@ void E_Vk_ResizeImage(E_VulkanImage* image, i32 width, i32 height)
 
 void E_Vk_DrawImageToGUI(E_VulkanImage* image, i32 width, i32 height)
 {
-    ImVec2 size = { width, height };
+    ImVec2 size = { (f32)width, (f32)height };
 
     ImVec2 uv0 = { 0, 0 };
     ImVec2 uv1 = { 1, 1 };

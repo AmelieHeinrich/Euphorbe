@@ -868,8 +868,8 @@ void E_Vk_RendererStartRender(E_ImageAttachment* attachments, i32 attachment_cou
     rendering_info.pColorAttachments = color_attachments;
 
     VkViewport viewport = { 0 };
-    viewport.width = (f32)render_size.x;
-    viewport.height = (f32)render_size.y;
+    viewport.width = render_size.x;
+    viewport.height = render_size.y;
     viewport.x = 0.0f;
     viewport.y = 0.0f;
     viewport.minDepth = 0.0f;
@@ -878,8 +878,8 @@ void E_Vk_RendererStartRender(E_ImageAttachment* attachments, i32 attachment_cou
     VkRect2D scissor = { 0 };
     scissor.offset.x = 0;
     scissor.offset.y = 0;
-    scissor.extent.width = render_size.x;
-    scissor.extent.height = render_size.y;
+    scissor.extent.width = (u32)render_size.x;
+    scissor.extent.height = (u32)render_size.y;
 
     vkCmdSetViewport(CURRENT_CMD_BUF, 0, 1, &viewport);
     vkCmdSetScissor(CURRENT_CMD_BUF, 0, 1, &scissor);

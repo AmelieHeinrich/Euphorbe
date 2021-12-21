@@ -108,7 +108,12 @@ E_WindowsWindow* E_CreateWindowsWindow(i32* width, i32* height, const char* titl
 
 void E_LaunchWindowsWindow(E_WindowsWindow* window)
 {
-    ShowWindow(window->hwnd, SW_SHOW);
+    ShowWindow(window->hwnd, SW_MAXIMIZE);
+
+    RECT rect;
+    GetClientRect(window->hwnd, &rect);
+    *window->width_pointer = rect.right - rect.left;
+    *window->height_pointer = rect.bottom - rect.top;
 }
 
 void E_FreeWindowsWindow(E_WindowsWindow* window)

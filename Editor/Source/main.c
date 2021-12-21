@@ -51,6 +51,7 @@ void ResizeCallback(i32 width, i32 height)
     for (i32 i = 0; i < FRAMES_IN_FLIGHT; i++)
         E_ImageResize(render_buffers[i], viewport_panel.viewport_size.x, viewport_panel.viewport_size.y);
     E_ImageResize(depth_image, viewport_panel.viewport_size.x, viewport_panel.viewport_size.y);
+    first_render = 3;
 }
 
 void DrawQuad(E_Image* render_buffer)
@@ -95,20 +96,15 @@ void BeginDockspace()
 {
     ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
     ImGuiViewport* viewport = igGetMainViewport();
-    igSetNextWindowPos((ImVec2) { viewport->Pos.x, viewport->Pos.y }, ImGuiCond_None, (ImVec2) { 0.0f, 0.0f });
-    igSetNextWindowSize((ImVec2) { viewport->Size.x, viewport->Size.y }, ImGuiCond_None);
+    igSetNextWindowPos(viewport->Pos, ImGuiCond_None, (ImVec2) { 0.0f, 0.0f });
+    igSetNextWindowSize(viewport->Size, ImGuiCond_None);
     igSetNextWindowViewport(viewport->ID);
     igPushStyleVar_Float(ImGuiStyleVar_WindowRounding, 0.0f);
     igPushStyleVar_Float(ImGuiStyleVar_WindowBorderSize, 0.0f);
     igPushStyleVar_Vec2(ImGuiStyleVar_WindowPadding, (ImVec2) { 0.0f, 0.0f });
-
     igBegin("Dockspace", NULL, window_flags);
     igPopStyleVar(3);
 
-    ImGuiIO* io = igGetIO();
-    ImGuiStyle* style = igGetStyle();
-    f32 min_win_size_x = style->WindowMinSize.x;
-    style->WindowMinSize.x = 270.0f;
     igDockSpace(igGetID_Str("MyDockSpace"), (ImVec2) { 0.0f, 0.0f }, ImGuiDockNodeFlags_None, NULL);
 }
 
@@ -131,8 +127,8 @@ int main()
 
     // Renderer assets
     for (i32 i = 0; i < FRAMES_IN_FLIGHT; i++)
-        render_buffers[i] = E_MakeImage(1280, 720, E_ImageFormatRGBA8);
-    depth_image = E_MakeImage(1280, 720, E_ImageFormatD32_Float);
+        render_buffers[i] = E_MakeImage(window->width, window->height, E_ImageFormatRGBA8);
+    depth_image = E_MakeImage(window->width, window->height, E_ImageFormatD32_Float);
 
     vertex_buffer = E_CreateVertexBuffer(sizeof(vertices));
     E_SetBufferData(vertex_buffer, vertices, sizeof(vertices));
@@ -154,12 +150,22 @@ int main()
     E_MaterialInstanceWriteBuffer(material_instance, &descriptor_instance, sizeof(V3));
 
     // Launch the window
-    InitViewportPanel(1280, 720);
-    E_LaunchWindow(window);
+    InitViewportPanel(window->width, window->height);
     E_WindowSetResizeCallback(window, ResizeCallback);
+    E_LaunchWindow(window);
 
     while (E_IsWindowOpen(window))
     {
+        // Update viewport
+        if (viewport_panel.viewport_size.x != (f32)render_buffers[0]->width || viewport_panel.viewport_size.y != (f32)render_buffers[0]->height && viewport_panel.viewport_size.x > 0 && viewport_panel.viewport_size.y > 0)
+        {
+            E_RendererWait();
+            for (i32 i = 0; i < FRAMES_IN_FLIGHT; i++)
+                E_ImageResize(render_buffers[i], viewport_panel.viewport_size.x, viewport_panel.viewport_size.y);
+            E_ImageResize(depth_image, viewport_panel.viewport_size.x, viewport_panel.viewport_size.y);
+            first_render = 3;
+        }
+
         BeginRender();
 
         u32 image_index = E_GetSwapchainImageIndex();
@@ -171,20 +177,12 @@ int main()
 
         // GUI //
         E_BeginGUI();
+
         BeginDockspace();
-
-
         E_LogDraw();
-        
-        if (viewport_panel.viewport_size.x != render_buffer->width || viewport_panel.viewport_size.y != render_buffer->height && viewport_panel.viewport_size.x > 0 && viewport_panel.viewport_size.y > 0)
-        {
-            E_RendererWait();
-            E_ImageResize(render_buffer, viewport_panel.viewport_size.x, viewport_panel.viewport_size.y);
-            E_ImageResize(depth_image, viewport_panel.viewport_size.x, viewport_panel.viewport_size.y);
-        }
         DrawViewportPanel(render_buffer);
-
         EndDockspace();
+
         E_EndGUI();
         // END GUI //
 
