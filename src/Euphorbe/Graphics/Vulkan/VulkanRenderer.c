@@ -803,13 +803,13 @@ void E_Vk_DeviceWait()
 }
 
 #pragma optimize("",off)
-void E_Vk_RendererStartRender(E_ImageAttachment* attachments, i32 attachment_count, i32 has_depth)
+void E_Vk_RendererStartRender(E_ImageAttachment* attachments, i32 attachment_count, V2 render_size, b32 has_depth)
 {
     u32 color_iterator = has_depth ? attachment_count - 1 : attachment_count;
 
     VkRect2D render_area = {0};
-    render_area.extent.width = rhi.window->width;
-    render_area.extent.height = rhi.window->height;
+    render_area.extent.width = render_size.x;
+    render_area.extent.height = render_size.y;
     render_area.offset.x = 0;
     render_area.offset.y = 0;
 
@@ -868,8 +868,8 @@ void E_Vk_RendererStartRender(E_ImageAttachment* attachments, i32 attachment_cou
     rendering_info.pColorAttachments = color_attachments;
 
     VkViewport viewport = { 0 };
-    viewport.width = (f32)rhi.window->width;
-    viewport.height = (f32)rhi.window->height;
+    viewport.width = (f32)render_size.x;
+    viewport.height = (f32)render_size.y;
     viewport.x = 0.0f;
     viewport.y = 0.0f;
     viewport.minDepth = 0.0f;
@@ -878,7 +878,8 @@ void E_Vk_RendererStartRender(E_ImageAttachment* attachments, i32 attachment_cou
     VkRect2D scissor = { 0 };
     scissor.offset.x = 0;
     scissor.offset.y = 0;
-    scissor.extent = rhi.swapchain.extent;
+    scissor.extent.width = render_size.x;
+    scissor.extent.height = render_size.y;
 
     vkCmdSetViewport(CURRENT_CMD_BUF, 0, 1, &viewport);
     vkCmdSetScissor(CURRENT_CMD_BUF, 0, 1, &scissor);
@@ -908,7 +909,6 @@ void E_Vk_BeginGUI()
 
     vkCmdBeginRenderPass(CURRENT_CMD_BUF, &render_pass_info, VK_SUBPASS_CONTENTS_INLINE);
 
-    vkResetDescriptorPool(rhi.device.handle, rhi.imgui.descriptor_pool, 0);
     ImGui_ImplVulkan_NewFrame();
     ImGui_ImplWin32_NewFrame();
     igNewFrame();
@@ -968,6 +968,11 @@ void E_Vk_DrawIndexed(u32 first, u32 count)
 E_Image* E_Vk_GetSwapchainImage()
 {
     return rhi.swapchain.euphorbe_images[rhi.sync.image_index];
+}
+
+u32 E_Vk_GetSwapchainImageIndex()
+{
+    return rhi.sync.image_index;
 }
 
 void E_Vk_Resize(i32 width, i32 height)

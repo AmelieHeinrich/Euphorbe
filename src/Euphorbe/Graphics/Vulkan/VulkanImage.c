@@ -103,7 +103,16 @@ E_VulkanImage* E_Vk_MakeImage(i32 width, i32 height, E_ImageFormat format)
         res = vkCreateSampler(rhi.device.handle, &sampler_info, NULL, &result->sampler);
         assert(res == VK_SUCCESS);
 
-        vkResetDescriptorPool(rhi.device.handle, rhi.imgui.descriptor_pool, 0);
+        VkDescriptorSetLayout set_layout = ImGui_ImplVulkan_GetDescriptorSetLayout();
+
+        VkDescriptorSetAllocateInfo alloc_info = { 0 };
+        alloc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+        alloc_info.descriptorSetCount = 1;
+        alloc_info.pSetLayouts = &set_layout;
+        alloc_info.descriptorPool = rhi.imgui.descriptor_pool;
+
+        res = vkAllocateDescriptorSets(rhi.device.handle, &alloc_info, &result->gui_descriptor_set);
+        assert(res == VK_SUCCESS);
 
         return result;
     }
@@ -113,6 +122,7 @@ E_VulkanImage* E_Vk_MakeImage(i32 width, i32 height, E_ImageFormat format)
 
 void E_Vk_FreeImage(E_VulkanImage* image)
 {
+    vkFreeDescriptorSets(rhi.device.handle, rhi.imgui.descriptor_pool, 1, &image->gui_descriptor_set);
     vkDestroySampler(rhi.device.handle, image->sampler, NULL);
     vkDestroyImageView(rhi.device.handle, image->image_view, NULL);
     vmaDestroyImage(rhi.allocator, image->image, image->allocation);
@@ -165,25 +175,15 @@ void E_Vk_ResizeImage(E_VulkanImage* image, i32 width, i32 height)
     assert(res == VK_SUCCESS);
 }
 
-void E_Vk_DrawImageToGUI(E_VulkanImage* image)
+void E_Vk_DrawImageToGUI(E_VulkanImage* image, i32 width, i32 height)
 {
-    ImVec2 size = { image->image_extent.width, image->image_extent.height };
+    ImVec2 size = { width, height };
 
-    ImVec2 uv0 = { 0, 1 };
-    ImVec2 uv1 = { 1, 0 };
-    ImVec4 color = { 0.0f };
+    ImVec2 uv0 = { 0, 0 };
+    ImVec2 uv1 = { 1, 1 };
+    ImVec4 color = { 1.0f, 1.0f, 1.0f, 1.0f };
+    ImVec4 border = { 0.0f, 0.0f, 0.0f, 0.0f };
 
-    VkDescriptorSetLayout set_layout = ImGui_ImplVulkan_GetDescriptorSetLayout();
-
-    VkDescriptorSetAllocateInfo alloc_info = { 0 };
-    alloc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-    alloc_info.descriptorSetCount = 1;
-    alloc_info.pSetLayouts = &set_layout;
-    alloc_info.descriptorPool = rhi.imgui.descriptor_pool;
-
-    VkResult res = vkAllocateDescriptorSets(rhi.device.handle, &alloc_info, &image->gui_descriptor_set);
-    assert(res == VK_SUCCESS);
-
-    image->gui_descriptor_set = ImGui_ImplVulkan_AddTexture(image->image_view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, image->sampler, image->gui_descriptor_set);
-    igImage(image->gui_descriptor_set, size, uv0, uv1, color, color);
+    ImGui_ImplVulkan_AddTexture(image->image_view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, image->sampler, image->gui_descriptor_set);
+    igImage(image->gui_descriptor_set, size, uv0, uv1, color, border);
 }

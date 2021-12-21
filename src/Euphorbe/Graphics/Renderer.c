@@ -39,10 +39,10 @@ void E_RendererWait()
 #endif
 }
 
-void E_RendererStartRender(E_ImageAttachment* attachments, i32 attachment_count, i32 has_depth)
+void E_RendererStartRender(E_ImageAttachment* attachments, i32 attachment_count, V2 render_size, b32 has_depth)
 {
 #ifdef EUPHORBE_WINDOWS
-    E_Vk_RendererStartRender(attachments, attachment_count, has_depth);
+    E_Vk_RendererStartRender(attachments, attachment_count, render_size, has_depth);
 #endif
 }
 
@@ -57,6 +57,13 @@ E_Image* E_GetSwapchainImage()
 {
 #ifdef EUPHORBE_WINDOWS
     return E_Vk_GetSwapchainImage();
+#endif
+}
+
+u32 E_GetSwapchainImageIndex()
+{
+#ifdef EUPHORBE_WINDOWS
+    return E_Vk_GetSwapchainImageIndex();
 #endif
 }
 

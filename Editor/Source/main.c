@@ -2,16 +2,13 @@
 
 #include <cimgui.h>
 
-E_Window* window;
-E_Image* render_buffer;
-E_Image* depth_image;
-E_Image* swapchain_buffer;
+#include "ViewportPanel.h"
 
-typedef struct ColorUniform ColorUniform;
-struct ColorUniform
-{
-    V3 color;
-};
+i32 first_render = FRAMES_IN_FLIGHT;
+E_Window* window;
+E_Image* render_buffers[FRAMES_IN_FLIGHT];
+E_Image* depth_image;
+V3 color;
 
 E_Material* material;
 E_MaterialInstance* material_instance;
@@ -34,11 +31,15 @@ static u32 indices[] = {
 void BeginRender()
 {
     E_RendererBegin();
-    swapchain_buffer = E_GetSwapchainImage();
 }
 
-void EndRender()
+void EndRender(E_Image* render_buffer)
 {
+    E_ImageTransitionLayout(render_buffer,
+        E_ImageAccessColorWrite, E_ImageAccessShaderRead,
+        E_ImageLayoutShaderRead, E_ImageLayoutColor,
+        E_ImagePipelineStageColorOutput, E_ImagePipelineStageFragmentShader);
+
     E_RendererEnd();
     E_WindowUpdate(window);
 }
@@ -46,8 +47,74 @@ void EndRender()
 void ResizeCallback(i32 width, i32 height)
 {
     E_RendererResize(width, height);
-    E_ImageResize(render_buffer, width, height);
-    E_ImageResize(depth_image, width, height);
+
+    for (i32 i = 0; i < FRAMES_IN_FLIGHT; i++)
+        E_ImageResize(render_buffers[i], viewport_panel.viewport_size.x, viewport_panel.viewport_size.y);
+    E_ImageResize(depth_image, viewport_panel.viewport_size.x, viewport_panel.viewport_size.y);
+}
+
+void DrawQuad(E_Image* render_buffer)
+{
+    E_ClearValue color_clear = { 1.0f, 0.1f, 0.1f, 1.0f, 0.0f, 0 };
+    E_ClearValue depth_clear = { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0 };
+
+    E_ImageAttachment attachments[2] = {
+        { render_buffer, E_ImageLayoutColor, color_clear },
+        { depth_image,   E_ImageLayoutDepth, depth_clear }
+    };
+
+    E_ImageLayout src_render_buffer_image_layout = first_render ? E_ImageLayoutUndefined : E_ImageLayoutColor;
+    first_render -= 1;
+
+    V2 render_size = { viewport_panel.viewport_size.x, viewport_panel.viewport_size.y };
+
+    E_RendererStartRender(attachments, 2, render_size, 1);
+
+    E_ImageTransitionLayout(render_buffer,
+        E_ImageAccessShaderRead, E_ImageAccessColorWrite,
+        src_render_buffer_image_layout, E_ImageLayoutShaderRead,
+        E_ImagePipelineStageFragmentShader, E_ImagePipelineStageColorOutput);
+
+    E_ImageTransitionLayout(depth_image,
+        0, E_ImageAccessDepthWrite,
+        E_ImageLayoutUndefined, E_ImageLayoutDepth,
+        E_ImagePipelineStageEarlyFragment | E_ImagePipelineStageLateFragment,
+        E_ImagePipelineStageEarlyFragment | E_ImagePipelineStageLateFragment);
+
+    E_BindMaterial(material);
+    E_BindMaterialInstance(material_instance, material);
+    E_SetBufferData(uniform_buffer, &color, sizeof(color));
+    E_BindBuffer(vertex_buffer);
+    E_BindBuffer(index_buffer);
+    E_DrawIndexed(0, 6);
+
+    E_RendererEndRender();
+}
+
+void BeginDockspace()
+{
+    ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
+    ImGuiViewport* viewport = igGetMainViewport();
+    igSetNextWindowPos((ImVec2) { viewport->Pos.x, viewport->Pos.y }, ImGuiCond_None, (ImVec2) { 0.0f, 0.0f });
+    igSetNextWindowSize((ImVec2) { viewport->Size.x, viewport->Size.y }, ImGuiCond_None);
+    igSetNextWindowViewport(viewport->ID);
+    igPushStyleVar_Float(ImGuiStyleVar_WindowRounding, 0.0f);
+    igPushStyleVar_Float(ImGuiStyleVar_WindowBorderSize, 0.0f);
+    igPushStyleVar_Vec2(ImGuiStyleVar_WindowPadding, (ImVec2) { 0.0f, 0.0f });
+
+    igBegin("Dockspace", NULL, window_flags);
+    igPopStyleVar(3);
+
+    ImGuiIO* io = igGetIO();
+    ImGuiStyle* style = igGetStyle();
+    f32 min_win_size_x = style->WindowMinSize.x;
+    style->WindowMinSize.x = 270.0f;
+    igDockSpace(igGetID_Str("MyDockSpace"), (ImVec2) { 0.0f, 0.0f }, ImGuiDockNodeFlags_None, NULL);
+}
+
+void EndDockspace()
+{
+    igEnd();
 }
 
 int main()
@@ -63,8 +130,9 @@ int main()
     E_RendererInit(window, settings);
 
     // Renderer assets
-    render_buffer = E_MakeImage(window->width, window->height, E_ImageFormatRGBA8);
-    depth_image = E_MakeImage(window->width, window->height, E_ImageFormatD32_Float);
+    for (i32 i = 0; i < FRAMES_IN_FLIGHT; i++)
+        render_buffers[i] = E_MakeImage(1280, 720, E_ImageFormatRGBA8);
+    depth_image = E_MakeImage(1280, 720, E_ImageFormatD32_Float);
 
     vertex_buffer = E_CreateVertexBuffer(sizeof(vertices));
     E_SetBufferData(vertex_buffer, vertices, sizeof(vertices));
@@ -72,8 +140,8 @@ int main()
     index_buffer = E_CreateIndexBuffer(sizeof(indices));
     E_SetBufferData(index_buffer, indices, sizeof(indices));
 
-    V3 color = V3Zero();
-    uniform_buffer = E_CreateUniformBuffer(sizeof(ColorUniform));
+    color = V3Zero();
+    uniform_buffer = E_CreateUniformBuffer(sizeof(V3));
     E_SetBufferData(uniform_buffer, &color, sizeof(color));
 
     material = E_CreateMaterialFromFile("Assets/Materials/RectangleMaterial.toml");
@@ -83,74 +151,44 @@ int main()
     descriptor_instance.descriptor = &material->material_create_info->descriptors[0];
     descriptor_instance.buffer.buffer = uniform_buffer;
 
-    E_MaterialInstanceWriteBuffer(material_instance, &descriptor_instance, sizeof(ColorUniform));
+    E_MaterialInstanceWriteBuffer(material_instance, &descriptor_instance, sizeof(V3));
 
     // Launch the window
-
-    E_WindowSetResizeCallback(window, ResizeCallback);
+    InitViewportPanel(1280, 720);
     E_LaunchWindow(window);
+    E_WindowSetResizeCallback(window, ResizeCallback);
 
     while (E_IsWindowOpen(window))
     {
         BeginRender();
 
-        // Render loop
+        u32 image_index = E_GetSwapchainImageIndex();
+        E_Image* render_buffer = render_buffers[image_index];
 
-        E_ClearValue color_clear = { 0.1f, 0.1f, 0.1f, 1.0f, 0.0f, 0 };
-        E_ClearValue depth_clear = { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0 };
+        // DRAW QUAD //
+        DrawQuad(render_buffer);
+        // END DRAW QUAD //
 
-        E_ImageAttachment attachments[2] = {
-            { render_buffer, E_ImageLayoutColor, color_clear },
-            { depth_image, E_ImageLayoutDepth, depth_clear }
-        };
-
-        E_ImageTransitionLayout(render_buffer,
-            E_ImageAccessShaderRead, E_ImageAccessColorWrite,
-            E_ImageLayoutUndefined, E_ImageLayoutShaderRead,
-            E_ImagePipelineStageFragmentShader,
-            E_ImagePipelineStageColorOutput);
-
-        E_ImageTransitionLayout(depth_image,
-            0, E_ImageAccessDepthWrite,
-            E_ImageLayoutUndefined, E_ImageLayoutDepth,
-            E_ImagePipelineStageEarlyFragment | E_ImagePipelineStageLateFragment,
-            E_ImagePipelineStageEarlyFragment | E_ImagePipelineStageLateFragment);
-
-        E_RendererStartRender(attachments, 2, 1);
-
-        E_BindMaterial(material);
-        E_BindMaterialInstance(material_instance, material);
-        E_SetBufferData(uniform_buffer, &color, sizeof(color));
-        E_BindBuffer(vertex_buffer);
-        E_BindBuffer(index_buffer);
-        E_DrawIndexed(0, 6);
-
-        E_RendererEndRender();
-
-        E_ImageTransitionLayout(render_buffer,
-            E_ImageAccessColorWrite, E_ImageAccessShaderRead,
-            E_ImageLayoutShaderRead, E_ImageLayoutColor,
-            E_ImagePipelineStageColorOutput,
-            E_ImagePipelineStageFragmentShader);
-
+        // GUI //
         E_BeginGUI();
-        
-        // Log
+        BeginDockspace();
+
+
         E_LogDraw();
+        
+        if (viewport_panel.viewport_size.x != render_buffer->width || viewport_panel.viewport_size.y != render_buffer->height && viewport_panel.viewport_size.x > 0 && viewport_panel.viewport_size.y > 0)
+        {
+            E_RendererWait();
+            E_ImageResize(render_buffer, viewport_panel.viewport_size.x, viewport_panel.viewport_size.y);
+            E_ImageResize(depth_image, viewport_panel.viewport_size.x, viewport_panel.viewport_size.y);
+        }
+        DrawViewportPanel(render_buffer);
 
-        // Color
-        igBegin("Color Panel", NULL, ImGuiWindowFlags_None);
-        igColorPicker3("Color Picker", color.data, ImGuiColorEditFlags_DisplayHex | ImGuiColorEditFlags_DisplayRGB);
-        igEnd();
-
-        // Viewport
-        igBegin("Viewport", NULL, ImGuiWindowFlags_None);
-        E_ImageDrawToGUI(render_buffer);
-        igEnd();
-
+        EndDockspace();
         E_EndGUI();
+        // END GUI //
 
-        EndRender();
+        EndRender(render_buffer);
     }
 
     E_RendererWait();
@@ -161,7 +199,8 @@ int main()
     E_FreeBuffer(vertex_buffer);
     E_FreeMaterial(material);
     E_FreeImage(depth_image);
-    E_FreeImage(render_buffer);
+    for (i32 i = 0; i < FRAMES_IN_FLIGHT; i++)
+        E_FreeImage(render_buffers[i]);
 
     E_RendererShutdown();
     E_FreeWindow(window);

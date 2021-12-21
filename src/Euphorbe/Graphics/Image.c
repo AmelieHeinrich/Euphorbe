@@ -52,14 +52,17 @@ void E_ImageTransitionLayout(E_Image* image, E_ImageAccess srcAccess, E_ImageAcc
 
 void E_ImageResize(E_Image* image, i32 width, i32 height)
 {
+    image->width = width;
+    image->height = height;
+
 #ifdef EUPHORBE_WINDOWS
     E_Vk_ResizeImage(image->rhi_handle, width, height);
 #endif
 }
 
-void E_ImageDrawToGUI(E_Image* image)
+void E_ImageDrawToGUI(E_Image* image, i32 width, i32 height)
 {
 #ifdef EUPHORBE_WINDOWS
-    E_Vk_DrawImageToGUI(image->rhi_handle);
+    E_Vk_DrawImageToGUI(image->rhi_handle, width, height);
 #endif
 }

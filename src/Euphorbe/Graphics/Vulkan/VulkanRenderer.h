@@ -1,8 +1,6 @@
 #ifndef EUPHORBE_VULKAN_RENDERER_H
 #define EUPHORBE_VULKAN_RENDERER_H
 
-#define FRAMES_IN_FLIGHT 3
-
 #pragma warning(disable: 28251)
 #include <Euphorbe/Graphics/Renderer.h>
 #include <Euphorbe/Graphics/Vulkan/VulkanMaterial.h>
@@ -94,7 +92,7 @@ void E_Vk_DeviceWait();
 
 void E_Vk_Resize(i32 width, i32 height);
 
-void E_Vk_RendererStartRender(E_ImageAttachment* attachments, i32 attachment_count, i32 has_depth);
+void E_Vk_RendererStartRender(E_ImageAttachment* attachments, i32 attachment_count, V2 render_size, b32 has_depth);
 void E_Vk_RendererEndRender();
 
 void E_Vk_BeginGUI();
@@ -108,6 +106,7 @@ void E_Vk_Draw(u32 first, u32 count);
 void E_Vk_DrawIndexed(u32 first, u32 count);
 
 E_Image* E_Vk_GetSwapchainImage();
+u32 E_Vk_GetSwapchainImageIndex();
 
 // Most useful function for dynamic rendering
 void E_Vk_Image_Memory_Barrier(VkCommandBuffer command_buffer, 

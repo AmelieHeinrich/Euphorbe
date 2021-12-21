@@ -126,7 +126,7 @@ void E_LogDraw()
 
     igPushStyleVar_Vec2(ImGuiStyleVar_ItemSpacing, style_size);
     if (copy) igLogToClipboard(0);
-    igTextUnformatted(ImGuiTextBuffer_begin(&log_gui.text_buffer), NULL);
+    igTextWrapped(ImGuiTextBuffer_begin(&log_gui.text_buffer));
     if (log_gui.scroll_to_bottom)
         igSetScrollHereY(1.0f);
     log_gui.scroll_to_bottom = 0;
