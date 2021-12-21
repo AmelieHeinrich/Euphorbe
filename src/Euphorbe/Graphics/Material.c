@@ -19,6 +19,7 @@ E_FrontFace E_GetFrontFaceFromString(const char* str);
 E_PrimitiveTopology E_GetPrimitiveTopologyFromString(const char* str);
 E_PolygonMode E_GetPolygonModeFromString(const char* str);
 E_ImageFormat E_GetImageFormatFromString(const char* str);
+E_DescriptorType E_GetDescriptorTypeFromString(const char* str);
 
 E_Material* E_CreateMaterial(E_MaterialCreateInfo* create_info)
 {
@@ -64,6 +65,10 @@ E_Material* E_CreateMaterialFromFile(const char* path)
 	toml_table_t* shaders = toml_table_in(conf, "Shaders");
 	if (!shaders)
 		E_LogError("TOML READ ERROR: Failed to parse shaders - %s", errbuf);
+
+	toml_table_t* descriptor_layout = toml_table_in(conf, "DescriptorLayout");
+	if (!descriptor_layout)
+		E_LogError("TOML READ ERROR: Failed to parse descriptor layout - %s", errbuf);
 
 	// MaterialProperties
 
@@ -127,6 +132,23 @@ E_Material* E_CreateMaterialFromFile(const char* path)
 	free(vertex_path.u.s);
 	free(fragment_path.u.s);
 
+	// Descriptor layout
+
+	toml_datum_t descriptor_count = toml_int_in(descriptor_layout, "DescriptorCount");
+	toml_array_t* descriptor_desc = toml_array_in(descriptor_layout, "Descriptors");
+	assert(descriptor_count.ok);
+
+	material->material_create_info->descriptor_count = descriptor_count.u.i;
+	for (i32 i = 0; ; i++)
+	{
+		toml_datum_t data = toml_string_at(descriptor_desc, i);
+		if (!data.ok) break;
+		char* descriptor_type = data.u.s;
+		material->material_create_info->descriptors[i].type = E_GetDescriptorTypeFromString(descriptor_type);
+		material->material_create_info->descriptors[i].binding = i;
+		free(descriptor_type);
+	}
+
 	// Finally, allocate the vulkan handle
 #ifdef EUPHORBE_WINDOWS
 	material->rhi_handle = E_Vk_CreateMaterial(material->material_create_info);
@@ -151,6 +173,40 @@ void E_FreeMaterial(E_Material* material)
 		free(material->material_create_info);
 	}
 	free(material);
+}
+
+E_MaterialInstance* E_CreateMaterialInstance(E_Material* material)
+{
+	E_MaterialInstance* instance = malloc(sizeof(E_MaterialInstance));
+	instance->material = material;
+	
+#ifdef EUPHORBE_WINDOWS
+	instance->rhi_handle = E_Vk_CreateMaterialInstance((E_VulkanMaterial*)material->rhi_handle);
+#endif
+
+	return instance;
+}
+
+void E_MaterialInstanceWriteBuffer(E_MaterialInstance* instance, E_DescriptorInstance* desc_instance, i32 buffer_size)
+{
+#ifdef EUPHORBE_WINDOWS
+	E_Vk_MaterialInstanceWriteBuffer((E_VulkanMaterialInstance*)instance->rhi_handle, desc_instance, buffer_size);
+#endif
+}
+
+void E_MaterialInstanceWriteImage(E_MaterialInstance* instance, E_DescriptorInstance* desc_instance)
+{
+#ifdef EUPHORBE_WINDOWS
+	E_Vk_MaterialInstanceWriteImage((E_VulkanMaterialInstance*)instance->rhi_handle, desc_instance);
+#endif
+}
+
+void E_FreeMaterialInstance(E_MaterialInstance* instance)
+{
+#ifdef EUPHORBE_WINDOWS
+	E_Vk_FreeMaterialInstance((E_VulkanMaterialInstance*)instance->rhi_handle);
+#endif
+	free(instance);
 }
 
 E_CullMode E_GetCullModeFromString(const char* str)
@@ -229,6 +285,16 @@ E_ImageFormat E_GetImageFormatFromString(const char* str)
 		return E_ImageFormatRGBA16;
 	if (!strcmp(str, "D32_Float"))
 		return E_ImageFormatD32_Float;
+
+	return 0;
+}
+
+E_DescriptorType E_GetDescriptorTypeFromString(const char* str)
+{
+	if (!strcmp(str, "UniformBuffer"))
+		return E_DescriptorTypeUniformBuffer;
+	if (!strcmp(str, "CombinedImageSampler"))
+		return E_DescriptorTypeCombinedImageSampler;
 
 	return 0;
 }

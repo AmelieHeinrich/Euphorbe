@@ -1,6 +1,8 @@
 #include "VulkanMaterial.h"
 #include "VulkanRenderer.h"
 
+#include "VulkanImage.h"
+
 #include <spirv_reflect.h>
 
 u32 E_Vk_FormatSize(VkFormat format)
@@ -150,6 +152,26 @@ E_VulkanMaterial* E_Vk_CreateMaterial(E_MaterialCreateInfo* create_info)
 {
     E_VulkanMaterial* result = malloc(sizeof(E_VulkanMaterial));
 
+    // Make descriptor set layout
+    i32 descriptor_desc_count = 0;
+    VkDescriptorSetLayoutBinding bindings[EUPHORBE_MAX_DESCRIPTORS] = { 0 };
+    for (i32 i = 0; i < create_info->descriptor_count; i++)
+    {
+        bindings[i].binding = create_info->descriptors[i].binding;
+        bindings[i].descriptorCount = 1;
+        bindings[i].descriptorType = (VkDescriptorType)create_info->descriptors[i].type;
+        bindings[i].pImmutableSamplers = NULL;
+        bindings[i].stageFlags = VK_SHADER_STAGE_ALL;
+    }
+
+    VkDescriptorSetLayoutCreateInfo layout_info = { 0 };
+    layout_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+    layout_info.bindingCount = create_info->descriptor_count;
+    layout_info.pBindings = bindings;
+
+    VkResult res = vkCreateDescriptorSetLayout(rhi.device.handle, &layout_info, NULL, &result->set_layout);
+    assert(res == VK_SUCCESS);
+
     VkShaderModule vertex_module;
     VkShaderModule fragment_module;
 
@@ -294,9 +316,10 @@ E_VulkanMaterial* E_Vk_CreateMaterial(E_MaterialCreateInfo* create_info)
     VkPipelineLayoutCreateInfo pipeline_layout_info = {0};
     pipeline_layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
     pipeline_layout_info.pushConstantRangeCount = 0;
-    pipeline_layout_info.setLayoutCount = 0;
+    pipeline_layout_info.setLayoutCount = 1;
+    pipeline_layout_info.pSetLayouts = &result->set_layout;
 
-    VkResult res = vkCreatePipelineLayout(rhi.device.handle, &pipeline_layout_info, NULL, &result->pipeline_layout);
+    res = vkCreatePipelineLayout(rhi.device.handle, &pipeline_layout_info, NULL, &result->pipeline_layout);
     assert(res == VK_SUCCESS);
 
     VkPipelineRenderingCreateInfoKHR rendering_create_info = {0};
@@ -340,7 +363,71 @@ E_VulkanMaterial* E_Vk_CreateMaterial(E_MaterialCreateInfo* create_info)
 
 void E_Vk_FreeMaterial(E_VulkanMaterial* material)
 {
+    vkDestroyDescriptorSetLayout(rhi.device.handle, material->set_layout, NULL);
     vkDestroyPipeline(rhi.device.handle, material->pipeline, NULL);
     vkDestroyPipelineLayout(rhi.device.handle, material->pipeline_layout, NULL);
     free(material);
+}
+
+E_VulkanMaterialInstance* E_Vk_CreateMaterialInstance(E_VulkanMaterial* material)
+{
+    E_VulkanMaterialInstance* material_instance = malloc(sizeof(E_VulkanMaterialInstance));
+
+    VkDescriptorSetAllocateInfo allocate_info = { 0 };
+    allocate_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+    allocate_info.descriptorPool = rhi.imgui.descriptor_pool;
+    allocate_info.descriptorSetCount = 1;
+    allocate_info.pSetLayouts = &material->set_layout;
+
+    VkResult res = vkAllocateDescriptorSets(rhi.device.handle, &allocate_info, &material_instance->set);
+    assert(res == VK_SUCCESS);
+
+    return material_instance;
+}
+
+void E_Vk_MaterialInstanceWriteBuffer(E_VulkanMaterialInstance* instance, E_DescriptorInstance* buffer, i32 buffer_size)
+{
+    E_VulkanBuffer* vk_buffer = (E_VulkanBuffer*)buffer->buffer.buffer->rhi_handle;
+
+    VkDescriptorBufferInfo buffer_info = { 0 };
+    buffer_info.buffer = vk_buffer->buffer;
+    buffer_info.offset = 0;
+    buffer_info.range = buffer_size;
+
+    VkWriteDescriptorSet write = { 0 };
+    write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    write.descriptorCount = 1;
+    write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    write.dstBinding = buffer->descriptor->binding;
+    write.dstArrayElement = 0;
+    write.dstSet = instance->set;
+    write.pBufferInfo = &buffer_info;
+
+    vkUpdateDescriptorSets(rhi.device.handle, 1, &write, 0, NULL);
+}
+
+void E_Vk_MaterialInstanceWriteImage(E_VulkanMaterialInstance* instance, E_DescriptorInstance* image)
+{
+    E_VulkanImage* vk_image = (E_VulkanImage*)image->image.image;
+
+    VkDescriptorImageInfo image_info = { 0 };
+    image_info.imageLayout = (VkImageLayout)image->image.layout;
+    image_info.sampler = vk_image->sampler;
+    image_info.imageView = vk_image->image_view;
+
+    VkWriteDescriptorSet write = { 0 };
+    write.descriptorCount = 1;
+    write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    write.dstBinding = image->descriptor->binding;
+    write.dstArrayElement = 0;
+    write.dstSet = instance->set;
+    write.pImageInfo = &image_info;
+
+    vkUpdateDescriptorSets(rhi.device.handle, 1, &write, 0, NULL);
+}
+
+void E_Vk_FreeMaterialInstance(E_VulkanMaterialInstance* instance)
+{
+    vkFreeDescriptorSets(rhi.device.handle, rhi.imgui.descriptor_pool, 1, &instance->set);
+    free(instance);
 }

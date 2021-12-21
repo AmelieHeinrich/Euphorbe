@@ -4,7 +4,10 @@
 #include <Euphorbe/Resource/Resource.h>
 
 #include "Image.h"
+#include "Buffer.h"
 #include "ShaderCompiler.h"
+
+#define EUPHORBE_MAX_DESCRIPTORS 32
 
 typedef enum E_PrimitiveTopology E_PrimitiveTopology;
 enum E_PrimitiveTopology
@@ -58,6 +61,36 @@ struct E_MaterialRenderInfo
     i32 color_attachment_count;
 };
 
+// Descriptor info
+typedef enum E_DescriptorType E_DescriptorType;
+enum E_DescriptorType
+{
+    E_DescriptorTypeCombinedImageSampler = 1,
+    E_DescriptorTypeUniformBuffer = 6
+};
+
+typedef struct E_Descriptor E_Descriptor;
+struct E_Descriptor
+{
+    E_DescriptorType type;
+    i32 binding;
+};
+
+typedef struct E_DescriptorInstance E_DescriptorInstance;
+struct E_DescriptorInstance
+{
+    E_Descriptor* descriptor;
+
+    struct {
+        E_Image* image;
+        E_ImageLayout layout;
+    } image;
+
+    struct {
+        E_Buffer* buffer;
+    } buffer;
+};
+
 typedef struct E_MaterialCreateInfo E_MaterialCreateInfo;
 struct E_MaterialCreateInfo
 {
@@ -70,6 +103,9 @@ struct E_MaterialCreateInfo
 
     E_ResourceFile* vertex_shader;
     E_ResourceFile* fragment_shader;
+
+    E_Descriptor descriptors[EUPHORBE_MAX_DESCRIPTORS];
+    i32 descriptor_count;
 };
 
 typedef struct E_Material E_Material;
@@ -80,9 +116,22 @@ struct E_Material
     b32 loaded_from_file;
 };
 
+typedef struct E_MaterialInstance E_MaterialInstance;
+struct E_MaterialInstance
+{
+    E_Material* material;
+    void* rhi_handle;
+};
+
 // WARNING: Vertex shader MUST contain input variables!
 E_Material* E_CreateMaterial(E_MaterialCreateInfo* create_info);
 E_Material* E_CreateMaterialFromFile(const char* path);
 void E_FreeMaterial(E_Material* material);
+
+// Instances
+E_MaterialInstance* E_CreateMaterialInstance(E_Material* material);
+void E_MaterialInstanceWriteBuffer(E_MaterialInstance* instance, E_DescriptorInstance* desc_instance, i32 buffer_size);
+void E_MaterialInstanceWriteImage(E_MaterialInstance* instance, E_DescriptorInstance* desc_instance);
+void E_FreeMaterialInstance(E_MaterialInstance* instance);
 
 #endif

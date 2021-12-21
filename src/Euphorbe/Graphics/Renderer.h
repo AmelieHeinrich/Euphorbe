@@ -54,6 +54,7 @@ void E_EndGUI();
 //
 void E_BindMaterial(E_Material* material);
 void E_BindBuffer(E_Buffer* buffer);
+void E_BindMaterialInstance(E_MaterialInstance* instance, E_Material* material);
 
 //
 void E_Draw(u32 first, u32 count);

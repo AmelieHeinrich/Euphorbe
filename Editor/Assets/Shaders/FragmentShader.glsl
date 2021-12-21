@@ -1,10 +1,12 @@
 #version 450
 
-layout (location = 0) in vec3 Color;
-
 layout (location = 0) out vec4 OutColor;
+
+layout(binding = 0) uniform ColorUniform {
+    vec3 color;
+} color;
 
 void main()
 {
-    OutColor = vec4(Color, 1.0);
+    OutColor = vec4(color.color, 1.0);
 }

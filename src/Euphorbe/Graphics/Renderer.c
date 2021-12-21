@@ -88,6 +88,13 @@ void E_BindBuffer(E_Buffer* buffer)
 #endif
 }
 
+void E_BindMaterialInstance(E_MaterialInstance* instance, E_Material* material)
+{
+#ifdef EUPHORBE_WINDOWS
+    E_Vk_BindMaterialInstance((E_VulkanMaterialInstance*)instance->rhi_handle, (E_VulkanMaterial*)material->rhi_handle);
+#endif
+}
+
 void E_Draw(u32 first, u32 count)
 {
 #ifdef EUPHORBE_WINDOWS

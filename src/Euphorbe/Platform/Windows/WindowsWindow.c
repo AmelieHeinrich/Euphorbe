@@ -3,8 +3,6 @@
 #include <Euphorbe/Core/Log.h>
 #include <Euphorbe/Graphics/Renderer.h>
 
-#define CIMGUI_DEFINE_ENUMS_AND_STRUCTS
-#define IMGUI_HAS_DOCK
 #include <cimgui.h>
 #include <generator/cimgui_template.h>
 #include <vulkan/vulkan.h>

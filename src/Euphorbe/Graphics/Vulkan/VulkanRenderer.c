@@ -11,7 +11,6 @@
 
 #include "VulkanImage.h"
 
-#define CIMGUI_DEFINE_ENUMS_AND_STRUCTS
 #include <cimgui.h>
 #include <cimgui_impl.h>
 
@@ -652,7 +651,7 @@ void E_Vk_InitImGui()
     init_info.MinImageCount = 2;
     init_info.ImageCount = FRAMES_IN_FLIGHT;
     init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
-    init_info.Subpass = VK_NULL_HANDLE;
+    init_info.Subpass = 0;
     init_info.CheckVkResultFn = E_Vk_ImGuiCheckError;
 
     ImGui_ImplVulkan_Init(&init_info, rhi.imgui.render_pass);
@@ -944,6 +943,11 @@ void E_Vk_BindBuffer(E_VulkanBuffer* buffer, E_BufferUsage usage)
     default:
         return;
     }
+}
+
+void E_Vk_BindMaterialInstance(E_VulkanMaterialInstance* instance, E_VulkanMaterial* material)
+{
+    vkCmdBindDescriptorSets(CURRENT_CMD_BUF, VK_PIPELINE_BIND_POINT_GRAPHICS, material->pipeline_layout, 0, 1, &instance->set, 0, NULL);
 }
 
 void E_Vk_Draw(u32 first, u32 count)

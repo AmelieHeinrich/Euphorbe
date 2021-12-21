@@ -6,15 +6,23 @@ E_Window* window;
 E_Image* depth_image;
 E_Image* swapchain_buffer;
 
+typedef struct ColorUniform ColorUniform;
+struct ColorUniform
+{
+    V3 color;
+};
+
 E_Material* material;
+E_MaterialInstance* material_instance;
 E_Buffer* vertex_buffer;
 E_Buffer* index_buffer;
+E_Buffer* uniform_buffer;
 
 static f32 vertices[] = {
-    -0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f,
-     0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f,
-     0.5f,  0.5f, 0.0f, 0.0f, 0.0f, 1.0f,
-    -0.5f,  0.5f, 0.0f, 1.0f, 0.0f, 1.0f
+    -0.5f, -0.5f, 0.0f,
+     0.5f, -0.5f, 0.0f,
+     0.5f,  0.5f, 0.0f,
+    -0.5f,  0.5f, 0.0f
 };
 
 static u32 indices[] = {
@@ -60,9 +68,21 @@ int main()
     index_buffer = E_CreateIndexBuffer(sizeof(indices));
     E_SetBufferData(index_buffer, indices, sizeof(indices));
 
+    V3 color = { 0.0f, 0.0f, 0.0f };
+    uniform_buffer = E_CreateUniformBuffer(sizeof(ColorUniform));
+    E_SetBufferData(uniform_buffer, &color, sizeof(color));
+
     material = E_CreateMaterialFromFile("Assets/Materials/RectangleMaterial.toml");
+    material_instance = E_CreateMaterialInstance(material);
+
+    E_DescriptorInstance descriptor_instance = { 0 };
+    descriptor_instance.descriptor = &material->material_create_info->descriptors[0];
+    descriptor_instance.buffer.buffer = uniform_buffer;
+
+    E_MaterialInstanceWriteBuffer(material_instance, &descriptor_instance, sizeof(ColorUniform));
 
     // Launch the window
+
     E_WindowSetResizeCallback(window, ResizeCallback);
     E_LaunchWindow(window);
 
@@ -93,10 +113,14 @@ int main()
             E_ImagePipelineStageEarlyFragment | E_ImagePipelineStageLateFragment);
 
         E_RendererStartRender(attachments, 2, 1);
+
         E_BindMaterial(material);
+        E_BindMaterialInstance(material_instance, material);
+        E_SetBufferData(uniform_buffer, &color, sizeof(color));
         E_BindBuffer(vertex_buffer);
         E_BindBuffer(index_buffer);
         E_DrawIndexed(0, 6);
+
         E_RendererEndRender();
 
         E_ImageTransitionLayout(swapchain_buffer,
@@ -106,7 +130,15 @@ int main()
             E_ImagePipelineStageBottom);
 
         E_BeginGUI();
+        
+        // Log
         E_LogDraw();
+
+        // Color
+        igBegin("Color Panel", NULL, ImGuiWindowFlags_None);
+        igSliderFloat3("Color", color.data, 0.0f, 1.0f, NULL, ImGuiSliderFlags_None);
+        igEnd();
+
         E_EndGUI();
 
         EndRender();
@@ -114,6 +146,8 @@ int main()
 
     E_RendererWait();
 
+    E_FreeMaterialInstance(material_instance);
+    E_FreeBuffer(uniform_buffer);
     E_FreeBuffer(index_buffer);
     E_FreeBuffer(vertex_buffer);
     E_FreeMaterial(material);
