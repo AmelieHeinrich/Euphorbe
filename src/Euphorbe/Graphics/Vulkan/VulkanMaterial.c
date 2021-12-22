@@ -408,7 +408,7 @@ void E_Vk_MaterialInstanceWriteBuffer(E_VulkanMaterialInstance* instance, E_Desc
 
 void E_Vk_MaterialInstanceWriteImage(E_VulkanMaterialInstance* instance, E_DescriptorInstance* image)
 {
-    E_VulkanImage* vk_image = (E_VulkanImage*)image->image.image;
+    E_VulkanImage* vk_image = (E_VulkanImage*)image->image.image->rhi_handle;
 
     VkDescriptorImageInfo image_info = { 0 };
     image_info.imageLayout = (VkImageLayout)image->image.layout;
@@ -416,8 +416,9 @@ void E_Vk_MaterialInstanceWriteImage(E_VulkanMaterialInstance* instance, E_Descr
     image_info.imageView = vk_image->image_view;
 
     VkWriteDescriptorSet write = { 0 };
+    write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     write.descriptorCount = 1;
-    write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     write.dstBinding = image->descriptor->binding;
     write.dstArrayElement = 0;
     write.dstSet = instance->set;

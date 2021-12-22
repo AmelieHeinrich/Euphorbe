@@ -13,7 +13,7 @@ struct E_VulkanImage
     VkFormat format;
     VkExtent3D image_extent;
     VkSampler sampler;
-    VkDescriptorSet gui_descriptor_set;
+    VkDescriptorSet gui_descriptor_set[FRAMES_IN_FLIGHT];
 
     VmaAllocation allocation;
     VmaAllocationInfo allocation_info;
@@ -22,6 +22,7 @@ struct E_VulkanImage
 };
 
 E_VulkanImage* E_Vk_MakeImage(i32 width, i32 height, E_ImageFormat format);
+E_VulkanImage* E_Vk_MakeImageFromFile(const char* path);
 void E_Vk_FreeImage(E_VulkanImage* image);
 void E_Vk_ResizeImage(E_VulkanImage* image, i32 width, i32 height);
 

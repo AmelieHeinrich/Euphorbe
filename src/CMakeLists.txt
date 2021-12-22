@@ -22,6 +22,7 @@ target_include_directories(Euphorbe PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
                                            ${THIRD_PARTY}/cimgui/imgui
                                            ${THIRD_PARTY}/imgui_backends
                                            ${THIRD_PARTY}/tomlc99
+                                           ${THIRD_PARTY}/stb
                                            $ENV{VULKAN_SDK}/Include)
 
 target_link_libraries(Euphorbe PUBLIC volk cimgui imgui_impl TOML)

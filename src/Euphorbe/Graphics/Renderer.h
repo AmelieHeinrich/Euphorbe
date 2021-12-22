@@ -5,8 +5,6 @@
 #include <Euphorbe/Platform/Window.h>
 #include <Euphorbe/Math/Types.h>
 
-#define FRAMES_IN_FLIGHT 3
-
 #include "Image.h"
 #include "Material.h"
 #include "Buffer.h"

@@ -20,6 +20,23 @@ E_Image* E_MakeImage(i32 width, i32 height, E_ImageFormat format)
     return image;
 }
 
+E_Image* E_MakeImageFromFile(const char* path)
+{
+    E_Image* image = malloc(sizeof(E_Image));
+    image->format = E_ImageFormatRGBA8;
+
+#ifdef EUPHORBE_WINDOWS
+    image->rhi_handle = E_Vk_MakeImageFromFile(path);
+
+    E_VulkanImage* vulkan_image = (E_VulkanImage*)image->rhi_handle;
+
+    image->width = vulkan_image->image_extent.width;
+    image->height = vulkan_image->image_extent.height;
+#endif
+
+    return image;
+}
+
 void E_FreeImage(E_Image* image)
 {
 #ifdef EUPHORBE_WINDOWS

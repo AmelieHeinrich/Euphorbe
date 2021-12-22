@@ -119,4 +119,8 @@ void E_Vk_Image_Memory_Barrier(VkCommandBuffer command_buffer,
                                VkPipelineStageFlags dst_stage_mask,
                                VkImageSubresourceRange subresource_range);
 
+// Utility stuff
+VkCommandBuffer E_Vk_SingleTimeCommands();
+void E_Vk_EndSingleTimeCommands(VkCommandBuffer cmd_buf);
+
 #endif

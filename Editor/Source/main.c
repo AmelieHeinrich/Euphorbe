@@ -4,10 +4,12 @@
 
 #include "ViewportPanel.h"
 
-i32 first_render = FRAMES_IN_FLIGHT;
+b32 first_render = 1;
 E_Window* window;
-E_Image* render_buffers[FRAMES_IN_FLIGHT];
+
+E_Image* render_buffer;
 E_Image* depth_image;
+E_Image* awesome_face;
 V3 color;
 
 E_Material* material;
@@ -17,10 +19,10 @@ E_Buffer* index_buffer;
 E_Buffer* uniform_buffer;
 
 static f32 vertices[] = {
-    -0.5f, -0.5f, 0.0f,
-     0.5f, -0.5f, 0.0f,
-     0.5f,  0.5f, 0.0f,
-    -0.5f,  0.5f, 0.0f
+    -0.5f, -0.5f, 0.0f, 0.0f, 0.0f,
+     0.5f, -0.5f, 0.0f, 1.0f, 0.0f,
+     0.5f,  0.5f, 0.0f, 1.0f, 1.0f,
+    -0.5f,  0.5f, 0.0f, 0.0f, 1.0f
 };
 
 static u32 indices[] = {
@@ -48,15 +50,14 @@ void ResizeCallback(i32 width, i32 height)
 {
     E_RendererResize(width, height);
 
-    for (i32 i = 0; i < FRAMES_IN_FLIGHT; i++)
-        E_ImageResize(render_buffers[i], viewport_panel.viewport_size.x, viewport_panel.viewport_size.y);
+    E_ImageResize(render_buffer, viewport_panel.viewport_size.x, viewport_panel.viewport_size.y);
     E_ImageResize(depth_image, viewport_panel.viewport_size.x, viewport_panel.viewport_size.y);
-    first_render = 3;
+    first_render = 1;
 }
 
 void DrawQuad(E_Image* render_buffer)
 {
-    E_ClearValue color_clear = { 1.0f, 0.1f, 0.1f, 1.0f, 0.0f, 0 };
+    E_ClearValue color_clear = { 0.1f, 0.2f, 0.3f, 1.0f, 0.0f, 0 };
     E_ClearValue depth_clear = { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0 };
 
     E_ImageAttachment attachments[2] = {
@@ -65,7 +66,7 @@ void DrawQuad(E_Image* render_buffer)
     };
 
     E_ImageLayout src_render_buffer_image_layout = first_render ? E_ImageLayoutUndefined : E_ImageLayoutColor;
-    first_render -= 1;
+    first_render = 0;
 
     V2 render_size = { viewport_panel.viewport_size.x, viewport_panel.viewport_size.y };
 
@@ -126,8 +127,7 @@ int main()
     E_RendererInit(window, settings);
 
     // Renderer assets
-    for (i32 i = 0; i < FRAMES_IN_FLIGHT; i++)
-        render_buffers[i] = E_MakeImage(window->width, window->height, E_ImageFormatRGBA8);
+    render_buffer = E_MakeImage(window->width, window->height, E_ImageFormatRGBA8);
     depth_image = E_MakeImage(window->width, window->height, E_ImageFormatD32_Float);
 
     vertex_buffer = E_CreateVertexBuffer(sizeof(vertices));
@@ -136,6 +136,8 @@ int main()
     index_buffer = E_CreateIndexBuffer(sizeof(indices));
     E_SetBufferData(index_buffer, indices, sizeof(indices));
 
+    awesome_face = E_MakeImageFromFile("Assets/Textures/awesomeface.png");
+
     color = V3Zero();
     uniform_buffer = E_CreateUniformBuffer(sizeof(V3));
     E_SetBufferData(uniform_buffer, &color, sizeof(color));
@@ -143,11 +145,17 @@ int main()
     material = E_CreateMaterialFromFile("Assets/Materials/RectangleMaterial.toml");
     material_instance = E_CreateMaterialInstance(material);
 
-    E_DescriptorInstance descriptor_instance = { 0 };
-    descriptor_instance.descriptor = &material->material_create_info->descriptors[0];
-    descriptor_instance.buffer.buffer = uniform_buffer;
+    E_DescriptorInstance buffer_instance = { 0 };
+    buffer_instance.descriptor = &material->material_create_info->descriptors[0];
+    buffer_instance.buffer.buffer = uniform_buffer;
 
-    E_MaterialInstanceWriteBuffer(material_instance, &descriptor_instance, sizeof(V3));
+    E_DescriptorInstance texture_instance = { 0 };
+    texture_instance.descriptor = &material->material_create_info->descriptors[1];
+    texture_instance.image.image = awesome_face;
+    texture_instance.image.layout = E_ImageLayoutShaderRead;
+
+    E_MaterialInstanceWriteBuffer(material_instance, &buffer_instance, sizeof(V3));
+    E_MaterialInstanceWriteImage(material_instance, &texture_instance);
 
     // Launch the window
     InitViewportPanel(window->width, window->height);
@@ -157,19 +165,15 @@ int main()
     while (E_IsWindowOpen(window))
     {
         // Update viewport
-        if (viewport_panel.viewport_size.x != (f32)render_buffers[0]->width || viewport_panel.viewport_size.y != (f32)render_buffers[0]->height && viewport_panel.viewport_size.x > 0 && viewport_panel.viewport_size.y > 0)
+        if (viewport_panel.viewport_size.x != (f32)render_buffer->width || viewport_panel.viewport_size.y != (f32)render_buffer->height && viewport_panel.viewport_size.x > 0 && viewport_panel.viewport_size.y > 0)
         {
             E_RendererWait();
-            for (i32 i = 0; i < FRAMES_IN_FLIGHT; i++)
-                E_ImageResize(render_buffers[i], viewport_panel.viewport_size.x, viewport_panel.viewport_size.y);
+            E_ImageResize(render_buffer, viewport_panel.viewport_size.x, viewport_panel.viewport_size.y);
             E_ImageResize(depth_image, viewport_panel.viewport_size.x, viewport_panel.viewport_size.y);
-            first_render = 3;
+            first_render = 1;
         }
 
         BeginRender();
-
-        u32 image_index = E_GetSwapchainImageIndex();
-        E_Image* render_buffer = render_buffers[image_index];
 
         // DRAW QUAD //
         DrawQuad(render_buffer);
@@ -177,12 +181,17 @@ int main()
 
         // GUI //
         E_BeginGUI();
-
         BeginDockspace();
+
         E_LogDraw();
         DrawViewportPanel(render_buffer);
-        EndDockspace();
 
+        igBegin("Material Viewer", NULL, ImGuiWindowFlags_AlwaysAutoResize);
+        igText("Albedo Map:");
+        E_ImageDrawToGUI(awesome_face, awesome_face->width / 2, awesome_face->height / 2);
+        igEnd();
+
+        EndDockspace();
         E_EndGUI();
         // END GUI //
 
@@ -192,13 +201,13 @@ int main()
     E_RendererWait();
 
     E_FreeMaterialInstance(material_instance);
+    E_FreeImage(awesome_face);
     E_FreeBuffer(uniform_buffer);
     E_FreeBuffer(index_buffer);
     E_FreeBuffer(vertex_buffer);
     E_FreeMaterial(material);
     E_FreeImage(depth_image);
-    for (i32 i = 0; i < FRAMES_IN_FLIGHT; i++)
-        E_FreeImage(render_buffers[i]);
+    E_FreeImage(render_buffer);
 
     E_RendererShutdown();
     E_FreeWindow(window);
