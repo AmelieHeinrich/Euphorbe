@@ -2,13 +2,13 @@
 #define EDITOR_VIEWPORT_PANEL_H
 
 #include <cimgui.h>
-#include <Euphorbe/Math/Math.h>
+#include <cglm/cglm.h>
 #include <Euphorbe/Graphics/Image.h>
 
 typedef struct ViewportPanel ViewportPanel;
 struct ViewportPanel
 {
-	V2 viewport_size;
+	vec2 viewport_size;
 };
 
 extern ViewportPanel viewport_panel;

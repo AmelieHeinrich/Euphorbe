@@ -23,9 +23,10 @@ target_include_directories(Euphorbe PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
                                            ${THIRD_PARTY}/imgui_backends
                                            ${THIRD_PARTY}/tomlc99
                                            ${THIRD_PARTY}/stb
+					   ${THIRD_PARTY}/cglm/include
                                            $ENV{VULKAN_SDK}/Include)
 
-target_link_libraries(Euphorbe PUBLIC volk cimgui imgui_impl TOML)
+target_link_libraries(Euphorbe PUBLIC volk cimgui imgui_impl TOML cglm)
 target_link_libraries(Euphorbe PUBLIC $ENV{VULKAN_SDK}/Lib/shaderc_combined.lib)
 target_compile_definitions(Euphorbe PUBLIC IMGUI_IMPL_API=)
 

@@ -14,6 +14,7 @@ set(IMGUI_STATIC "on")
 # Dependencies
 add_subdirectory(ThirdParty/volk)
 add_subdirectory(ThirdParty/cimgui)
+add_subdirectory(ThirdParty/cglm)
 
 # ImGui impl
 add_library(imgui_impl STATIC ThirdParty/cimgui/imgui/backends/imgui_impl_win32.h 

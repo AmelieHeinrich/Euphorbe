@@ -10,7 +10,11 @@ add_definitions(-DCIMGUI_DEFINE_ENUMS_AND_STRUCTS)
 target_include_directories(Editor PUBLIC 
                            "Euphorbe"
                            ${THIRD_PARTY}/cimgui 
-                           ${THIRD_PARTY}/cimgui/imgui)
-target_link_libraries(Editor PUBLIC Euphorbe cimgui)
+                           ${THIRD_PARTY}/cimgui/imgui
+			   ${THIRD_PARTY}/cglm/include)
+target_link_libraries(Editor PUBLIC Euphorbe cimgui cglm)
 add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 set_target_properties(Editor PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+
+
+source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${EDITOR_SOURCE})

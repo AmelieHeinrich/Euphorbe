@@ -7,3 +7,6 @@
 [submodule "ThirdParty/cimgui"]
 	path = ThirdParty/cimgui
 	url = https://github.com/Sausty/cimgui
+[submodule "ThirdParty/cglm"]
+	path = ThirdParty/cglm
+	url = https://github.com/recp/cglm

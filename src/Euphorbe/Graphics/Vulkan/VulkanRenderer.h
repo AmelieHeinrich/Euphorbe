@@ -92,7 +92,7 @@ void E_Vk_DeviceWait();
 
 void E_Vk_Resize(i32 width, i32 height);
 
-void E_Vk_RendererStartRender(E_ImageAttachment* attachments, i32 attachment_count, V2 render_size, b32 has_depth);
+void E_Vk_RendererStartRender(E_ImageAttachment* attachments, i32 attachment_count, vec2 render_size, b32 has_depth);
 void E_Vk_RendererEndRender();
 
 void E_Vk_BeginGUI();

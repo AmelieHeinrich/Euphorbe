@@ -3,7 +3,7 @@
 
 #include <Euphorbe/Core/Log.h>
 #include <Euphorbe/Platform/Window.h>
-#include <Euphorbe/Math/Types.h>
+#include <cglm/cglm.h>
 
 #include "Image.h"
 #include "Material.h"
@@ -45,7 +45,7 @@ void E_RendererEnd();
 void E_RendererWait();
 
 // Put all of your color + depth attachments in the array. Depth attachment must be at the end
-void E_RendererStartRender(E_ImageAttachment* attachments, i32 attachment_count, V2 render_size, b32 has_depth);
+void E_RendererStartRender(E_ImageAttachment* attachments, i32 attachment_count, vec2 render_size, b32 has_depth);
 void E_RendererEndRender();
 
 E_Image* E_GetSwapchainImage();

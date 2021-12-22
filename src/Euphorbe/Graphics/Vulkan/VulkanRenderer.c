@@ -803,13 +803,13 @@ void E_Vk_DeviceWait()
 }
 
 #pragma optimize("",off)
-void E_Vk_RendererStartRender(E_ImageAttachment* attachments, i32 attachment_count, V2 render_size, b32 has_depth)
+void E_Vk_RendererStartRender(E_ImageAttachment* attachments, i32 attachment_count, vec2 render_size, b32 has_depth)
 {
     u32 color_iterator = has_depth ? attachment_count - 1 : attachment_count;
 
     VkRect2D render_area = {0};
-    render_area.extent.width = render_size.x;
-    render_area.extent.height = render_size.y;
+    render_area.extent.width = render_size[0];
+    render_area.extent.height = render_size[1];
     render_area.offset.x = 0;
     render_area.offset.y = 0;
 
@@ -868,8 +868,8 @@ void E_Vk_RendererStartRender(E_ImageAttachment* attachments, i32 attachment_cou
     rendering_info.pColorAttachments = color_attachments;
 
     VkViewport viewport = { 0 };
-    viewport.width = render_size.x;
-    viewport.height = render_size.y;
+    viewport.width = render_size[0];
+    viewport.height = render_size[1];
     viewport.x = 0.0f;
     viewport.y = 0.0f;
     viewport.minDepth = 0.0f;
@@ -878,8 +878,8 @@ void E_Vk_RendererStartRender(E_ImageAttachment* attachments, i32 attachment_cou
     VkRect2D scissor = { 0 };
     scissor.offset.x = 0;
     scissor.offset.y = 0;
-    scissor.extent.width = (u32)render_size.x;
-    scissor.extent.height = (u32)render_size.y;
+    scissor.extent.width = (u32)render_size[0];
+    scissor.extent.height = (u32)render_size[1];
 
     vkCmdSetViewport(CURRENT_CMD_BUF, 0, 1, &viewport);
     vkCmdSetScissor(CURRENT_CMD_BUF, 0, 1, &scissor);

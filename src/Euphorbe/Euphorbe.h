@@ -18,8 +18,4 @@
 // Resource
 #include "Resource/Resource.h"
 
-// Math
-#include "Math/Types.h"
-#include "Math/Math.h"
-
 #endif

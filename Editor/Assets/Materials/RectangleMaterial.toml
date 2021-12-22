@@ -1,5 +1,5 @@
 [MaterialProperties]
-	CullMode = "Back"
+	CullMode = "None"
 	DepthOperation = "Always"
 	FrontFace = "CW"
 	PrimitiveTopology = "TriangleList"
