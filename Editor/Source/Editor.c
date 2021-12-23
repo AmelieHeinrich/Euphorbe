@@ -134,6 +134,7 @@ void EditorAssureViewportSize()
 
 void EditorBeginRender()
 {
+    f64 start = EditorBeginProfiling();
     E_RendererBegin();
 
     glm_mat4_identity(editor_state.uniforms.mvp);
@@ -163,10 +164,14 @@ void EditorBeginRender()
         E_ImageLayoutUndefined, E_ImageLayoutDepth,
         E_ImagePipelineStageEarlyFragment | E_ImagePipelineStageLateFragment,
         E_ImagePipelineStageEarlyFragment | E_ImagePipelineStageLateFragment);
+
+    editor_state.perf.begin_render = EditorEndProfiling(start);
 }
 
 void EditorEndRender()
 {
+    f64 start = EditorBeginProfiling();
+
     E_ImageTransitionLayout(editor_state.render_buffer,
         E_ImageAccessColorWrite, E_ImageAccessShaderRead,
         E_ImageLayoutShaderRead, E_ImageLayoutColor,
@@ -174,10 +179,14 @@ void EditorEndRender()
 
     E_RendererEnd();
     E_WindowUpdate(editor_state.window);
+    
+    editor_state.perf.end_render = EditorEndProfiling(start);
 }
 
 void EditorDrawTexturedQuad()
 {
+    f64 start = EditorBeginProfiling();
+
     E_BindMaterial(editor_state.material);
     E_BindMaterialInstance(editor_state.material_instance, editor_state.material);
     E_SetBufferData(editor_state.uniform_buffer, &editor_state.uniforms, sizeof(editor_state.uniforms));
@@ -186,21 +195,38 @@ void EditorDrawTexturedQuad()
     E_DrawIndexed(0, 6);
 
     E_RendererEndRender();
+
+    editor_state.perf.draw_quad = EditorEndProfiling(start);
 }
 
 void EditorDrawGUI()
 {
+    f64 start = EditorBeginProfiling();
+
     EditorCreateDockspace();
 
     E_LogDraw();
     DrawViewportPanel(editor_state.render_buffer);
 
+    // Material Viewer
     igBegin("Material Viewer", NULL, ImGuiWindowFlags_AlwaysAutoResize);
     igText("Albedo Map:");
     E_ImageDrawToGUI(editor_state.quad_texture, editor_state.quad_texture->width / 2, editor_state.quad_texture->height / 2);
     igEnd();
 
+    // Performance panel
+    igBegin("Performance Viewer", NULL, ImGuiWindowFlags_None);
+    f64 editor_update = editor_state.perf.begin_render + editor_state.perf.end_render + editor_state.perf.draw_quad + editor_state.perf.draw_gui;
+    igText("EditorBeginRender: %g ms", editor_state.perf.begin_render);
+    igText("EditorEndRender: %g ms", editor_state.perf.end_render);
+    igText("EditorDrawQuad: %g ms", editor_state.perf.draw_quad);
+    igText("EditorDrawGUI: %g ms", editor_state.perf.draw_gui);
+    igText("EditorUpdate: %g ms", editor_update);
+    igEnd();
+
     EditorDestroyDockspace();
+
+    editor_state.perf.draw_gui = EditorEndProfiling(start);
 }
 
 void EditorCreateDockspace()
@@ -226,4 +252,15 @@ void EditorDestroyDockspace()
     igEnd();
 
     E_EndGUI();
+}
+
+f64 EditorBeginProfiling()
+{
+    return clock();
+}
+
+f64 EditorEndProfiling(f64 start)
+{
+    clock_t end = clock();
+    return ((f64)(end - start));
 }

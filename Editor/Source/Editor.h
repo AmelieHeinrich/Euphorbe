@@ -4,6 +4,7 @@
 #include <Euphorbe/Euphorbe.h>
 #include <cglm/cglm.h>
 #include <cimgui.h>
+#include <time.h>
 
 #include "Panels/ViewportPanel.h"
 
@@ -11,6 +12,15 @@ typedef struct SceneUniforms SceneUniforms;
 struct SceneUniforms
 {
 	mat4 mvp;
+};
+
+typedef struct EditorPerformance EditorPerformance;
+struct EditorPerformance
+{
+	f64 begin_render;
+	f64 draw_quad;
+	f64 draw_gui;
+	f64 end_render;
 };
 
 typedef struct EditorData EditorData;
@@ -31,6 +41,9 @@ struct EditorData
 	E_Buffer* uniform_buffer;
 	E_Image* quad_texture;
 	SceneUniforms uniforms;
+
+	// Performance
+	EditorPerformance perf;
 };
 
 extern EditorData editor_state;
@@ -52,5 +65,7 @@ void EditorDrawTexturedQuad();
 void EditorCreateDockspace();
 void EditorDestroyDockspace();
 void EditorDrawGUI();
+f64 EditorBeginProfiling();
+f64 EditorEndProfiling(f64 start);
 
 #endif
