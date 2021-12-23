@@ -23,6 +23,7 @@ struct E_VulkanMaterialInstance
 
 E_VulkanMaterial* E_Vk_CreateMaterial(E_MaterialCreateInfo* create_info);
 void E_Vk_FreeMaterial(E_VulkanMaterial* material);
+void E_Vk_PushConstants(E_VulkanMaterial* material, void* data, i64 size);
 
 E_VulkanMaterialInstance* E_Vk_CreateMaterialInstance(E_VulkanMaterial* material);
 void E_Vk_MaterialInstanceWriteBuffer(E_VulkanMaterialInstance* instance, i32 binding, E_VulkanBuffer* buffer, i32 buffer_size);

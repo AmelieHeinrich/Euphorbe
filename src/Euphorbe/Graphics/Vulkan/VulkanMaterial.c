@@ -313,11 +313,20 @@ E_VulkanMaterial* E_Vk_CreateMaterial(E_MaterialCreateInfo* create_info)
     color_blending.blendConstants[2] = 0.0f;
     color_blending.blendConstants[3] = 0.0f;
 
+    VkPushConstantRange push_constant = { 0 };
+    push_constant.offset = 0;
+    push_constant.size = create_info->push_constants_size;
+    push_constant.stageFlags = VK_SHADER_STAGE_ALL;
+
     VkPipelineLayoutCreateInfo pipeline_layout_info = {0};
     pipeline_layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    pipeline_layout_info.pushConstantRangeCount = 0;
     pipeline_layout_info.setLayoutCount = 1;
     pipeline_layout_info.pSetLayouts = &result->set_layout;
+    if (create_info->has_push_constants)
+    {
+        pipeline_layout_info.pushConstantRangeCount = 1;
+        pipeline_layout_info.pPushConstantRanges = &push_constant;
+    }
 
     res = vkCreatePipelineLayout(rhi.device.handle, &pipeline_layout_info, NULL, &result->pipeline_layout);
     assert(res == VK_SUCCESS);
@@ -367,6 +376,11 @@ void E_Vk_FreeMaterial(E_VulkanMaterial* material)
     vkDestroyPipeline(rhi.device.handle, material->pipeline, NULL);
     vkDestroyPipelineLayout(rhi.device.handle, material->pipeline_layout, NULL);
     free(material);
+}
+
+void E_Vk_PushConstants(E_VulkanMaterial* material, void* data, i64 size)
+{
+    vkCmdPushConstants(rhi.command.command_buffers[rhi.sync.image_index], material->pipeline_layout, VK_SHADER_STAGE_ALL, 0, size, data);
 }
 
 E_VulkanMaterialInstance* E_Vk_CreateMaterialInstance(E_VulkanMaterial* material)

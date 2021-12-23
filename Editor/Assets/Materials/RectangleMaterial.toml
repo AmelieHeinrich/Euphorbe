@@ -15,5 +15,9 @@
 	Fragment = "Assets/Shaders/FragmentShader.glsl"
 
 [DescriptorLayout]
-	Descriptors = ["UniformBuffer", "CombinedImageSampler"]
-	DescriptorCount = 2
+	Descriptors = ["CombinedImageSampler"]
+	DescriptorCount = 1
+
+[PushConstants]
+	HasPushConstants = 1
+	Size = 64

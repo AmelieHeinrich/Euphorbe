@@ -1,6 +1,6 @@
 #version 450
 
-layout (binding = 0) uniform SceneUniform {
+layout (push_constant) uniform SceneUniform {
     mat4 mvp;
 } scene;
 

@@ -38,7 +38,6 @@ struct EditorData
 	E_MaterialInstance* material_instance;
 	E_Buffer* vertex_buffer;
 	E_Buffer* index_buffer;
-	E_Buffer* uniform_buffer;
 	E_ResourceFile* quad_texture;
 	SceneUniforms uniforms;
 

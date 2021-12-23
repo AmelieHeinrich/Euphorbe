@@ -16,7 +16,6 @@ void EditorCleanup()
 
     E_FreeMaterialInstance(editor_state.material_instance);
     E_FreeResource(editor_state.quad_texture);
-    E_FreeBuffer(editor_state.uniform_buffer);
     E_FreeBuffer(editor_state.index_buffer);
     E_FreeBuffer(editor_state.vertex_buffer);
     E_FreeResource(editor_state.material);
@@ -68,7 +67,7 @@ void EditorInitialiseWindow()
 
 void EditorInitialiseRenderState()
 {
-    editor_state.render_buffer = E_MakeImage(editor_state.window->width, editor_state.window->height, E_ImageFormatRGBA8);
+    editor_state.render_buffer = E_MakeImage(editor_state.window->width, editor_state.window->height, E_ImageFormatRGBA16);
     editor_state.depth_buffer = E_MakeImage(editor_state.window->width, editor_state.window->height, E_ImageFormatD32_Float);
 }
 
@@ -94,15 +93,10 @@ void EditorInitialiseTexturedQuad()
 
     editor_state.quad_texture = E_LoadResource("Assets/Textures/awesomeface.png", E_ResourceTypeTexture);
 
-    glm_mat4_identity(&editor_state.uniforms.mvp);
-    editor_state.uniform_buffer = E_CreateUniformBuffer(sizeof(editor_state.uniforms));
-    E_SetBufferData(editor_state.uniform_buffer, &editor_state.uniforms, sizeof(editor_state.uniforms));
-
     editor_state.material = E_LoadResource("Assets/Materials/RectangleMaterial.toml", E_ResourceTypeMaterial);
     editor_state.material_instance = E_CreateMaterialInstance(editor_state.material->as.material);
 
-    E_MaterialInstanceWriteBuffer(editor_state.material_instance, 0, editor_state.uniform_buffer, sizeof(mat4));
-    E_MaterialInstanceWriteImage(editor_state.material_instance, 1, editor_state.quad_texture->as.image);
+    E_MaterialInstanceWriteImage(editor_state.material_instance, 0, editor_state.quad_texture->as.image);
 }
 
 void EditorLaunch()
@@ -176,11 +170,13 @@ void EditorEndRender()
 
 void EditorDrawTexturedQuad()
 {
+    glm_mat4_identity(editor_state.uniforms.mvp);
+
     f64 start = EditorBeginProfiling();
 
     E_BindMaterial(editor_state.material->as.material);
     E_BindMaterialInstance(editor_state.material_instance, editor_state.material->as.material);
-    E_SetBufferData(editor_state.uniform_buffer, &editor_state.uniforms, sizeof(editor_state.uniforms));
+    E_MaterialPushConstants(editor_state.material->as.material, &editor_state.uniforms.mvp, sizeof(editor_state.uniforms.mvp));
     E_BindBuffer(editor_state.vertex_buffer);
     E_BindBuffer(editor_state.index_buffer);
     E_DrawIndexed(0, 6);

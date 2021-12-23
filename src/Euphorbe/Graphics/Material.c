@@ -34,7 +34,6 @@ E_Material* E_CreateMaterial(E_MaterialCreateInfo* create_info)
 	return result;
 }
 
-#pragma optimize("", off)
 E_Material* E_CreateMaterialFromFile(const char* path)
 {
 	E_Material* material = malloc(sizeof(E_Material));
@@ -69,6 +68,10 @@ E_Material* E_CreateMaterialFromFile(const char* path)
 	toml_table_t* descriptor_layout = toml_table_in(conf, "DescriptorLayout");
 	if (!descriptor_layout)
 		E_LogError("TOML READ ERROR: Failed to parse descriptor layout - %s", errbuf);
+
+	toml_table_t* push_constants = toml_table_in(conf, "PushConstants");
+	if (!push_constants)
+		E_LogError("TOML READ ERROR: Failed to parse push constants - %s", errbuf);
 
 	// MaterialProperties
 
@@ -149,6 +152,14 @@ E_Material* E_CreateMaterialFromFile(const char* path)
 		free(descriptor_type);
 	}
 
+	// Push Constants
+	toml_datum_t has_push_constants = toml_int_in(push_constants, "HasPushConstants");
+	toml_datum_t push_constants_size = toml_int_in(push_constants, "Size");
+	assert(has_push_constants.ok);
+	assert(push_constants_size.ok);
+	material->material_create_info->has_push_constants = has_push_constants.u.i;
+	material->material_create_info->push_constants_size = push_constants_size.u.i;
+
 	// Finally, allocate the vulkan handle
 #ifdef EUPHORBE_WINDOWS
 	material->rhi_handle = E_Vk_CreateMaterial(material->material_create_info);
@@ -159,7 +170,14 @@ E_Material* E_CreateMaterialFromFile(const char* path)
 
 	return material;
 }
-#pragma optimize("", on)
+
+void E_MaterialPushConstants(E_Material* material, void* data, i64 size)
+{
+#ifdef EUPHORBE_WINDOWS
+	E_Vk_PushConstants((E_VulkanMaterial*)material->rhi_handle, data, size);
+#endif
+}
+
 
 void E_FreeMaterial(E_Material* material)
 {

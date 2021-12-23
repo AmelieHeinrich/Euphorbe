@@ -79,6 +79,7 @@ struct E_Descriptor
 typedef struct E_MaterialCreateInfo E_MaterialCreateInfo;
 struct E_MaterialCreateInfo
 {
+    // Pipeline render info
     E_PrimitiveTopology primitive_topology;
     E_PolygonMode polygon_mode;
     E_CullMode cull_mode;
@@ -86,11 +87,17 @@ struct E_MaterialCreateInfo
     E_CompareOP depth_op;
     E_MaterialRenderInfo render_info;
 
+    // Shaders
     E_ResourceFile* vertex_shader;
     E_ResourceFile* fragment_shader;
 
+    // Descriptors
     E_Descriptor descriptors[EUPHORBE_MAX_DESCRIPTORS];
     i32 descriptor_count;
+
+    // Push constants
+    b32 has_push_constants;
+    i32 push_constants_size;
 };
 
 typedef struct E_Material E_Material;
@@ -111,6 +118,7 @@ struct E_MaterialInstance
 // WARNING: Vertex shader MUST contain input variables!
 E_Material* E_CreateMaterial(E_MaterialCreateInfo* create_info);
 E_Material* E_CreateMaterialFromFile(const char* path);
+void E_MaterialPushConstants(E_Material* material, void* data, i64 size);
 void E_FreeMaterial(E_Material* material);
 
 // Instances
