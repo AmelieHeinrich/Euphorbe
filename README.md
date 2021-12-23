@@ -35,7 +35,7 @@ cmake -G "Visual Studio 17 2022" -B build
 ## Screenshots
 
 ### Screenshot from Dec 23 2021
-![Dec 23 2021](.github/23dec2021.png)
+![Dec 23 2021](.github/23dec2021.PNG)
 
 ## Additional information
 
