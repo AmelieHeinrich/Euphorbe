@@ -91,12 +91,15 @@ void EditorInitialiseTexturedQuad()
     editor_state.index_buffer = E_CreateIndexBuffer(sizeof(indices));
     E_SetBufferData(editor_state.index_buffer, indices, sizeof(indices));
 
-    editor_state.quad_texture = E_LoadResource("Assets/Textures/awesomeface.png", E_ResourceTypeTexture);
+    editor_state.quad_texture = E_LoadResource("Assets/Textures/cobblestone.png", E_ResourceTypeTexture);
 
     editor_state.material = E_LoadResource("Assets/Materials/RectangleMaterial.toml", E_ResourceTypeMaterial);
     editor_state.material_instance = E_CreateMaterialInstance(editor_state.material->as.material);
 
     E_MaterialInstanceWriteImage(editor_state.material_instance, 0, editor_state.quad_texture->as.image);
+
+    glm_vec3_zero(editor_state.camera_position);
+    glm_mat4_identity(editor_state.camera_view);
 }
 
 void EditorLaunch()
@@ -121,8 +124,6 @@ void EditorBeginRender()
 {
     f64 start = EditorBeginProfiling();
     E_RendererBegin();
-
-    glm_mat4_identity(editor_state.uniforms.mvp);
 
     E_ClearValue color_clear = { 0.1f, 0.2f, 0.3f, 1.0f, 0.0f, 0 };
     E_ClearValue depth_clear = { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0 };
@@ -170,13 +171,23 @@ void EditorEndRender()
 
 void EditorDrawTexturedQuad()
 {
-    glm_mat4_identity(editor_state.uniforms.mvp);
-
     f64 start = EditorBeginProfiling();
+    
+    mat4 view;
+    mat4 projection;
 
+    glm_mat4_identity(view);
+    glm_mat4_identity(projection);
+    glm_perspective(90.0f, editor_state.render_buffer->width / editor_state.render_buffer->height, 0.001f, 1000.0f, projection);
+    glm_translate(view, editor_state.camera_position);
+
+    glm_mat4_identity(editor_state.camera_view);
+    glm_mat4_mul(projection, view, editor_state.camera_view);
+
+       
     E_BindMaterial(editor_state.material->as.material);
     E_BindMaterialInstance(editor_state.material_instance, editor_state.material->as.material);
-    E_MaterialPushConstants(editor_state.material->as.material, &editor_state.uniforms.mvp, sizeof(editor_state.uniforms.mvp));
+    E_MaterialPushConstants(editor_state.material->as.material, &editor_state.camera_view, sizeof(editor_state.camera_view));
     E_BindBuffer(editor_state.vertex_buffer);
     E_BindBuffer(editor_state.index_buffer);
     E_DrawIndexed(0, 6);
@@ -209,6 +220,11 @@ void EditorDrawGUI()
     igText("EditorDrawQuad: %g ms", editor_state.perf.draw_quad);
     igText("EditorDrawGUI: %g ms", editor_state.perf.draw_gui);
     igText("EditorUpdate: %g ms", editor_update);
+    igEnd();
+
+    // Camera Panel
+    igBegin("Camera Panel", NULL, ImGuiWindowFlags_None);
+    igSliderFloat3("Camera Position", editor_state.camera_position, -10.0f, 10.0f, "%.3f", ImGuiSliderFlags_None);
     igEnd();
 
     EditorDestroyDockspace();

@@ -3,16 +3,11 @@
 
 #include <Euphorbe/Euphorbe.h>
 #include <cglm/cglm.h>
+#include <cglm/mat4.h>
 #include <cimgui.h>
 #include <time.h>
 
 #include "Panels/ViewportPanel.h"
-
-typedef struct SceneUniforms SceneUniforms;
-struct SceneUniforms
-{
-	mat4 mvp;
-};
 
 typedef struct EditorPerformance EditorPerformance;
 struct EditorPerformance
@@ -39,10 +34,13 @@ struct EditorData
 	E_Buffer* vertex_buffer;
 	E_Buffer* index_buffer;
 	E_ResourceFile* quad_texture;
-	SceneUniforms uniforms;
 
 	// Performance
 	EditorPerformance perf;
+
+	// Editor Camera
+	vec3 camera_position;
+	mat4 camera_view;
 };
 
 extern EditorData editor_state;
