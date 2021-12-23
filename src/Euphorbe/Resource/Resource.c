@@ -10,7 +10,7 @@ E_ResourceFile* E_LoadResource(const char* path, E_ResourceType type)
 {
     E_ResourceFile* resource = malloc(sizeof(E_ResourceFile));
 	resource->type = type;
-	resource->path = path;
+	resource->path = (char*)path;
 	resource->resource_data = E_ReadFile(path, &resource->resource_size);
 
 	switch (resource->type)

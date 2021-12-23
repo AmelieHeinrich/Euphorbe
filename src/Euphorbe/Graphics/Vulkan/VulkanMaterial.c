@@ -385,12 +385,10 @@ E_VulkanMaterialInstance* E_Vk_CreateMaterialInstance(E_VulkanMaterial* material
     return material_instance;
 }
 
-void E_Vk_MaterialInstanceWriteBuffer(E_VulkanMaterialInstance* instance, E_DescriptorInstance* buffer, i32 buffer_size)
+void E_Vk_MaterialInstanceWriteBuffer(E_VulkanMaterialInstance* instance, i32 binding, E_VulkanBuffer* buffer, i32 buffer_size)
 {
-    E_VulkanBuffer* vk_buffer = (E_VulkanBuffer*)buffer->buffer.buffer->rhi_handle;
-
     VkDescriptorBufferInfo buffer_info = { 0 };
-    buffer_info.buffer = vk_buffer->buffer;
+    buffer_info.buffer = buffer->buffer;
     buffer_info.offset = 0;
     buffer_info.range = buffer_size;
 
@@ -398,7 +396,7 @@ void E_Vk_MaterialInstanceWriteBuffer(E_VulkanMaterialInstance* instance, E_Desc
     write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     write.descriptorCount = 1;
     write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    write.dstBinding = buffer->descriptor->binding;
+    write.dstBinding = binding;
     write.dstArrayElement = 0;
     write.dstSet = instance->set;
     write.pBufferInfo = &buffer_info;
@@ -406,20 +404,18 @@ void E_Vk_MaterialInstanceWriteBuffer(E_VulkanMaterialInstance* instance, E_Desc
     vkUpdateDescriptorSets(rhi.device.handle, 1, &write, 0, NULL);
 }
 
-void E_Vk_MaterialInstanceWriteImage(E_VulkanMaterialInstance* instance, E_DescriptorInstance* image)
+void E_Vk_MaterialInstanceWriteImage(E_VulkanMaterialInstance* instance, i32 binding, E_VulkanImage* image)
 {
-    E_VulkanImage* vk_image = (E_VulkanImage*)image->image.image->rhi_handle;
-
     VkDescriptorImageInfo image_info = { 0 };
-    image_info.imageLayout = (VkImageLayout)image->image.layout;
-    image_info.sampler = vk_image->sampler;
-    image_info.imageView = vk_image->image_view;
+    image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    image_info.sampler = image->sampler;
+    image_info.imageView = image->image_view;
 
     VkWriteDescriptorSet write = { 0 };
     write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     write.descriptorCount = 1;
     write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    write.dstBinding = image->descriptor->binding;
+    write.dstBinding = binding;
     write.dstArrayElement = 0;
     write.dstSet = instance->set;
     write.pImageInfo = &image_info;

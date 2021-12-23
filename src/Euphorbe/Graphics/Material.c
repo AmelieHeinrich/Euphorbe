@@ -187,17 +187,17 @@ E_MaterialInstance* E_CreateMaterialInstance(E_Material* material)
 	return instance;
 }
 
-void E_MaterialInstanceWriteBuffer(E_MaterialInstance* instance, E_DescriptorInstance* desc_instance, i32 buffer_size)
+void E_MaterialInstanceWriteBuffer(E_MaterialInstance* instance, i32 binding, E_Buffer* buffer, i32 buffer_size)
 {
 #ifdef EUPHORBE_WINDOWS
-	E_Vk_MaterialInstanceWriteBuffer((E_VulkanMaterialInstance*)instance->rhi_handle, desc_instance, buffer_size);
+	E_Vk_MaterialInstanceWriteBuffer((E_VulkanMaterialInstance*)instance->rhi_handle, binding, (E_VulkanBuffer*)buffer->rhi_handle, buffer_size);
 #endif
 }
 
-void E_MaterialInstanceWriteImage(E_MaterialInstance* instance, E_DescriptorInstance* desc_instance)
+void E_MaterialInstanceWriteImage(E_MaterialInstance* instance, i32 binding, E_Image* image)
 {
 #ifdef EUPHORBE_WINDOWS
-	E_Vk_MaterialInstanceWriteImage((E_VulkanMaterialInstance*)instance->rhi_handle, desc_instance);
+	E_Vk_MaterialInstanceWriteImage((E_VulkanMaterialInstance*)instance->rhi_handle, binding, (E_VulkanImage*)image->rhi_handle);
 #endif
 }
 

@@ -201,7 +201,7 @@ E_VulkanImage* E_Vk_MakeImageFromFile(const char* path)
     VmaAllocationCreateInfo staging_buffer_alloc_info = { 0 };
     staging_buffer_alloc_info.usage = VMA_MEMORY_USAGE_CPU_ONLY;
 
-    res = vmaCreateBuffer(rhi.allocator, &staging_buffer_info, &staging_buffer_alloc_info, &staging_buffer, &staging_buffer_allocation, &staging_buffer_info);
+    res = vmaCreateBuffer(rhi.allocator, &staging_buffer_info, &staging_buffer_alloc_info, &staging_buffer, &staging_buffer_allocation, NULL);
     assert(res == VK_SUCCESS);
 
     void* upload_data;

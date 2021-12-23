@@ -101,17 +101,8 @@ void EditorInitialiseTexturedQuad()
     editor_state.material = E_LoadResource("Assets/Materials/RectangleMaterial.toml", E_ResourceTypeMaterial);
     editor_state.material_instance = E_CreateMaterialInstance(editor_state.material->as.material);
 
-    E_DescriptorInstance buffer_instance = { 0 };
-    buffer_instance.descriptor = &editor_state.material->as.material->material_create_info->descriptors[0];
-    buffer_instance.buffer.buffer = editor_state.uniform_buffer;
-
-    E_DescriptorInstance texture_instance = { 0 };
-    texture_instance.descriptor = &editor_state.material->as.material->material_create_info->descriptors[1];
-    texture_instance.image.image = editor_state.quad_texture->as.image;
-    texture_instance.image.layout = E_ImageLayoutShaderRead;
-
-    E_MaterialInstanceWriteBuffer(editor_state.material_instance, &buffer_instance, sizeof(mat4));
-    E_MaterialInstanceWriteImage(editor_state.material_instance, &texture_instance);
+    E_MaterialInstanceWriteBuffer(editor_state.material_instance, 0, editor_state.uniform_buffer, sizeof(mat4));
+    E_MaterialInstanceWriteImage(editor_state.material_instance, 1, editor_state.quad_texture->as.image);
 }
 
 void EditorLaunch()

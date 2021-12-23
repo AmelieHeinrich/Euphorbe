@@ -808,8 +808,8 @@ void E_Vk_RendererStartRender(E_ImageAttachment* attachments, i32 attachment_cou
     u32 color_iterator = has_depth ? attachment_count - 1 : attachment_count;
 
     VkRect2D render_area = {0};
-    render_area.extent.width = render_size[0];
-    render_area.extent.height = render_size[1];
+    render_area.extent.width = (u32)render_size[0];
+    render_area.extent.height = (u32)render_size[1];
     render_area.offset.x = 0;
     render_area.offset.y = 0;
 

@@ -76,21 +76,6 @@ struct E_Descriptor
     i32 binding;
 };
 
-typedef struct E_DescriptorInstance E_DescriptorInstance;
-struct E_DescriptorInstance
-{
-    E_Descriptor* descriptor;
-
-    struct {
-        E_Image* image;
-        E_ImageLayout layout;
-    } image;
-
-    struct {
-        E_Buffer* buffer;
-    } buffer;
-};
-
 typedef struct E_MaterialCreateInfo E_MaterialCreateInfo;
 struct E_MaterialCreateInfo
 {
@@ -130,8 +115,8 @@ void E_FreeMaterial(E_Material* material);
 
 // Instances
 E_MaterialInstance* E_CreateMaterialInstance(E_Material* material);
-void E_MaterialInstanceWriteBuffer(E_MaterialInstance* instance, E_DescriptorInstance* desc_instance, i32 buffer_size);
-void E_MaterialInstanceWriteImage(E_MaterialInstance* instance, E_DescriptorInstance* desc_instance);
+void E_MaterialInstanceWriteBuffer(E_MaterialInstance* instance, i32 binding, E_Buffer* buffer, i32 buffer_size);
+void E_MaterialInstanceWriteImage(E_MaterialInstance* instance, i32 binding, E_Image* image);
 void E_FreeMaterialInstance(E_MaterialInstance* instance);
 
 #endif
