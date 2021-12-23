@@ -34,12 +34,12 @@ struct EditorData
 	E_Image* depth_buffer;
 
 	// Textured quad
-	E_Material* material;
+	E_ResourceFile* material;
 	E_MaterialInstance* material_instance;
 	E_Buffer* vertex_buffer;
 	E_Buffer* index_buffer;
 	E_Buffer* uniform_buffer;
-	E_Image* quad_texture;
+	E_ResourceFile* quad_texture;
 	SceneUniforms uniforms;
 
 	// Performance

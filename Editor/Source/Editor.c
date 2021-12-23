@@ -15,11 +15,11 @@ void EditorCleanup()
     E_RendererWait();
 
     E_FreeMaterialInstance(editor_state.material_instance);
-    E_FreeImage(editor_state.quad_texture);
+    E_FreeResource(editor_state.quad_texture);
     E_FreeBuffer(editor_state.uniform_buffer);
     E_FreeBuffer(editor_state.index_buffer);
     E_FreeBuffer(editor_state.vertex_buffer);
-    E_FreeMaterial(editor_state.material);
+    E_FreeResource(editor_state.material);
     E_FreeImage(editor_state.depth_buffer);
     E_FreeImage(editor_state.render_buffer);
 
@@ -92,22 +92,22 @@ void EditorInitialiseTexturedQuad()
     editor_state.index_buffer = E_CreateIndexBuffer(sizeof(indices));
     E_SetBufferData(editor_state.index_buffer, indices, sizeof(indices));
 
-    editor_state.quad_texture = E_MakeImageFromFile("Assets/Textures/awesomeface.png");
+    editor_state.quad_texture = E_LoadResource("Assets/Textures/awesomeface.png", E_ResourceTypeTexture);
 
     glm_mat4_identity(&editor_state.uniforms.mvp);
     editor_state.uniform_buffer = E_CreateUniformBuffer(sizeof(editor_state.uniforms));
     E_SetBufferData(editor_state.uniform_buffer, &editor_state.uniforms, sizeof(editor_state.uniforms));
 
-    editor_state.material = E_CreateMaterialFromFile("Assets/Materials/RectangleMaterial.toml");
-    editor_state.material_instance = E_CreateMaterialInstance(editor_state.material);
+    editor_state.material = E_LoadResource("Assets/Materials/RectangleMaterial.toml", E_ResourceTypeMaterial);
+    editor_state.material_instance = E_CreateMaterialInstance(editor_state.material->as.material);
 
     E_DescriptorInstance buffer_instance = { 0 };
-    buffer_instance.descriptor = &editor_state.material->material_create_info->descriptors[0];
+    buffer_instance.descriptor = &editor_state.material->as.material->material_create_info->descriptors[0];
     buffer_instance.buffer.buffer = editor_state.uniform_buffer;
 
     E_DescriptorInstance texture_instance = { 0 };
-    texture_instance.descriptor = &editor_state.material->material_create_info->descriptors[1];
-    texture_instance.image.image = editor_state.quad_texture;
+    texture_instance.descriptor = &editor_state.material->as.material->material_create_info->descriptors[1];
+    texture_instance.image.image = editor_state.quad_texture->as.image;
     texture_instance.image.layout = E_ImageLayoutShaderRead;
 
     E_MaterialInstanceWriteBuffer(editor_state.material_instance, &buffer_instance, sizeof(mat4));
@@ -187,8 +187,8 @@ void EditorDrawTexturedQuad()
 {
     f64 start = EditorBeginProfiling();
 
-    E_BindMaterial(editor_state.material);
-    E_BindMaterialInstance(editor_state.material_instance, editor_state.material);
+    E_BindMaterial(editor_state.material->as.material);
+    E_BindMaterialInstance(editor_state.material_instance, editor_state.material->as.material);
     E_SetBufferData(editor_state.uniform_buffer, &editor_state.uniforms, sizeof(editor_state.uniforms));
     E_BindBuffer(editor_state.vertex_buffer);
     E_BindBuffer(editor_state.index_buffer);
@@ -211,7 +211,7 @@ void EditorDrawGUI()
     // Material Viewer
     igBegin("Material Viewer", NULL, ImGuiWindowFlags_AlwaysAutoResize);
     igText("Albedo Map:");
-    E_ImageDrawToGUI(editor_state.quad_texture, editor_state.quad_texture->width / 2, editor_state.quad_texture->height / 2);
+    E_ImageDrawToGUI(editor_state.quad_texture->as.image, editor_state.quad_texture->as.image->width / 2, editor_state.quad_texture->as.image->height / 2);
     igEnd();
 
     // Performance panel
