@@ -58,3 +58,11 @@ void E_WindowSetResizeCallback(E_Window* window, E_WindowResizeCallback callback
     win32->resize_callback = callback;
 #endif
 }
+
+void E_WindowSetScrollCallback(E_Window* window, E_WindowResizeCallback callback)
+{
+#ifdef EUPHORBE_WINDOWS
+    E_WindowsWindow* win32 = (E_WindowsWindow*)window->platform_data;
+    win32->scroll_callback = callback;
+#endif
+}

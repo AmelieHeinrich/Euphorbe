@@ -7,6 +7,8 @@
 
 // Platform
 #include "Platform/Window.h"
+#include "Platform/Input.h"
+#include "Platform/Timer.h"
 
 // Renderer
 #include "Graphics/Renderer.h"

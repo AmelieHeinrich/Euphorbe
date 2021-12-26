@@ -2,12 +2,11 @@
 #define EUPHORBE_EDITOR_H
 
 #include <Euphorbe/Euphorbe.h>
-#include <cglm/cglm.h>
-#include <cglm/mat4.h>
 #include <cimgui.h>
 #include <time.h>
 
 #include "Panels/ViewportPanel.h"
+#include "EditorCamera.h"
 
 typedef struct EditorPerformance EditorPerformance;
 struct EditorPerformance
@@ -22,6 +21,8 @@ typedef struct EditorData EditorData;
 struct EditorData
 {
 	E_Window* window;
+	b32 is_viewport_focused;
+	f32 last_frame;
 
 	// Render state
 	b32 first_render;
@@ -39,8 +40,7 @@ struct EditorData
 	EditorPerformance perf;
 
 	// Editor Camera
-	vec3 camera_position;
-	mat4 camera_view;
+	EditorCamera camera;
 };
 
 extern EditorData editor_state;
@@ -49,6 +49,7 @@ void EditorInit();
 void EditorCleanup();
 void EditorUpdate();
 void EditorResize(i32 width, i32 height);
+void EditorScroll(f32 scroll);
 
 //
 void EditorInitialiseWindow();
@@ -62,6 +63,7 @@ void EditorDrawTexturedQuad();
 void EditorCreateDockspace();
 void EditorDestroyDockspace();
 void EditorDrawGUI();
+void EditorUpdateCameraInput(f32 dt);
 f64 EditorBeginProfiling();
 f64 EditorEndProfiling(f64 start);
 

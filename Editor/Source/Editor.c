@@ -30,6 +30,10 @@ void EditorUpdate()
 {
     while (E_IsWindowOpen(editor_state.window))
     {
+        f32 time = E_TimerGetTime();
+        f32 dt = time - editor_state.last_frame;
+        editor_state.last_frame = time;
+
         EditorAssureViewportSize();
 
         EditorBeginRender();
@@ -38,6 +42,12 @@ void EditorUpdate()
         EditorDrawGUI();
 
         EditorEndRender();
+
+        if (editor_state.is_viewport_focused)
+            EditorUpdateCameraInput(dt);
+        EditorCameraUpdate(&editor_state.camera, dt);
+
+        E_WindowUpdate(editor_state.window);
     }
 }
 
@@ -63,6 +73,10 @@ void EditorInitialiseWindow()
 
     editor_state.window = E_CreateWindow(1280, 720, "Euphorbe Editor");
     E_RendererInit(editor_state.window, settings);
+
+    E_TimerInit();
+
+    EditorCameraInit(&editor_state.camera);
 }
 
 void EditorInitialiseRenderState()
@@ -97,15 +111,13 @@ void EditorInitialiseTexturedQuad()
     editor_state.material_instance = E_CreateMaterialInstance(editor_state.material->as.material);
 
     E_MaterialInstanceWriteImage(editor_state.material_instance, 0, editor_state.quad_texture->as.image);
-
-    glm_vec3_zero(editor_state.camera_position);
-    glm_mat4_identity(editor_state.camera_view);
 }
 
 void EditorLaunch()
 {
     InitViewportPanel(editor_state.window->width, editor_state.window->height);
     E_WindowSetResizeCallback(editor_state.window, EditorResize);
+    E_WindowSetScrollCallback(editor_state.window, EditorScroll);
     E_LaunchWindow(editor_state.window);
 }
 
@@ -117,6 +129,7 @@ void EditorAssureViewportSize()
         E_ImageResize(editor_state.render_buffer, viewport_panel.viewport_size[0], viewport_panel.viewport_size[1]);
         E_ImageResize(editor_state.depth_buffer, viewport_panel.viewport_size[0], viewport_panel.viewport_size[1]);
         editor_state.first_render = 1;
+        EditorCameraResize(&editor_state.camera, viewport_panel.viewport_size[0], viewport_panel.viewport_size[1]);
     }
 }
 
@@ -125,7 +138,7 @@ void EditorBeginRender()
     f64 start = EditorBeginProfiling();
     E_RendererBegin();
 
-    E_ClearValue color_clear = { 0.1f, 0.2f, 0.3f, 1.0f, 0.0f, 0 };
+    E_ClearValue color_clear = { 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0 };
     E_ClearValue depth_clear = { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0 };
 
     E_ImageAttachment attachments[2] = {
@@ -164,7 +177,6 @@ void EditorEndRender()
         E_ImagePipelineStageColorOutput, E_ImagePipelineStageFragmentShader);
 
     E_RendererEnd();
-    E_WindowUpdate(editor_state.window);
     
     editor_state.perf.end_render = EditorEndProfiling(start);
 }
@@ -173,21 +185,9 @@ void EditorDrawTexturedQuad()
 {
     f64 start = EditorBeginProfiling();
     
-    mat4 view;
-    mat4 projection;
-
-    glm_mat4_identity(view);
-    glm_mat4_identity(projection);
-    glm_perspective(90.0f, editor_state.render_buffer->width / editor_state.render_buffer->height, 0.001f, 1000.0f, projection);
-    glm_translate(view, editor_state.camera_position);
-
-    glm_mat4_identity(editor_state.camera_view);
-    glm_mat4_mul(projection, view, editor_state.camera_view);
-
-       
     E_BindMaterial(editor_state.material->as.material);
     E_BindMaterialInstance(editor_state.material_instance, editor_state.material->as.material);
-    E_MaterialPushConstants(editor_state.material->as.material, &editor_state.camera_view, sizeof(editor_state.camera_view));
+    E_MaterialPushConstants(editor_state.material->as.material, &editor_state.camera.camera_matrix, sizeof(editor_state.camera.camera_matrix));
     E_BindBuffer(editor_state.vertex_buffer);
     E_BindBuffer(editor_state.index_buffer);
     E_DrawIndexed(0, 6);
@@ -204,7 +204,7 @@ void EditorDrawGUI()
     EditorCreateDockspace();
 
     E_LogDraw();
-    DrawViewportPanel(editor_state.render_buffer);
+    DrawViewportPanel(editor_state.render_buffer, &editor_state.is_viewport_focused);
 
     // Material Viewer
     igBegin("Material Viewer", NULL, ImGuiWindowFlags_AlwaysAutoResize);
@@ -220,11 +220,6 @@ void EditorDrawGUI()
     igText("EditorDrawQuad: %g ms", editor_state.perf.draw_quad);
     igText("EditorDrawGUI: %g ms", editor_state.perf.draw_gui);
     igText("EditorUpdate: %g ms", editor_update);
-    igEnd();
-
-    // Camera Panel
-    igBegin("Camera Panel", NULL, ImGuiWindowFlags_None);
-    igSliderFloat3("Camera Position", editor_state.camera_position, -10.0f, 10.0f, "%.3f", ImGuiSliderFlags_None);
     igEnd();
 
     EditorDestroyDockspace();
@@ -257,9 +252,20 @@ void EditorDestroyDockspace()
     E_EndGUI();
 }
 
+void EditorScroll(f32 scroll)
+{
+    if (editor_state.is_viewport_focused)
+        EditorCameraOnMouseScroll(&editor_state.camera, scroll);
+}
+
 f64 EditorBeginProfiling()
 {
     return clock();
+}
+
+void EditorUpdateCameraInput(f32 dt)
+{
+    EditorCameraProcessInput(&editor_state.camera, dt);
 }
 
 f64 EditorEndProfiling(f64 start)

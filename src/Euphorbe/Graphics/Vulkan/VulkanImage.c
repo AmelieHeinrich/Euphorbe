@@ -268,6 +268,7 @@ void E_Vk_FreeImage(E_VulkanImage* image)
     vkDestroySampler(rhi.device.handle, image->sampler, NULL);
     vkDestroyImageView(rhi.device.handle, image->image_view, NULL);
     vmaDestroyImage(rhi.allocator, image->image, image->allocation);
+    free(image);
 }
 
 void E_Vk_ResizeImage(E_VulkanImage* image, i32 width, i32 height)

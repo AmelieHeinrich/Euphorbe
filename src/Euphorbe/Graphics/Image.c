@@ -43,7 +43,6 @@ void E_FreeImage(E_Image* image)
     E_Vk_FreeImage(image->rhi_handle);
 #endif
 
-    free(image->rhi_handle);
     free(image);
 }
 

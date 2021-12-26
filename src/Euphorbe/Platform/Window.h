@@ -4,6 +4,7 @@
 #include <Euphorbe/Core/Common.h>
 
 typedef void (*E_WindowResizeCallback)(int, int);
+typedef void (*E_WindowScrollCallback)(f32);
 
 typedef struct E_Window E_Window;
 struct E_Window
@@ -23,5 +24,6 @@ void E_WindowUpdate(E_Window* window);
 
 // Callbacks
 void E_WindowSetResizeCallback(E_Window* window, E_WindowResizeCallback callback);
+void E_WindowSetScrollCallback(E_Window* window, E_WindowResizeCallback callback);
 
 #endif

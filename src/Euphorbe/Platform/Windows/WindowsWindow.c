@@ -46,6 +46,17 @@ LRESULT CALLBACK WinProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
         break;
     }
 
+    case WM_MOUSEWHEEL:
+    {
+        E_WindowsWindow* window = (E_WindowsWindow*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
+        f32 scroll = (f32)GET_WHEEL_DELTA_WPARAM(wparam) / (f32)WHEEL_DELTA;
+
+        if (window->scroll_callback != NULL)
+            window->scroll_callback(scroll);
+
+        break;
+    }
+
     default:
         return DefWindowProc(hwnd, msg, wparam, lparam);
     }
