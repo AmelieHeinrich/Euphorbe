@@ -23,6 +23,7 @@ struct EditorData
 	E_Window* window;
 	b32 is_viewport_focused;
 	f32 last_frame;
+	b32 running;
 
 	// Render state
 	b32 first_render;

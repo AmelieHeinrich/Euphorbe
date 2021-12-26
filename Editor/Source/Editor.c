@@ -28,7 +28,7 @@ void EditorCleanup()
 
 void EditorUpdate()
 {
-    while (E_IsWindowOpen(editor_state.window))
+    while (E_IsWindowOpen(editor_state.window) && editor_state.running)
     {
         f32 time = E_TimerGetTime();
         f32 dt = time - editor_state.last_frame;
@@ -64,6 +64,8 @@ void EditorResize(i32 width, i32 height)
 
 void EditorInitialiseWindow()
 {
+    editor_state.running = 1;
+
     // Initialise Euphorbe
     E_RendererInitSettings settings = { 0 };
     settings.log_found_layers = 0;
@@ -243,6 +245,18 @@ void EditorCreateDockspace()
     igPopStyleVar(3);
 
     igDockSpace(igGetID_Str("MyDockSpace"), (ImVec2) { 0.0f, 0.0f }, ImGuiDockNodeFlags_None, NULL);
+
+    if (igBeginMenuBar())
+    {
+        if (igBeginMenu("File", 1))
+        {
+            if (igMenuItem_Bool("Quit", "Ctrl+Q", 0, 1))
+                editor_state.running = 0;
+            igEndMenu();
+        }
+
+        igEndMenuBar();
+    }
 }
 
 void EditorDestroyDockspace()
