@@ -24,6 +24,6 @@ void E_WindowUpdate(E_Window* window);
 
 // Callbacks
 void E_WindowSetResizeCallback(E_Window* window, E_WindowResizeCallback callback);
-void E_WindowSetScrollCallback(E_Window* window, E_WindowResizeCallback callback);
+void E_WindowSetScrollCallback(E_Window* window, E_WindowScrollCallback callback);
 
 #endif

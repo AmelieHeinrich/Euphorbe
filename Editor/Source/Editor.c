@@ -85,6 +85,7 @@ void EditorInitialiseRenderState()
 {
     editor_state.render_buffer = E_MakeImage(editor_state.window->width, editor_state.window->height, E_ImageFormatRGBA16);
     editor_state.depth_buffer = E_MakeImage(editor_state.window->width, editor_state.window->height, E_ImageFormatD32_Float);
+    editor_state.clear_color[3] = 1.0f;
 }
 
 void EditorInitialiseTexturedQuad()
@@ -107,7 +108,7 @@ void EditorInitialiseTexturedQuad()
     editor_state.index_buffer = E_CreateIndexBuffer(sizeof(indices));
     E_SetBufferData(editor_state.index_buffer, indices, sizeof(indices));
 
-    editor_state.quad_texture = E_LoadResource("Assets/Textures/cobblestone.png", E_ResourceTypeTexture);
+    editor_state.quad_texture = E_LoadResource("Assets/Textures/paving2.png", E_ResourceTypeTexture);
 
     editor_state.material = E_LoadResource("Assets/Materials/RectangleMaterial.toml", E_ResourceTypeMaterial);
     editor_state.material_instance = E_CreateMaterialInstance(editor_state.material->as.material);
@@ -140,7 +141,7 @@ void EditorBeginRender()
     f64 start = EditorBeginProfiling();
     E_RendererBegin();
 
-    E_ClearValue color_clear = { 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0 };
+    E_ClearValue color_clear = { editor_state.clear_color[0], editor_state.clear_color[1], editor_state.clear_color[2], editor_state.clear_color[3], 0.0f, 0};
     E_ClearValue depth_clear = { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0 };
 
     E_ImageAttachment attachments[2] = {
@@ -222,6 +223,16 @@ void EditorDrawGUI()
     igText("EditorDrawQuad: %g ms", editor_state.perf.draw_quad);
     igText("EditorDrawGUI: %g ms", editor_state.perf.draw_gui);
     igText("EditorUpdate: %g ms", editor_update);
+    igEnd();
+
+    // Scene Settings
+    igBegin("Scene Settings", NULL, ImGuiWindowFlags_None);
+    b32 open = igTreeNodeEx_Str("Clear Color Setting", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_AllowItemOverlap | ImGuiTreeNodeFlags_FramePadding);
+    if (open)
+    {
+        igColorPicker4("Clear Color", editor_state.clear_color, ImGuiColorEditFlags_DisplayRGB | ImGuiColorEditFlags_DisplayHex | ImGuiColorEditFlags_Float | ImGuiColorEditFlags_HDR, NULL);
+        igTreePop();
+    }
     igEnd();
 
     EditorDestroyDockspace();

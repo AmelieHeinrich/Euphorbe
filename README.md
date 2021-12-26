@@ -31,6 +31,7 @@ cmake -G "Visual Studio 17 2022" -B build
 - [cimgui](https://github.com/Sausty/cimgui)
 - [tomlc99](https://github.com/cktan/tomlc99)
 - [cglm](https://github.com/recp/cglm)
+- [cgltf](https://github.com/jkuhlmann/cgltf)
 
 ## Screenshots
 

@@ -42,6 +42,9 @@ struct EditorData
 
 	// Editor Camera
 	EditorCamera camera;
+
+	// Scene Settings
+	vec4 clear_color;
 };
 
 extern EditorData editor_state;
