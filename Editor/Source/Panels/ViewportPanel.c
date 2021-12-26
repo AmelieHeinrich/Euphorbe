@@ -14,7 +14,7 @@ void DrawViewportPanel(E_Image* buffer, b32* is_viewport_focused)
 
     igBegin("Viewport", NULL, ImGuiWindowFlags_None);
 
-    *is_viewport_focused = igIsWindowFocused(ImGuiFocusedFlags_None) && igIsWindowHovered(ImGuiHoveredFlags_None);
+    *is_viewport_focused = igIsWindowFocused(ImGuiFocusedFlags_None);
     ImVec2 panel_content_size = { 0.0f, 0.0f };
     igGetContentRegionAvail(&panel_content_size);
 

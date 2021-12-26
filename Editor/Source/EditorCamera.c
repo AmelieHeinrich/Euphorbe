@@ -36,6 +36,9 @@ void EditorCameraInit(EditorCamera* camera)
 	camera->yaw = CAMERA_DEFAULT_YAW;
 	camera->pitch = CAMERA_DEFAULT_PITCH;
 	camera->zoom = CAMERA_DEFAULT_ZOOM;
+	camera->friction = 10.0f;
+	camera->acceleration = 20.0f;
+	camera->max_velocity = 15.0f;
 	camera->viewport_width = 1280;
 	camera->viewport_height = 720;
 
@@ -67,15 +70,28 @@ void EditorCameraUpdate(EditorCamera* camera, f32 dt)
 void EditorCameraProcessInput(EditorCamera* camera, f32 dt)
 {
 	// keyboard
-	f32 velocity = CAMERA_DEFAULT_SPEED * dt;
+	f32 speed_multiplier = camera->acceleration * dt;
 	if (E_IsKeyPressed(EUPHORBE_KEY_Z) || E_IsKeyPressed(EUPHORBE_KEY_W))
-		glm_vec3_add(camera->position, (vec3) { camera->front[0] * velocity, camera->front[1] * velocity, camera->front[2] * velocity }, camera->position);
+		glm_vec3_add(camera->velocity, (vec3) { camera->front[0] * speed_multiplier, camera->front[1] * speed_multiplier, camera->front[2] * speed_multiplier }, camera->velocity);
 	if (E_IsKeyPressed(EUPHORBE_KEY_S))
-		glm_vec3_sub(camera->position, (vec3) { camera->front[0] * velocity, camera->front[1] * velocity, camera->front[2] * velocity }, camera->position);
+		glm_vec3_sub(camera->velocity, (vec3) { camera->front[0] * speed_multiplier, camera->front[1] * speed_multiplier, camera->front[2] * speed_multiplier }, camera->velocity);
 	if (E_IsKeyPressed(EUPHORBE_KEY_Q) || E_IsKeyPressed(EUPHORBE_KEY_A))
-		glm_vec3_sub(camera->position, (vec3) { camera->right[0] * velocity, camera->right[1] * velocity, camera->right[2] * velocity }, camera->position);
+		glm_vec3_sub(camera->velocity, (vec3) { camera->right[0] * speed_multiplier, camera->right[1] * speed_multiplier, camera->right[2] * speed_multiplier }, camera->velocity);
 	if (E_IsKeyPressed(EUPHORBE_KEY_D))
-		glm_vec3_add(camera->position, (vec3) { camera->right[0] * velocity, camera->right[1] * velocity, camera->right[2] * velocity }, camera->position);
+		glm_vec3_add(camera->velocity, (vec3) { camera->right[0] * speed_multiplier, camera->right[1] * speed_multiplier, camera->right[2] * speed_multiplier }, camera->velocity);
+
+	f32 friction_multiplier = 1.0f / (1.0f + (camera->friction * dt));
+	glm_vec3_mul(camera->velocity, (vec3) { friction_multiplier, friction_multiplier, friction_multiplier }, camera->velocity);
+
+	f32 vec_length = (camera->velocity[0] * camera->velocity[0]) + (camera->velocity[1] * camera->velocity[1]) + (camera->velocity[2] * camera->velocity[2]);
+	if (vec_length > camera->max_velocity)
+	{
+		vec3 normalised_velocity;
+		glm_vec3_normalize_to(camera->velocity, normalised_velocity);
+		glm_vec3_mul(normalised_velocity, (vec3) { camera->max_velocity, camera->max_velocity, camera->max_velocity }, camera->velocity);
+	}
+
+	glm_vec3_add(camera->position, (vec3) { camera->velocity[0] * dt, camera->velocity[1] * dt, camera->velocity[2] * dt }, camera->position);
 
 	// mouse
 

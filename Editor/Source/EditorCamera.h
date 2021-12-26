@@ -4,11 +4,12 @@
 #include <Euphorbe/Core/Common.h>
 #include <Euphorbe/Platform/Input.h>
 #include <cglm/cglm.h>
+#include <cglm/call.h>
 
 #define CAMERA_DEFAULT_YAW -90.0f
 #define CAMERA_DEFAULT_PITCH 0.0f
 #define CAMERA_DEFAULT_SPEED 1.0f
-#define CAMERA_DEFAULT_MOUSE_SENSITIVITY 2.5f
+#define CAMERA_DEFAULT_MOUSE_SENSITIVITY 5.0f
 #define CAMERA_DEFAULT_ZOOM 90.0f
 
 typedef struct EditorCamera EditorCamera;
@@ -33,6 +34,11 @@ struct EditorCamera
 
 	f32 viewport_width;
 	f32 viewport_height;
+
+	f32 acceleration;
+	f32 friction;
+	vec3 velocity;
+	f32 max_velocity;
 };
 
 void EditorCameraInit(EditorCamera* camera);
