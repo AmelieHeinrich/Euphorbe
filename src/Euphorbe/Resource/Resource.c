@@ -53,6 +53,10 @@ E_ResourceFile* E_LoadResource(const char* path, E_ResourceType type)
 	case E_ResourceTypeMaterial:
 		resource->as.material = E_CreateMaterialFromFile(resource->path);
 		break;
+	case E_ResourceTypeMesh:
+		resource->as.mesh = E_LoadMesh(resource->path);
+		free(resource->resource_data); // We ain't going to store large mesh files on the cpu
+		break;
 	}
 
 	return resource;
@@ -76,10 +80,14 @@ void E_FreeResource(E_ResourceFile* file)
 	case E_ResourceTypeMaterial:
 		E_FreeMaterial(file->as.material);
 		break;
+	case E_ResourceTypeMesh:
+		E_FreeMesh(file->as.mesh);
+		break;
 	case E_ResourceTypeUndefined:
 		break;
 	}
 
-	free(file->resource_data);
+	if (file->resource_data != NULL)
+		free(file->resource_data);
     free(file);
 }

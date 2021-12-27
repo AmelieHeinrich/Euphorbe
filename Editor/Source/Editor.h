@@ -32,9 +32,9 @@ struct EditorData
 
 	// Textured mesh
 	E_ResourceFile* material;
-	E_MaterialInstance* material_instance;
-	E_Mesh* mesh;
+	E_ResourceFile* mesh;
 	E_ResourceFile* mesh_texture;
+	E_MaterialInstance* material_instance;
 
 	// Performance
 	EditorPerformance perf;
@@ -57,7 +57,7 @@ void EditorScroll(f32 scroll);
 //
 void EditorInitialiseWindow();
 void EditorInitialiseRenderState();
-void EditorInitialiseTexturedQuad();
+void EditorInitialiseTexturedMesh();
 void EditorLaunch();
 void EditorAssureViewportSize();
 void EditorBeginRender();

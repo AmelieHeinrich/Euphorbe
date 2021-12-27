@@ -6,7 +6,7 @@ void EditorInit()
 {
     EditorInitialiseWindow();
     EditorInitialiseRenderState();
-    EditorInitialiseTexturedQuad();
+    EditorInitialiseTexturedMesh();
     EditorLaunch();
 }
 
@@ -15,7 +15,7 @@ void EditorCleanup()
     E_RendererWait();
 
     E_FreeMaterialInstance(editor_state.material_instance);
-    E_FreeMesh(editor_state.mesh);
+    E_FreeResource(editor_state.mesh);
     E_FreeResource(editor_state.material);
     E_FreeResource(editor_state.mesh_texture);
     E_FreeImage(editor_state.depth_buffer);
@@ -87,22 +87,10 @@ void EditorInitialiseRenderState()
     editor_state.clear_color[3] = 1.0f;
 }
 
-void EditorInitialiseTexturedQuad()
+void EditorInitialiseTexturedMesh()
 {
-    f32 vertices[] = {
-        -0.5f, -0.5f, 0.0f, 0.0f, 0.0f,
-         0.5f, -0.5f, 0.0f, 1.0f, 0.0f,
-         0.5f,  0.5f, 0.0f, 1.0f, 1.0f,
-        -0.5f,  0.5f, 0.0f, 0.0f, 1.0f
-    };
-
-    u32 indices[] = {
-        0, 1, 2,
-        2, 3, 0
-    };
-
     editor_state.mesh_texture = E_LoadResource("Assets/Textures/paving2.png", E_ResourceTypeTexture);
-    editor_state.mesh = E_LoadMesh("Assets/Models/Suzanne.gltf");
+    editor_state.mesh = E_LoadResource("Assets/Models/Suzanne.gltf", E_ResourceTypeMesh);
 
     editor_state.material = E_LoadResource("Assets/Materials/RectangleMaterial.toml", E_ResourceTypeMaterial);
     editor_state.material_instance = E_CreateMaterialInstance(editor_state.material->as.material);
@@ -185,11 +173,12 @@ void EditorDrawTexturedMesh()
     E_BindMaterial(editor_state.material->as.material);
     E_BindMaterialInstance(editor_state.material_instance, editor_state.material->as.material);
     E_MaterialPushConstants(editor_state.material->as.material, &editor_state.camera.camera_matrix, sizeof(editor_state.camera.camera_matrix));
-    for (i32 i = 0; i < editor_state.mesh->submesh_count; i++)
+    for (i32 i = 0; i < editor_state.mesh->as.mesh->submesh_count; i++)
     {
-        E_BindBuffer(editor_state.mesh->submeshes[i].vertex_buffer);
-        E_BindBuffer(editor_state.mesh->submeshes[i].index_buffer);
-        E_DrawIndexed(0, editor_state.mesh->submeshes[i].index_count);
+        E_Submesh mesh = editor_state.mesh->as.mesh->submeshes[i];
+        E_BindBuffer(mesh.vertex_buffer);
+        E_BindBuffer(mesh.index_buffer);
+        E_DrawIndexed(0, mesh.index_count);
     }
 
     E_RendererEndRender();
@@ -233,9 +222,9 @@ void EditorDrawGUI()
         b32 render_stats = igTreeNodeEx_Str("Renderer Stats", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_AllowItemOverlap | ImGuiTreeNodeFlags_FramePadding);
         if (render_stats)
         {
-            igText("Triangle: %d", editor_state.mesh->total_tri_count);
-            igText("Vertices: %d", editor_state.mesh->total_vertex_count);
-            igText("Indices: %d", editor_state.mesh->total_index_count);
+            igText("Triangle: %d", editor_state.mesh->as.mesh->total_tri_count);
+            igText("Vertices: %d", editor_state.mesh->as.mesh->total_vertex_count);
+            igText("Indices: %d", editor_state.mesh->as.mesh->total_index_count);
             igTreePop();
         }
         igEnd();
