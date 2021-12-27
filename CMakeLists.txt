@@ -23,6 +23,7 @@ add_library(imgui_impl STATIC ThirdParty/cimgui/imgui/backends/imgui_impl_win32.
 							  ThirdParty/imgui_backends/imgui_impl_vulkan.cpp
 							  ThirdParty/imgui_backends/cimgui_impl.h)
 target_include_directories(imgui_impl PRIVATE ThirdParty/cimgui/imgui $ENV{VULKAN_SDK}/Include ThirdParty/volk)
+target_link_libraries(imgui_impl PRIVATE cimgui)
 target_compile_definitions(imgui_impl PRIVATE IMGUI_IMPL_API=extern\ \"C\")
 target_compile_definitions(imgui_impl PRIVATE VK_NO_PROTOTYPES)
 
