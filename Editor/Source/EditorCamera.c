@@ -63,6 +63,7 @@ void EditorCameraUpdate(EditorCamera* camera, f32 dt)
 	glm_lookat(camera->position, center, camera->worldup, camera->view);
 
 	glm_perspective(glm_rad(camera->zoom), camera->viewport_width / camera->viewport_height, 0.0001f, 100000.0f, camera->proj);
+	camera->proj[1][1] *= -1;
 
 	glm_mat4_mul(camera->proj, camera->view, camera->camera_matrix);
 }
@@ -104,7 +105,7 @@ void EditorCameraProcessInput(EditorCamera* camera, f32 dt)
 	if (E_IsMouseButtonPressed(EUPHORBE_MOUSE_LEFT))
 	{
 		camera->yaw += dx; // Inverse camera controls
-		camera->pitch += dy; // Inverse camera controls
+		camera->pitch -= dy; // Inverse camera controls
 	}
 
 	EditorCameraUpdateVectors(camera);

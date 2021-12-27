@@ -26,6 +26,7 @@ typedef double f64;
 #define KILOBYTES(bytes) bytes * 1024
 #define MEGABYTES(bytes) KILOBYTES(bytes) * 1024
 #define GIGABYTES(bytes) MEGABYTES(bytes) * 1024
+#define OFFSET_PTR_BYTES(type, ptr, offset) ((type*)((u8*)ptr + (offset)))
 #define FRAMES_IN_FLIGHT 3
 
 // Platform detection

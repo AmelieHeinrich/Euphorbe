@@ -1,7 +1,7 @@
 [MaterialProperties]
-	CullMode = "None"
-	DepthOperation = "Always"
-	FrontFace = "CW"
+	CullMode = "Back"
+	DepthOperation = "Less"
+	FrontFace = "CCW"
 	PrimitiveTopology = "TriangleList"
 	PolygonMode = "Fill"
 

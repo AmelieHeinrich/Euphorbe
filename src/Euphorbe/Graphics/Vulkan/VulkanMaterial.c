@@ -335,6 +335,7 @@ E_VulkanMaterial* E_Vk_CreateMaterial(E_MaterialCreateInfo* create_info)
     rendering_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR;
     rendering_create_info.colorAttachmentCount = create_info->render_info.color_attachment_count;
     rendering_create_info.depthAttachmentFormat = create_info->render_info.depth_format;
+    rendering_create_info.stencilAttachmentFormat = create_info->render_info.depth_format;
     rendering_create_info.pColorAttachmentFormats = (VkFormat*)create_info->render_info.color_formats;
     rendering_create_info.pNext = VK_NULL_HANDLE;
 

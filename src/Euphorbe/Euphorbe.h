@@ -16,6 +16,7 @@
 #include "Graphics/ShaderCompiler.h"
 #include "Graphics/Material.h"
 #include "Graphics/Buffer.h"
+#include "Graphics/Mesh.h"
 
 // Resource
 #include "Resource/Resource.h"

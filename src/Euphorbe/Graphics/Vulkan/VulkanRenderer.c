@@ -849,7 +849,7 @@ void E_Vk_RendererStartRender(E_ImageAttachment* attachments, i32 attachment_cou
         E_VulkanImage* vk_image = (E_VulkanImage*)attachments[color_iterator].image->rhi_handle;
 
         VkClearValue depth_clear_value = {0};
-        depth_clear_value.depthStencil.depth = attachments[color_iterator].clear_value.depth;
+        depth_clear_value.depthStencil.depth = 1.0f;
         depth_clear_value.depthStencil.stencil = attachments[color_iterator].clear_value.stencil;
 
         VkRenderingAttachmentInfoKHR depth_attachment = {0};

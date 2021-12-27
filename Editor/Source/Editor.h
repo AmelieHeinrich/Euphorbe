@@ -30,12 +30,11 @@ struct EditorData
 	E_Image* render_buffer;
 	E_Image* depth_buffer;
 
-	// Textured quad
+	// Textured mesh
 	E_ResourceFile* material;
 	E_MaterialInstance* material_instance;
-	E_Buffer* vertex_buffer;
-	E_Buffer* index_buffer;
-	E_ResourceFile* quad_texture;
+	E_Mesh* mesh;
+	E_ResourceFile* mesh_texture;
 
 	// Performance
 	EditorPerformance perf;
@@ -63,7 +62,7 @@ void EditorLaunch();
 void EditorAssureViewportSize();
 void EditorBeginRender();
 void EditorEndRender();
-void EditorDrawTexturedQuad();
+void EditorDrawTexturedMesh();
 void EditorCreateDockspace();
 void EditorDestroyDockspace();
 void EditorDrawGUI();
