@@ -11,7 +11,8 @@ E_ResourceFile* E_LoadResource(const char* path, E_ResourceType type)
     E_ResourceFile* resource = malloc(sizeof(E_ResourceFile));
 	resource->type = type;
 	resource->path = (char*)path;
-	resource->resource_data = E_ReadFile(path, &resource->resource_size);
+	if (type != E_ResourceTypeMesh)
+		resource->resource_data = E_ReadFile(path, &resource->resource_size);
 
 	switch (resource->type)
 	{
@@ -55,7 +56,6 @@ E_ResourceFile* E_LoadResource(const char* path, E_ResourceType type)
 		break;
 	case E_ResourceTypeMesh:
 		resource->as.mesh = E_LoadMesh(resource->path);
-		free(resource->resource_data); // We ain't going to store large mesh files on the cpu
 		break;
 	}
 
@@ -87,7 +87,7 @@ void E_FreeResource(E_ResourceFile* file)
 		break;
 	}
 
-	if (file->resource_data != NULL)
+	if (file->type != E_ResourceTypeMesh)
 		free(file->resource_data);
     free(file);
 }

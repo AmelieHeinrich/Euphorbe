@@ -5,7 +5,6 @@
 #include <Euphorbe/Core/Log.h>
 
 #ifdef EUPHORBE_WINDOWS
-    #include <vulkan/vulkan_win32.h>
     #include <Euphorbe/Platform/Windows/WindowsWindow.h>
 #endif
 
