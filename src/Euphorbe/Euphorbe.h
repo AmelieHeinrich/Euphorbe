@@ -17,6 +17,7 @@
 #include "Graphics/Material.h"
 #include "Graphics/Buffer.h"
 #include "Graphics/Mesh.h"
+#include "Graphics/RenderGraph.h"
 
 // Resource
 #include "Resource/Resource.h"

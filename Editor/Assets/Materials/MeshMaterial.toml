@@ -11,8 +11,8 @@
 	ColorFormats = ["RGBA8"]
 
 [Shaders]
-	Vertex = "Assets/Shaders/VertexShader.glsl"
-	Fragment = "Assets/Shaders/FragmentShader.glsl"
+	Vertex = "Assets/Shaders/Geometry/Vertex.glsl"
+	Fragment = "Assets/Shaders/Geometry/Fragment.glsl"
 
 [DescriptorLayout]
 	Descriptors = ["CombinedImageSampler"]

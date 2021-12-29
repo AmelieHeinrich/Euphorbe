@@ -6,13 +6,14 @@
 #include <time.h>
 
 #include "Panels/ViewportPanel.h"
+#include "RenderNodes/GeometryNode.h"
 #include "EditorCamera.h"
 
 typedef struct EditorPerformance EditorPerformance;
 struct EditorPerformance
 {
 	f64 begin_render;
-	f64 draw_quad;
+	f64 execute_render_graph;
 	f64 draw_gui;
 	f64 end_render;
 };
@@ -26,12 +27,11 @@ struct EditorData
 	b32 running;
 
 	// Render state
-	b32 first_render;
-	E_Image* render_buffer;
-	E_Image* depth_buffer;
+	E_RenderGraph* graph;
+	E_RenderGraphExecuteInfo execute_info;
+	E_RenderGraphNode* geometry_node;
 
 	// Textured mesh
-	E_ResourceFile* material;
 	E_ResourceFile* mesh;
 	E_ResourceFile* mesh_texture;
 	E_MaterialInstance* material_instance;
@@ -41,9 +41,6 @@ struct EditorData
 
 	// Editor Camera
 	EditorCamera camera;
-
-	// Scene Settings
-	vec4 clear_color;
 };
 
 extern EditorData editor_state;
@@ -62,7 +59,7 @@ void EditorLaunch();
 void EditorAssureViewportSize();
 void EditorBeginRender();
 void EditorEndRender();
-void EditorDrawTexturedMesh();
+void EditorDraw();
 void EditorCreateDockspace();
 void EditorDestroyDockspace();
 void EditorDrawGUI();
