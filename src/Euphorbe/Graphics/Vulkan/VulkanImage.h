@@ -23,6 +23,7 @@ struct E_VulkanImage
 
 E_VulkanImage* E_Vk_MakeImage(i32 width, i32 height, E_ImageFormat format);
 E_VulkanImage* E_Vk_MakeImageFromFile(const char* path);
+E_VulkanImage* E_Vk_MakeHDRImageFromFile(const char* path);
 void E_Vk_FreeImage(E_VulkanImage* image);
 void E_Vk_ResizeImage(E_VulkanImage* image, i32 width, i32 height);
 

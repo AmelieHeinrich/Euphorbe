@@ -29,7 +29,9 @@ struct EditorData
 	// Render state
 	E_RenderGraph* graph;
 	E_RenderGraphExecuteInfo execute_info;
+	
 	E_RenderGraphNode* geometry_node;
+	b32 enable_skybox;
 
 	// Textured mesh
 	E_ResourceFile* mesh;

@@ -27,7 +27,9 @@ struct E_RenderGraphExecuteInfo
 	E_Drawable drawables[EUPHORBE_MAX_DRAWABLE_COUNT];
 	i32 drawable_count;
 
-	mat4 camera;
+	mat4 projection;
+	mat4 view;
+
 	i32 width;
 	i32 height;
 	i32 frame_index;

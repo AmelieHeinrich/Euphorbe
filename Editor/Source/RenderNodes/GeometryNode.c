@@ -6,9 +6,15 @@ typedef struct GeometryData GeometryData;
 struct GeometryData
 {
 	b32 first_render;
+	b32 skybox_enabled;
 	E_Image* depth_buffer;
 
 	E_ResourceFile* geometry_material;
+	E_ResourceFile* skybox_material;
+
+	E_ResourceFile* skybox_mesh;
+	E_MaterialInstance* skybox_instance;
+	E_ResourceFile* hdr_skybox;
 };
 
 void GeometryNodeInit(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info)
@@ -19,11 +25,24 @@ void GeometryNodeInit(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info)
 	data->depth_buffer = E_MakeImage(info->width, info->height, E_ImageFormatD32_Float);
 	data->first_render = 1;
 	data->geometry_material = E_LoadResource("Assets/Materials/MeshMaterial.toml", E_ResourceTypeMaterial);
+
+	data->skybox_material = E_LoadResource("Assets/Materials/SkyboxMaterial.toml", E_ResourceTypeMaterial);
+	data->skybox_mesh = E_LoadResource("Assets/Models/Cube.gltf", E_ResourceTypeMesh);
+	data->skybox_instance = E_CreateMaterialInstance(data->skybox_material->as.material);
+	data->hdr_skybox = E_MakeHDRImageFromFile("Assets/EnvMaps/SnowyField/4k.hdr");
+	data->skybox_enabled = 1;
+
+	E_MaterialInstanceWriteImage(data->skybox_instance, 0, data->hdr_skybox);
 }
 
 void GeometryNodeClean(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info)
 {
 	GeometryData* data = (GeometryData*)node->node_data;
+
+	E_FreeResource(data->skybox_mesh);
+	E_FreeImage(data->hdr_skybox);
+	E_FreeMaterialInstance(data->skybox_instance);
+	E_FreeResource(data->skybox_material);
 
 	E_FreeImage(node->output);
 	E_FreeImage(data->depth_buffer);
@@ -61,8 +80,51 @@ void GeometryNodeExecute(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info
 
 	E_RendererStartRender(attachments, 2, render_size, 1);
 
+	// Draw skybox
+	// Calculate skybox model view projection matrix
+	if (data->skybox_enabled)
+	{
+		mat4 output_matrix;
+		glm_mat4_identity(output_matrix);
+
+		mat4 view_mat3;
+		glm_mat4_copy(info->view, view_mat3);
+
+		view_mat3[3][0] = 0.0f;
+		view_mat3[3][1] = 0.0f;
+		view_mat3[3][2] = 0.0f;
+		view_mat3[0][3] = 0.0f;
+		view_mat3[1][3] = 0.0f;
+		view_mat3[2][3] = 0.0f;
+		view_mat3[3][3] = 1.0f;
+
+		mat4 scale_matrix;
+		glm_mat4_identity(scale_matrix);
+		glm_scale(scale_matrix, (vec3) { 10000.0f, 10000.0f, 10000.0f });
+
+		glm_mat4_mul(output_matrix, info->projection, output_matrix);
+		glm_mat4_mul(output_matrix, view_mat3, output_matrix);
+		glm_mat4_mul(output_matrix, scale_matrix, output_matrix);
+
+		E_BindMaterial(data->skybox_material->as.material);
+		E_MaterialPushConstants(data->skybox_material->as.material, &output_matrix, sizeof(output_matrix));
+		E_BindMaterialInstance(data->skybox_instance, data->skybox_material->as.material);
+		for (i32 i = 0; i < data->skybox_mesh->as.mesh->submesh_count; i++)
+		{
+			E_Submesh submesh = data->skybox_mesh->as.mesh->submeshes[i];
+
+			E_BindBuffer(submesh.vertex_buffer);
+			E_BindBuffer(submesh.index_buffer);
+			E_DrawIndexed(0, submesh.index_count);
+		}
+	}
+
+	// Draw meshes
+
+	mat4 model_view;
+	glm_mat4_mul(info->projection, info->view, model_view);
 	E_BindMaterial(data->geometry_material->as.material);
-	E_MaterialPushConstants(data->geometry_material->as.material, &info->camera, sizeof(info->camera));
+	E_MaterialPushConstants(data->geometry_material->as.material, &model_view, sizeof(mat4));
 
 	for (i32 i = 0; i < info->drawable_count; i++)
 	{
@@ -117,4 +179,11 @@ E_Material* GetGeometryNodeMaterial(E_RenderGraphNode* node)
 	GeometryData* data = (GeometryData*)node->node_data;
 
 	return data->geometry_material->as.material;
+}
+
+void EnableGeometryNodeSkybox(E_RenderGraphNode* node, b32 enable)
+{
+	GeometryData* data = (GeometryData*)node->node_data;
+
+	data->skybox_enabled = enable;
 }

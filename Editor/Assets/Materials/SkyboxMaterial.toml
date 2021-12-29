@@ -1,0 +1,23 @@
+[MaterialProperties]
+	CullMode = "Front"
+	DepthOperation = "Always"
+	FrontFace = "CCW"
+	PrimitiveTopology = "TriangleList"
+	PolygonMode = "Fill"
+
+[RenderInfo]
+	ColorAttachmentCount = 1
+	DepthFormat = "D32_Float"
+	ColorFormats = ["RGBA8"]
+
+[Shaders]
+	Vertex = "Assets/Shaders/Skybox/Vertex.glsl"
+	Fragment = "Assets/Shaders/Skybox/Fragment.glsl"
+
+[DescriptorLayout]
+	Descriptors = ["CombinedImageSampler"]
+	DescriptorCount = 1
+
+[PushConstants]
+	HasPushConstants = 1
+	Size = 64

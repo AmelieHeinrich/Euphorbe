@@ -37,6 +37,23 @@ E_Image* E_MakeImageFromFile(const char* path)
     return image;
 }
 
+E_Image* E_MakeHDRImageFromFile(const char* path)
+{
+    E_Image* image = malloc(sizeof(E_Image));
+    image->format = E_ImageFormatRGBA32;
+
+#ifdef EUPHORBE_WINDOWS
+    image->rhi_handle = E_Vk_MakeHDRImageFromFile(path);
+
+    E_VulkanImage* vulkan_image = (E_VulkanImage*)image->rhi_handle;
+
+    image->width = vulkan_image->image_extent.width;
+    image->height = vulkan_image->image_extent.height;
+#endif
+
+    return image;
+}
+
 void E_FreeImage(E_Image* image)
 {
 #ifdef EUPHORBE_WINDOWS

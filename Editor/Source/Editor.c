@@ -79,6 +79,7 @@ void EditorInitialiseRenderState()
 {
     editor_state.execute_info.width = editor_state.window->width;
     editor_state.execute_info.height = editor_state.window->height;
+    editor_state.enable_skybox = 1;
 
     editor_state.graph = E_CreateRenderGraph();
     editor_state.geometry_node = CreateGeometryNode();
@@ -140,8 +141,11 @@ void EditorEndRender()
 void EditorDraw()
 {
     f64 start = EditorBeginProfiling();
+
+    EnableGeometryNodeSkybox(editor_state.geometry_node, editor_state.enable_skybox);
     
-    glm_mat4_copy(editor_state.camera.camera_matrix, editor_state.execute_info.camera);
+    glm_mat4_copy(editor_state.camera.view, editor_state.execute_info.view);
+    glm_mat4_copy(editor_state.camera.proj, editor_state.execute_info.projection);
     E_ExecuteRenderGraph(editor_state.graph, &editor_state.execute_info);
 
     editor_state.perf.execute_render_graph = EditorEndProfiling(start);
@@ -186,6 +190,18 @@ void EditorDrawGUI()
             igText("Triangle: %d", editor_state.mesh->as.mesh->total_tri_count);
             igText("Vertices: %d", editor_state.mesh->as.mesh->total_vertex_count);
             igText("Indices: %d", editor_state.mesh->as.mesh->total_index_count);
+            igTreePop();
+        }
+        igEnd();
+    }
+
+    // Render Graph Viewer
+    {
+        igBegin("Render Graph Viewer", NULL, ImGuiWindowFlags_None);
+        b32 geometry_node = igTreeNodeEx_Str("Geometry Node", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_AllowItemOverlap | ImGuiTreeNodeFlags_FramePadding);
+        if (geometry_node)
+        {
+            igCheckbox("Enable Skybox", &editor_state.enable_skybox);
             igTreePop();
         }
         igEnd();

@@ -6,5 +6,6 @@
 
 E_RenderGraphNode* CreateGeometryNode();
 E_Material* GetGeometryNodeMaterial(E_RenderGraphNode* node);
+void EnableGeometryNodeSkybox(E_RenderGraphNode* node, b32 enable);
 
 #endif
