@@ -35,7 +35,12 @@ struct EditorData
 
 	// Textured mesh
 	E_ResourceFile* mesh;
-	E_ResourceFile* mesh_texture;
+
+	E_ResourceFile* albedo_texture;
+	E_ResourceFile* metallic_roughness_texture;
+
+	E_Buffer* material_settings;
+	b32 material_buffer[4];
 	E_MaterialInstance* material_instance;
 
 	// Performance

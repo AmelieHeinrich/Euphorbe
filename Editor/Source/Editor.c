@@ -16,7 +16,9 @@ void EditorCleanup()
 
     E_FreeMaterialInstance(editor_state.material_instance);
     E_FreeResource(editor_state.mesh);
-    E_FreeResource(editor_state.mesh_texture);
+    E_FreeBuffer(editor_state.material_settings);
+    E_FreeResource(editor_state.metallic_roughness_texture);
+    E_FreeResource(editor_state.albedo_texture);
     E_CleanRenderGraph(editor_state.graph, &editor_state.execute_info);
 
     E_RendererShutdown();
@@ -88,10 +90,23 @@ void EditorInitialiseRenderState()
 
 void EditorInitialiseTexturedMesh()
 {
-    editor_state.mesh_texture = E_LoadResource("Assets/Textures/paving2.png", E_ResourceTypeTexture);
+    editor_state.material_buffer[0] = 1.0f; // Has albedo texture
+    editor_state.material_buffer[1] = 1.0f; // Has roughness texture
+    editor_state.material_buffer[2] = 1.0f; // Enable blending
+    editor_state.material_buffer[3] = 0.0f; // Don't flip UVs
+
+    editor_state.albedo_texture = E_LoadResource("Assets/Textures/Suzanne_BaseColor.png", E_ResourceTypeTexture);
+    editor_state.metallic_roughness_texture = E_LoadResource("Assets/Textures/Suzanne_MetallicRoughness.png", E_ResourceTypeTexture);
+
     editor_state.mesh = E_LoadResource("Assets/Models/Suzanne.gltf", E_ResourceTypeMesh);
     editor_state.material_instance = E_CreateMaterialInstance(GetGeometryNodeMaterial(editor_state.geometry_node));
-    E_MaterialInstanceWriteImage(editor_state.material_instance, 0, editor_state.mesh_texture->as.image);
+
+    editor_state.material_settings = E_CreateUniformBuffer(sizeof(vec4));
+    E_SetBufferData(editor_state.material_settings, &editor_state.material_buffer, sizeof(vec4));
+
+    E_MaterialInstanceWriteBuffer(editor_state.material_instance, 0, editor_state.material_settings, sizeof(vec4));
+    E_MaterialInstanceWriteImage(editor_state.material_instance, 1, editor_state.albedo_texture->as.image);
+    E_MaterialInstanceWriteImage(editor_state.material_instance, 2, editor_state.metallic_roughness_texture->as.image);
 
     editor_state.execute_info.drawables[0].mesh = editor_state.mesh->as.mesh;
     editor_state.execute_info.drawables[0].material_instance = editor_state.material_instance;
@@ -143,6 +158,7 @@ void EditorDraw()
     f64 start = EditorBeginProfiling();
 
     EnableGeometryNodeSkybox(editor_state.geometry_node, editor_state.enable_skybox);
+    E_SetBufferData(editor_state.material_settings, &editor_state.material_buffer, sizeof(vec4));
     
     glm_mat4_copy(editor_state.camera.view, editor_state.execute_info.view);
     glm_mat4_copy(editor_state.camera.proj, editor_state.execute_info.projection);
@@ -163,8 +179,10 @@ void EditorDrawGUI()
     // Material Viewer
     {
         igBegin("Material Viewer", NULL, ImGuiWindowFlags_AlwaysAutoResize);
-        igText("Albedo Map:");
-        E_ImageDrawToGUI(editor_state.mesh_texture->as.image, editor_state.mesh_texture->as.image->width / 2, editor_state.mesh_texture->as.image->height / 2);
+        igCheckbox("Enable Albedo", &editor_state.material_buffer[0]);
+        igCheckbox("Enable Metallic Roughness", &editor_state.material_buffer[1]);
+        igCheckbox("Enable Blending", &editor_state.material_buffer[2]);
+        igCheckbox("Flip UVs", &editor_state.material_buffer[3]);
         igEnd();
     }
 

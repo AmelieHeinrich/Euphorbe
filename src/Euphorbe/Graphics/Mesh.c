@@ -113,7 +113,7 @@ void ProcessGLTFPrimitive(cgltf_primitive* primitive, u32 currentPrimitiveIndex,
 
     {
         u32 component_size, component_count;
-        f32* src = (f32*)QueryAccessorData(normal_attribute->data, &component_size, &component_count);
+        f32* src = (f32*)QueryAccessorData(texcoord_attribute->data, &component_size, &component_count);
         assert(component_size == 4);
 
         for (i32 vertex_index = 0; vertex_index < vertex_count; vertex_index++)
@@ -121,20 +121,20 @@ void ProcessGLTFPrimitive(cgltf_primitive* primitive, u32 currentPrimitiveIndex,
             u32 internal_index = vertex_index * vertex_stride_count;
             vertices[internal_index + 3] = src[vertex_index * component_count + 0];
             vertices[internal_index + 4] = src[vertex_index * component_count + 1];
-            vertices[internal_index + 5] = src[vertex_index * component_count + 2];
         }
     }
 
     {
         u32 component_size, component_count;
-        f32* src = (f32*)QueryAccessorData(texcoord_attribute->data, &component_size, &component_count);
+        f32* src = (f32*)QueryAccessorData(normal_attribute->data, &component_size, &component_count);
         assert(component_size == 4);
 
         for (i32 vertex_index = 0; vertex_index < vertex_count; vertex_index++)
         {
             u32 internal_index = vertex_index * vertex_stride_count;
-            vertices[internal_index + 6] = src[vertex_index * component_count + 0];
-            vertices[internal_index + 7] = src[vertex_index * component_count + 1];
+            vertices[internal_index + 5] = src[vertex_index * component_count + 0];
+            vertices[internal_index + 6] = src[vertex_index * component_count + 1];
+            vertices[internal_index + 7] = src[vertex_index * component_count + 2];
         }
     }
 

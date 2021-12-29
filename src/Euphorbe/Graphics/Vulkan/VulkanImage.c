@@ -128,7 +128,7 @@ E_VulkanImage* E_Vk_MakeImageFromFile(const char* path)
 {
     E_VulkanImage* result = malloc(sizeof(E_VulkanImage));
 
-    stbi_set_flip_vertically_on_load(1);
+    stbi_set_flip_vertically_on_load(0);
     i32 width = 0, height = 0, channels = 0;
     u8* data = stbi_load(path, &width, &height, &channels, STBI_rgb_alpha);
     VkDeviceSize image_size = width * height * 4; // Force alpha channel
