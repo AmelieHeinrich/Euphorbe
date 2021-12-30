@@ -35,8 +35,23 @@ cmake -G "Visual Studio 17 2022" -B build
 
 ## Screenshots
 
-### Screenshot from Dec 29 2021
-![Dec 29 2021](.github/29dec2021.PNG)
+### Screenshot from Dec 30 2021
+![Dec 30 2021](.github/30dec2021.PNG)
+
+## Current features
+
+- Fully customisable render graph
+- Vulkan backend
+- Model loading (glTF) with cgltf
+- HDR texture support
+- Built-in editor
+- Custom material file format
+- Window management
+- Input system
+- Runtime shader compiling with shaderc
+- Resource system
+- GUI system with cimgui
+- Timer
 
 ## Additional information
 
