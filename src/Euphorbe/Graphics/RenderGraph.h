@@ -9,12 +9,20 @@
 
 #define EUPHORBE_MAX_DRAWABLE_COUNT 128
 #define EUPHORBE_MAX_RENDER_NODE_OUTPUTS 8
+#define EUPHORBE_MAX_RENDER_NODE_INPUTS 8
 #define EUPHORBE_MAX_RENDER_GRAPH_NODES 16
+
+#define EUPHORBE_DECLARE_NODE_OUTPUT(index) ((~(1u << 31u)) & index)
+#define EUPHORBE_DECLARE_NODE_INPUT(index) ((1u << 31u) | index)
+#define EUPHORBE_IS_NODE_INPUT(id) (((1u << 31u) & id) > 0)
+#define EUPHORBE_GET_NODE_PORT_INDEX(id) (((1u << 31u) - 1u) & id)
 
 typedef struct E_RenderGraphExecuteInfo E_RenderGraphExecuteInfo;
 typedef struct E_RenderGraphNode E_RenderGraphNode;
+typedef struct E_RenderGraphNodeInput E_RenderGraphNodeInput;
 typedef struct E_RenderGraph E_RenderGraph;
 typedef struct E_Drawable E_Drawable;
+typedef struct E_RenderGraphNodeVector E_RenderGraphNodeVector;
 
 struct E_Drawable
 {
@@ -40,31 +48,48 @@ typedef void (*E_RenderGraphNodeCleanFunc)(E_RenderGraphNode* node, E_RenderGrap
 typedef void (*E_RenderGraphNodeExecuteFunc)(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info);
 typedef void (*E_RenderGraphNodeResizeFunc)(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info);
 
+struct E_RenderGraphNodeInput
+{
+	E_RenderGraphNode* owner;
+	u32 index;
+};
+
 struct E_RenderGraphNode
 {
 	void* node_data;
 	b32 enabled;
 	char* name;
-	E_Image* output;
 
 	E_RenderGraphNodeInitFunc init_func;
 	E_RenderGraphNodeCleanFunc clean_func;
 	E_RenderGraphNodeExecuteFunc execute_func;
 	E_RenderGraphNodeResizeFunc resize_func;
+
+	E_Image* outputs[EUPHORBE_MAX_RENDER_NODE_OUTPUTS];
+	i32 output_count;
+
+	E_RenderGraphNodeInput inputs[EUPHORBE_MAX_RENDER_NODE_INPUTS];
+	i32 input_count;
 };
 
-struct E_RenderGraph
+struct E_RenderGraphNodeVector
 {
 	E_RenderGraphNode* nodes[EUPHORBE_MAX_RENDER_GRAPH_NODES];
 	i32 node_count;
 };
 
+struct E_RenderGraph
+{
+	E_RenderGraphNodeVector node_vector;
+};
+
 E_RenderGraph* E_CreateRenderGraph();
+void E_RenderGraphConnectNodes(E_RenderGraphNode* src_node, u32 src_id, E_RenderGraphNode* dst_node, u32 dst_id);
+E_Image* E_GetRenderGraphNodeInputImage(E_RenderGraphNodeInput* input);
+
+void E_BuildRenderGraph(E_RenderGraph* graph, E_RenderGraphExecuteInfo* info, E_RenderGraphNode* lastNode);
 void E_CleanRenderGraph(E_RenderGraph* graph, E_RenderGraphExecuteInfo* info);
 void E_ResizeRenderGraph(E_RenderGraph* graph, E_RenderGraphExecuteInfo* info);
 void E_ExecuteRenderGraph(E_RenderGraph* graph, E_RenderGraphExecuteInfo* info);
-
-void E_AddNodeToRenderGraph(E_RenderGraph* graph, E_RenderGraphExecuteInfo* info, E_RenderGraphNode* node);
-E_RenderGraphNode* E_GetRenderGraphNode(E_RenderGraph* graph, char* name);
 
 #endif

@@ -25,6 +25,19 @@ enum E_ImageLayout
     E_ImageLayoutSwapchainPresent = 1000001002
 };
 
+typedef enum E_ImageUsage E_ImageUsage;
+enum E_ImageUsage
+{
+    E_ImageUsageTransferSource = 0x00000001,
+    E_ImageUsageTransferDest = 0x00000002,
+    E_ImageUsageSampled = 0x00000004,
+    E_ImageUsageStorage = 0x00000008,
+    E_ImageUsageColorAttachment = 0x00000010,
+    E_ImageUsageDepthStencilAttachment = 0x00000020
+};
+
+#define E_ImageUsageRenderGraphNodeOutput E_ImageUsageTransferSource | E_ImageUsageColorAttachment | E_ImageUsageSampled
+
 typedef enum E_ImageAccess E_ImageAccess;
 enum E_ImageAccess
 {
@@ -58,10 +71,11 @@ struct E_Image
     i32 width;
     i32 height;
     E_ImageFormat format;
+    E_ImageUsage usage;
     void* rhi_handle;
 };
 
-E_Image* E_MakeImage(i32 width, i32 height, E_ImageFormat format);
+E_Image* E_MakeImage(i32 width, i32 height, E_ImageFormat format, E_ImageUsage usage);
 E_Image* E_MakeImageFromFile(const char* path);
 E_Image* E_MakeHDRImageFromFile(const char* path);
 void E_FreeImage(E_Image* image);
@@ -69,6 +83,7 @@ void E_FreeImage(E_Image* image);
 void E_ImageTransitionLayout(E_Image* image, E_ImageAccess srcAccess, E_ImageAccess dstAccess, E_ImageLayout old, E_ImageLayout new, E_ImagePipelineStage srcStage, E_ImagePipelineStage dstStage);
 void E_ImageResize(E_Image* image, i32 width, i32 height);
 
+void E_ImageBlit(E_Image* src, E_Image* dst, E_ImageLayout src_layout, E_ImageLayout dst_layout);
 void E_ImageDrawToGUI(E_Image* image, i32 width, i32 height);
 
 #endif

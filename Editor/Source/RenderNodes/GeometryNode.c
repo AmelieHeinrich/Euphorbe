@@ -7,7 +7,6 @@ struct GeometryData
 {
 	b32 first_render;
 	b32 skybox_enabled;
-	E_Image* depth_buffer;
 
 	E_ResourceFile* geometry_material;
 	E_ResourceFile* skybox_material;
@@ -21,8 +20,10 @@ void GeometryNodeInit(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info)
 {
 	GeometryData* data = (GeometryData*)node->node_data;
 
-	node->output = E_MakeImage(info->width, info->height, E_ImageFormatRGBA8);
-	data->depth_buffer = E_MakeImage(info->width, info->height, E_ImageFormatD32_Float);
+	node->outputs[0] = E_MakeImage(info->width, info->height, E_ImageFormatRGBA16, E_ImageUsageRenderGraphNodeOutput);
+	node->outputs[1] = E_MakeImage(info->width, info->height, E_ImageFormatD32_Float, E_ImageUsageDepthStencilAttachment | E_ImageUsageSampled);
+	node->output_count = 2;
+
 	data->first_render = 1;
 	data->geometry_material = E_LoadResource("Assets/Materials/MeshMaterial.toml", E_ResourceTypeMaterial);
 
@@ -44,8 +45,8 @@ void GeometryNodeClean(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info)
 	E_FreeMaterialInstance(data->skybox_instance);
 	E_FreeResource(data->skybox_material);
 
-	E_FreeImage(node->output);
-	E_FreeImage(data->depth_buffer);
+	E_FreeImage(node->outputs[1]);
+	E_FreeImage(node->outputs[0]);
 	E_FreeResource(data->geometry_material);
 	free(data);
 }
@@ -58,21 +59,21 @@ void GeometryNodeExecute(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info
 	E_ClearValue depth_clear = { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0 };
 
 	E_ImageAttachment attachments[2] = {
-		{ node->output, E_ImageLayoutColor, color_clear },
-		{ data->depth_buffer, E_ImageLayoutDepth, depth_clear }
+		{ node->outputs[0], E_ImageLayoutColor, color_clear},
+		{ node->outputs[1], E_ImageLayoutDepth, depth_clear}
 	};
 
-	E_ImageLayout src_render_buffer_image_layout = data->first_render ? E_ImageLayoutUndefined : E_ImageLayoutShaderRead;
+	E_ImageLayout src_render_buffer_image_layout = data->first_render ? E_ImageLayoutUndefined : E_ImageLayoutTransferSource;
 	data->first_render = 0;
 
 	vec2 render_size = { info->width, info->height };
 
-	E_ImageTransitionLayout(node->output,
+	E_ImageTransitionLayout(node->outputs[0],
 		E_ImageAccessShaderRead, E_ImageAccessColorWrite,
 		src_render_buffer_image_layout, E_ImageLayoutColor,
 		E_ImagePipelineStageFragmentShader, E_ImagePipelineStageColorOutput);
 
-	E_ImageTransitionLayout(data->depth_buffer,
+	E_ImageTransitionLayout(node->outputs[1],
 		0, E_ImageAccessDepthWrite,
 		E_ImageLayoutUndefined, E_ImageLayoutDepth,
 		E_ImagePipelineStageEarlyFragment | E_ImagePipelineStageLateFragment,
@@ -142,9 +143,9 @@ void GeometryNodeExecute(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info
 
 	E_RendererEndRender();
 
-	E_ImageTransitionLayout(node->output,
+	E_ImageTransitionLayout(node->outputs[0],
 		E_ImageAccessColorWrite, E_ImageAccessShaderRead,
-		E_ImageLayoutColor, E_ImageLayoutShaderRead,
+		E_ImageLayoutColor, E_ImageLayoutTransferSource,
 		E_ImagePipelineStageColorOutput, E_ImagePipelineStageFragmentShader);
 }
 
@@ -152,10 +153,10 @@ void GeometryNodeResize(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info)
 {
 	GeometryData* data = (GeometryData*)node->node_data;
 
-	E_FreeImage(node->output);
-	E_FreeImage(data->depth_buffer);
-	node->output = E_MakeImage(info->width, info->height, E_ImageFormatRGBA8);
-	data->depth_buffer = E_MakeImage(info->width, info->height, E_ImageFormatD32_Float);
+	E_FreeImage(node->outputs[1]);
+	E_FreeImage(node->outputs[0]);
+	node->outputs[0] = E_MakeImage(info->width, info->height, E_ImageFormatRGBA16, E_ImageUsageRenderGraphNodeOutput);
+	node->outputs[1] = E_MakeImage(info->width, info->height, E_ImageFormatD32_Float, E_ImageUsageSampled | E_ImageUsageDepthStencilAttachment);
 	data->first_render = 1;
 }
 
@@ -177,6 +178,7 @@ E_RenderGraphNode* CreateGeometryNode()
 E_Material* GetGeometryNodeMaterial(E_RenderGraphNode* node)
 {
 	GeometryData* data = (GeometryData*)node->node_data;
+	assert(data);
 
 	return data->geometry_material->as.material;
 }

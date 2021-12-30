@@ -85,7 +85,11 @@ void EditorInitialiseRenderState()
 
     editor_state.graph = E_CreateRenderGraph();
     editor_state.geometry_node = CreateGeometryNode();
-    E_AddNodeToRenderGraph(editor_state.graph, &editor_state.execute_info, editor_state.geometry_node);
+    editor_state.final_blit_node = CreateFinalBlitNode();
+
+    E_RenderGraphConnectNodes(editor_state.geometry_node, GeometryNodeOutput_Color, editor_state.final_blit_node, FinalBlitNodeInput_ImageIn);
+    
+    E_BuildRenderGraph(editor_state.graph, &editor_state.execute_info, editor_state.final_blit_node);
 }
 
 void EditorInitialiseTexturedMesh()
@@ -174,7 +178,7 @@ void EditorDrawGUI()
     EditorCreateDockspace();
 
     E_LogDraw();
-    DrawViewportPanel(editor_state.geometry_node->output, &editor_state.is_viewport_focused);
+    DrawViewportPanel(editor_state.final_blit_node->outputs[0], &editor_state.is_viewport_focused);
 
     // Material Viewer
     {

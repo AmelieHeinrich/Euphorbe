@@ -19,14 +19,16 @@ struct E_VulkanImage
     VmaAllocationInfo allocation_info;
 
     E_ImageFormat euphorbe_format;
+    E_ImageUsage euphorbe_usage;
 };
 
-E_VulkanImage* E_Vk_MakeImage(i32 width, i32 height, E_ImageFormat format);
+E_VulkanImage* E_Vk_MakeImage(i32 width, i32 height, E_ImageFormat format, E_ImageUsage usage);
 E_VulkanImage* E_Vk_MakeImageFromFile(const char* path);
 E_VulkanImage* E_Vk_MakeHDRImageFromFile(const char* path);
 void E_Vk_FreeImage(E_VulkanImage* image);
 void E_Vk_ResizeImage(E_VulkanImage* image, i32 width, i32 height);
 
+void E_Vk_BlitImage(E_VulkanImage* src, E_VulkanImage* dst, E_ImageLayout src_layout, E_ImageLayout dst_layout);
 void E_Vk_DrawImageToGUI(E_VulkanImage* image, i32 width, i32 height);
 
 #endif

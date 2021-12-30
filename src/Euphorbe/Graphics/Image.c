@@ -5,16 +5,17 @@
     #include "Vulkan/VulkanRenderer.h"
 #endif
 
-E_Image* E_MakeImage(i32 width, i32 height, E_ImageFormat format)
+E_Image* E_MakeImage(i32 width, i32 height, E_ImageFormat format, E_ImageUsage usage)
 {
     E_Image* image = malloc(sizeof(E_Image));
 
     image->format = format;
     image->width = width;
     image->height = height;
+    image->usage = usage;
 
 #ifdef EUPHORBE_WINDOWS
-    image->rhi_handle = E_Vk_MakeImage(width, height, format);
+    image->rhi_handle = E_Vk_MakeImage(width, height, format, usage);
 #endif
 
     return image;
@@ -90,6 +91,13 @@ void E_ImageResize(E_Image* image, i32 width, i32 height)
 
 #ifdef EUPHORBE_WINDOWS
     E_Vk_ResizeImage(image->rhi_handle, width, height);
+#endif
+}
+
+void E_ImageBlit(E_Image* src, E_Image* dst, E_ImageLayout src_layout, E_ImageLayout dst_layout)
+{
+#ifdef EUPHORBE_WINDOWS
+    E_Vk_BlitImage(src->rhi_handle, dst->rhi_handle, src_layout, dst_layout);
 #endif
 }
 

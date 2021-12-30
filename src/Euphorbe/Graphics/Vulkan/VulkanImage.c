@@ -5,21 +5,6 @@
 #include <cimgui_impl.h>
 #include <stb_image.h>
 
-VkImageUsageFlags EuphorbeFormatToVulkanUsage(E_ImageFormat format)
-{
-    switch (format)
-    {
-    case E_ImageFormatD32_Float:
-        return VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
-    case E_ImageFormatRGBA8:
-        return VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
-    case E_ImageFormatRGBA16:
-        return VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
-    }
-
-    return 0;
-}
-
 VkImageAspectFlags EuphorbeFormatToVulkanAspect(E_ImageFormat format)
 {
     switch (format)
@@ -27,15 +12,15 @@ VkImageAspectFlags EuphorbeFormatToVulkanAspect(E_ImageFormat format)
     case E_ImageFormatD32_Float:
         return VK_IMAGE_ASPECT_DEPTH_BIT;
     case E_ImageFormatRGBA8:
-        return VK_IMAGE_ASPECT_COLOR_BIT;
     case E_ImageFormatRGBA16:
+    case E_ImageFormatRGBA32:
         return VK_IMAGE_ASPECT_COLOR_BIT;
     }
 
     return 0;
 }
 
-E_VulkanImage* E_Vk_MakeImage(i32 width, i32 height, E_ImageFormat format)
+E_VulkanImage* E_Vk_MakeImage(i32 width, i32 height, E_ImageFormat format, E_ImageUsage usage)
 {
     E_VulkanImage* result = malloc(sizeof(E_VulkanImage));
 
@@ -44,6 +29,7 @@ E_VulkanImage* E_Vk_MakeImage(i32 width, i32 height, E_ImageFormat format)
     {
         result->format = (VkFormat)format;
         result->euphorbe_format = format;
+        result->euphorbe_usage = usage;
 
         VkImageCreateInfo image_create_info = { 0 };
         image_create_info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -56,7 +42,7 @@ E_VulkanImage* E_Vk_MakeImage(i32 width, i32 height, E_ImageFormat format)
         image_create_info.arrayLayers = 1;
         image_create_info.tiling = VK_IMAGE_TILING_OPTIMAL;
         image_create_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-        image_create_info.usage = EuphorbeFormatToVulkanUsage(format);
+        image_create_info.usage = usage;
         image_create_info.samples = VK_SAMPLE_COUNT_1_BIT;
         image_create_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
@@ -422,7 +408,7 @@ void E_Vk_ResizeImage(E_VulkanImage* image, i32 width, i32 height)
     image_create_info.arrayLayers = 1;
     image_create_info.tiling = VK_IMAGE_TILING_OPTIMAL;
     image_create_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    image_create_info.usage = EuphorbeFormatToVulkanUsage(image->euphorbe_format);
+    image_create_info.usage = image->euphorbe_usage;
     image_create_info.samples = VK_SAMPLE_COUNT_1_BIT;
     image_create_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
@@ -451,6 +437,23 @@ void E_Vk_ResizeImage(E_VulkanImage* image, i32 width, i32 height)
 
     res = vkCreateImageView(rhi.device.handle, &view_info, NULL, &image->image_view);
     assert(res == VK_SUCCESS);
+}
+
+void E_Vk_BlitImage(E_VulkanImage* src, E_VulkanImage* dst, E_ImageLayout src_layout, E_ImageLayout dst_layout)
+{
+    VkImageBlit region = {0};
+    region.srcOffsets[1].x = src->image_extent.width;
+    region.srcOffsets[1].y = src->image_extent.height;
+    region.srcOffsets[1].z = 1;
+    region.srcSubresource.layerCount = 1;
+    region.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    region.dstOffsets[1].x = dst->image_extent.width;
+    region.dstOffsets[1].y = dst->image_extent.height;
+    region.dstOffsets[1].z = 1;
+    region.dstSubresource.layerCount = 1;
+    region.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+
+    vkCmdBlitImage(rhi.command.command_buffers[rhi.sync.image_index], src->image, src_layout, dst->image, dst_layout, 1, &region, VK_FILTER_NEAREST);
 }
 
 void E_Vk_DrawImageToGUI(E_VulkanImage* image, i32 width, i32 height)
