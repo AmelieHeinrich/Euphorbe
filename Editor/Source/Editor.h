@@ -9,6 +9,7 @@
 #include "EditorCamera.h"
 
 #include "RenderNodes/GeometryNode.h"
+#include "RenderNodes/HDRNode.h"
 #include "RenderNodes/FinalBlitNode.h"
 
 typedef struct EditorPerformance EditorPerformance;
@@ -33,8 +34,7 @@ struct EditorData
 	E_RenderGraphExecuteInfo execute_info;
 	
 	E_RenderGraphNode* geometry_node;
-	b32 enable_skybox;
-
+	E_RenderGraphNode* hdr_node;
 	E_RenderGraphNode* final_blit_node;
 
 	// Textured mesh

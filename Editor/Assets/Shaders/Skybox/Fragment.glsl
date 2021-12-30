@@ -24,14 +24,6 @@ void main()
     const float gamma = 2.2;
     vec3 hdr_color = texture(HDRTexture, uv).rgb;
 
-    float map_x = hdr_color.x / (hdr_color.x + 1.0);
-	float map_y = hdr_color.y / (hdr_color.y + 1.0);
-	float map_z = hdr_color.z / (hdr_color.z + 1.0);
-	vec3 map = vec3(map_x, map_y, map_z);
-
-    map.x = pow(abs(map.x), 1.0 / gamma);
-	map.y = pow(abs(map.y), 1.0 / gamma);
-	map.z = pow(abs(map.z), 1.0 / gamma);
-
-    OutColor = vec4(map, 1.0);
+    vec3 result = pow(hdr_color, vec3(1.0 / gamma));
+    OutColor = vec4(result, 1.0);
 }

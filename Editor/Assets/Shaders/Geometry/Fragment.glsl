@@ -1,8 +1,12 @@
 #version 450
 
 layout (location = 0) out vec4 OutColor;
-layout (location = 0) in vec2 OutUV;
 
+layout (location = 0) in vec3 OutPos;
+layout (location = 1) in vec2 OutUV;
+layout (location = 2) in vec3 OutNormals;
+
+// Uniforms
 layout (binding = 0) uniform MaterialSettings {
     bool has_albedo;
     bool has_metallic_roughness;

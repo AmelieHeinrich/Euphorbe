@@ -1,0 +1,23 @@
+[MaterialProperties]
+	CullMode = "None"
+	DepthOperation = "Less"
+	FrontFace = "CW"
+	PrimitiveTopology = "TriangleStrip"
+	PolygonMode = "Fill"
+
+[RenderInfo]
+	ColorFormats = ["RGBA16"]
+	ColorAttachmentCount = 1
+	DepthFormat = "D32_Float"
+
+[Shaders]
+	Vertex = "Assets/Shaders/HDR/Vertex.glsl"
+	Fragment = "Assets/Shaders/HDR/Fragment.glsl"
+
+[DescriptorLayout]
+	Descriptors = ["CombinedImageSampler"]
+	DescriptorCount = 1
+
+[PushConstants]
+	HasPushConstants = 1
+	Size = 16

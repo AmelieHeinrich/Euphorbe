@@ -19,7 +19,10 @@ void FinalBlitNodeInit(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info)
 
 void FinalBlitNodeClean(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info)
 {
+	FinalBlitNodeData* data = node->node_data;
+
 	E_FreeImage(node->outputs[0]);
+	free(data);
 }
 
 void FinalBlitNodeExecute(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info)

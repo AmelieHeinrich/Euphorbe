@@ -301,6 +301,8 @@ E_ImageFormat E_GetImageFormatFromString(const char* str)
 		return E_ImageFormatRGBA8;
 	if (!strcmp(str, "RGBA16"))
 		return E_ImageFormatRGBA16;
+	if (!strcmp(str, "RGBA32"))
+		return E_ImageFormatRGBA32;
 	if (!strcmp(str, "D32_Float"))
 		return E_ImageFormatD32_Float;
 

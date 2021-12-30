@@ -8,7 +8,7 @@
 [RenderInfo]
 	ColorAttachmentCount = 1
 	DepthFormat = "D32_Float"
-	ColorFormats = ["RGBA8"]
+	ColorFormats = ["RGBA16"]
 
 [Shaders]
 	Vertex = "Assets/Shaders/Geometry/Vertex.glsl"

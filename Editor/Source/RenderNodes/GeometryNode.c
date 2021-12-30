@@ -63,7 +63,7 @@ void GeometryNodeExecute(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info
 		{ node->outputs[1], E_ImageLayoutDepth, depth_clear}
 	};
 
-	E_ImageLayout src_render_buffer_image_layout = data->first_render ? E_ImageLayoutUndefined : E_ImageLayoutTransferSource;
+	E_ImageLayout src_render_buffer_image_layout = data->first_render ? E_ImageLayoutUndefined : E_ImageLayoutShaderRead;
 	data->first_render = 0;
 
 	vec2 render_size = { info->width, info->height };
@@ -145,7 +145,7 @@ void GeometryNodeExecute(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info
 
 	E_ImageTransitionLayout(node->outputs[0],
 		E_ImageAccessColorWrite, E_ImageAccessShaderRead,
-		E_ImageLayoutColor, E_ImageLayoutTransferSource,
+		E_ImageLayoutColor, E_ImageLayoutShaderRead,
 		E_ImagePipelineStageColorOutput, E_ImagePipelineStageFragmentShader);
 }
 
@@ -183,9 +183,14 @@ E_Material* GetGeometryNodeMaterial(E_RenderGraphNode* node)
 	return data->geometry_material->as.material;
 }
 
-void EnableGeometryNodeSkybox(E_RenderGraphNode* node, b32 enable)
+void GeometryNodeDrawGUI(E_RenderGraphNode* node)
 {
 	GeometryData* data = (GeometryData*)node->node_data;
 
-	data->skybox_enabled = enable;
+	b32 geometry_node = igTreeNodeEx_Str("Geometry Node", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_AllowItemOverlap | ImGuiTreeNodeFlags_FramePadding);
+	if (geometry_node)
+	{
+		igCheckbox("Enable Skybox", &data->skybox_enabled);
+		igTreePop();
+	}
 }

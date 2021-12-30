@@ -51,7 +51,7 @@ void E_BuildRenderGraph(E_RenderGraph* graph, E_RenderGraphExecuteInfo* info, E_
 
 	E_RenderGraphNodeVector temp = {0};
 	temp.node_count = 0;
-	memset(temp.nodes, 0, sizeof(E_RenderGraphNode*) * EUPHORBE_MAX_RENDER_GRAPH_NODES);
+	memset(temp.nodes, 0, sizeof(temp.nodes));
 	RecursivelyAddNodes(lastNode, &temp);
 
 	// Add the nodes to the graph
@@ -84,8 +84,10 @@ void E_BuildRenderGraph(E_RenderGraph* graph, E_RenderGraphExecuteInfo* info, E_
 		E_RenderGraphNode* node = graph->node_vector.nodes[i];
 		node->init_func(node, info);
 
-		E_LogInfo("Initialised node at index %d with name %s", i, node->name);
+		E_LogInfo("RENDER GRAPH BUILD: Initialised node at index %d with name %s", i, node->name);
 	}
+
+	E_LogInfo("RENDER GRAPH BUILD: Built render graph with %d nodes", graph->node_vector.node_count);
 }
 
 void E_CleanRenderGraph(E_RenderGraph* graph, E_RenderGraphExecuteInfo* info)
