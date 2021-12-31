@@ -24,6 +24,7 @@ E_DescriptorType E_GetDescriptorTypeFromString(const char* str);
 E_Material* E_CreateMaterial(E_MaterialCreateInfo* create_info)
 {
 	E_Material* result = malloc(sizeof(E_Material));
+	memset(result, 0, sizeof(E_Material));
 	result->loaded_from_file = 0;
 	result->material_create_info = create_info;
 	
@@ -37,6 +38,7 @@ E_Material* E_CreateMaterial(E_MaterialCreateInfo* create_info)
 E_Material* E_CreateMaterialFromFile(const char* path)
 {
 	E_Material* material = malloc(sizeof(E_Material));
+	memset(material, 0, sizeof(E_Material));
 	material->loaded_from_file = 1;
 	material->material_create_info = malloc(sizeof(E_MaterialCreateInfo));
 
@@ -110,10 +112,9 @@ E_Material* E_CreateMaterialFromFile(const char* path)
 
 	material->material_create_info->render_info.color_attachment_count = attachment_count.u.i;
 	material->material_create_info->render_info.depth_format = E_GetImageFormatFromString(depth_format.u.s);
-	for (i32 i = 0; ; i++)
+	for (i32 i = 0; i < material->material_create_info->render_info.color_attachment_count; i++)
 	{
 		toml_datum_t data = toml_string_at(attachment_formats, i);
-		if (!data.ok) break;
 		char* format = data.u.s;
 		material->material_create_info->render_info.color_formats[i] = E_GetImageFormatFromString(format);
 		free(format);
@@ -137,19 +138,29 @@ E_Material* E_CreateMaterialFromFile(const char* path)
 
 	// Descriptor layout
 
-	toml_datum_t descriptor_count = toml_int_in(descriptor_layout, "DescriptorCount");
-	toml_array_t* descriptor_desc = toml_array_in(descriptor_layout, "Descriptors");
-	assert(descriptor_count.ok);
+	toml_datum_t descriptor_set_layout_count = toml_int_in(descriptor_layout, "DescriptorSetLayoutCount");
+	toml_array_t* descriptor_set_layouts = toml_array_in(descriptor_layout, "DescriptorSetLayouts");
+	assert(descriptor_set_layout_count.ok);
 
-	material->material_create_info->descriptor_count = descriptor_count.u.i;
-	for (i32 i = 0; ; i++)
+	material->material_create_info->descriptor_set_layout_count = descriptor_set_layout_count.u.i;
+	for (i32 i = 0; i < material->material_create_info->descriptor_set_layout_count; i++)
 	{
-		toml_datum_t data = toml_string_at(descriptor_desc, i);
-		if (!data.ok) break;
-		char* descriptor_type = data.u.s;
-		material->material_create_info->descriptors[i].type = E_GetDescriptorTypeFromString(descriptor_type);
-		material->material_create_info->descriptors[i].binding = i;
-		free(descriptor_type);
+		// Get descriptor set layout info (descriptors, descriptor_count)
+		toml_array_t* data = toml_array_at(descriptor_set_layouts, i);
+		toml_array_t* descriptors = toml_array_at(data, 0);
+		toml_datum_t descriptor_count = toml_int_at(data, 1);
+		assert(descriptor_count.ok);
+
+		material->material_create_info->descriptor_set_layouts[i].descriptor_count = descriptor_count.u.i;
+
+		for (i32 j = 0; j < material->material_create_info->descriptor_set_layouts[i].descriptor_count; j++)
+		{
+			toml_datum_t descriptor_type = toml_string_at(descriptors, j);
+			assert(descriptor_type.ok);
+			material->material_create_info->descriptor_set_layouts[i].descriptors[j].type = E_GetDescriptorTypeFromString(descriptor_type.u.s);
+			material->material_create_info->descriptor_set_layouts[i].descriptors[j].binding = j;
+			free(descriptor_type.u.s);
+		}
 	}
 
 	// Push Constants
@@ -186,20 +197,20 @@ void E_FreeMaterial(E_Material* material)
 #endif
 	if (material->loaded_from_file)
 	{
-		E_FreeResource(material->material_create_info->vertex_shader);
-		E_FreeResource(material->material_create_info->fragment_shader);
+		if (material->material_create_info->vertex_shader) E_FreeResource(material->material_create_info->vertex_shader);
+		if (material->material_create_info->fragment_shader) E_FreeResource(material->material_create_info->fragment_shader);
 		free(material->material_create_info);
 	}
 	free(material);
 }
 
-E_MaterialInstance* E_CreateMaterialInstance(E_Material* material)
+E_MaterialInstance* E_CreateMaterialInstance(E_Material* material, i32 set_layout_index)
 {
 	E_MaterialInstance* instance = malloc(sizeof(E_MaterialInstance));
 	instance->material = material;
 	
 #ifdef EUPHORBE_WINDOWS
-	instance->rhi_handle = E_Vk_CreateMaterialInstance((E_VulkanMaterial*)material->rhi_handle);
+	instance->rhi_handle = E_Vk_CreateMaterialInstance((E_VulkanMaterial*)material->rhi_handle, set_layout_index);
 #endif
 
 	return instance;
@@ -299,6 +310,8 @@ E_ImageFormat E_GetImageFormatFromString(const char* str)
 {
 	if (!strcmp(str, "RGBA8"))
 		return E_ImageFormatRGBA8;
+	if (!strcmp(str, "RG16"))
+		return E_ImageFormatRG16;
 	if (!strcmp(str, "RGBA16"))
 		return E_ImageFormatRGBA16;
 	if (!strcmp(str, "RGBA32"))

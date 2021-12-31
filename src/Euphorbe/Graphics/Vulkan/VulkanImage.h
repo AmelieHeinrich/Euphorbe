@@ -20,11 +20,13 @@ struct E_VulkanImage
 
     E_ImageFormat euphorbe_format;
     E_ImageUsage euphorbe_usage;
+    b32 cube_map;
 };
 
 E_VulkanImage* E_Vk_MakeImage(i32 width, i32 height, E_ImageFormat format, E_ImageUsage usage);
 E_VulkanImage* E_Vk_MakeImageFromFile(const char* path);
 E_VulkanImage* E_Vk_MakeHDRImageFromFile(const char* path);
+E_VulkanImage* E_Vk_MakeCubeMap(i32 width, i32 height, E_ImageFormat format, E_ImageUsage usage);
 void E_Vk_FreeImage(E_VulkanImage* image);
 void E_Vk_ResizeImage(E_VulkanImage* image, i32 width, i32 height);
 

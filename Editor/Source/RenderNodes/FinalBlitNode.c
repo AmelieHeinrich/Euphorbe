@@ -64,5 +64,8 @@ E_RenderGraphNode* CreateFinalBlitNode()
 	node->name = "FinalBlitNode";
 	node->node_data = malloc(sizeof(E_Image));
 
+	node->input_count = 0;
+	memset(node->inputs, 0, sizeof(node->inputs));
+
 	return node;
 }

@@ -23,8 +23,6 @@ struct E_ResourceFile
 {
     E_ResourceType type;
     char* path;
-
-    char* resource_data;
     i32 resource_size;
 
     struct {

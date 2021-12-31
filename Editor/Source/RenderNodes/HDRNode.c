@@ -28,7 +28,7 @@ void HDRNodeInit(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info)
 	assert(color_buffer && color_buffer->rhi_handle);
 
 	data->screen_shader = E_LoadResource("Assets/Materials/HDRMaterial.toml", E_ResourceTypeMaterial);
-	data->material_instance = E_CreateMaterialInstance(data->screen_shader->as.material);
+	data->material_instance = E_CreateMaterialInstance(data->screen_shader->as.material, 0);
 	E_MaterialInstanceWriteImage(data->material_instance, 0, color_buffer);
 
 	// Screen Quad
@@ -87,7 +87,7 @@ void HDRNodeExecute(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info)
 	E_RendererStartRender(attachments, 1, render_size, 0);
 
 	E_BindMaterial(data->screen_shader->as.material);
-	E_BindMaterialInstance(data->material_instance, data->screen_shader->as.material);
+	E_BindMaterialInstance(data->material_instance, data->screen_shader->as.material, 0);
 	E_MaterialPushConstants(data->screen_shader->as.material, &uniform, sizeof(vec4));
 	E_BindBuffer(data->quad_vertex_buffer);
 	E_Draw(0, 4);
@@ -125,6 +125,9 @@ E_RenderGraphNode* CreateHDRNode()
 	node->resize_func = HDRNodeResize;
 	node->node_data = malloc(sizeof(HDRNodeData));
 	node->name = "HDRNode";
+
+	node->input_count = 0;
+	memset(node->inputs, 0, sizeof(node->inputs));
 	
 	return node;
 }

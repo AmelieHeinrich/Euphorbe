@@ -63,6 +63,7 @@ char* E_ReadFile(const char* path, i32* output_size)
 	return NULL;
 }
 
+#pragma optimize("", off)
 void E_CompileShader(char* source, i32 source_size, E_Shader* shader)
 {
 	shaderc_compiler_t compiler = shaderc_compiler_initialize();
@@ -87,3 +88,4 @@ void E_CompileShader(char* source, i32 source_size, E_Shader* shader)
 
 	shaderc_compiler_release(compiler);
 }
+#pragma optimize("", on)

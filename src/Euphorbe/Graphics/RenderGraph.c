@@ -7,33 +7,35 @@ E_RenderGraph* E_CreateRenderGraph()
 	E_RenderGraph* graph = malloc(sizeof(E_RenderGraph));
 
 	graph->node_vector.node_count = 0;
-	memset(graph->node_vector.nodes, 0, sizeof(graph->node_vector.nodes));
+	graph->node_vector.nodes = malloc(sizeof(E_RenderGraphNode*) * EUPHORBE_MAX_RENDER_GRAPH_NODES);
 
 	return graph;
 }
 
 void E_RenderGraphConnectNodes(E_RenderGraphNode* src_node, u32 src_id, E_RenderGraphNode* dst_node, u32 dst_id)
 {
-	E_RenderGraphNodeInput input = {0};
-	input.owner = src_node;
-	input.index = EUPHORBE_GET_NODE_PORT_INDEX(src_id);
+	assert(src_node);
+	assert(dst_node);
+	assert(!EUPHORBE_IS_NODE_PORT_INPUT(src_id)); // Make sure srcId is an output - to be used as an input
+	assert(EUPHORBE_IS_NODE_PORT_INPUT(dst_id)); // Make sure dstId is an input port.
 
-	dst_node->inputs[EUPHORBE_GET_NODE_PORT_INDEX(dst_id)] = input;
+	dst_node->inputs[EUPHORBE_GET_NODE_PORT_INDEX(dst_id)].owner = src_node;
+	dst_node->inputs[EUPHORBE_GET_NODE_PORT_INDEX(dst_id)].index = EUPHORBE_GET_NODE_PORT_INDEX(src_id);
 	dst_node->input_count++;
 }
 
 void RecursivelyAddNodes(E_RenderGraphNode* node, E_RenderGraphNodeVector* vec)
 {
-	vec->nodes[vec->node_count] = node;
-	vec->node_count++;
-
-	for (i32 i = 0; i < node->input_count; i++)
+	if (node)
 	{
-		if (&node->inputs[i] != NULL)
+		vec->nodes[vec->node_count] = node;
+		vec->node_count++;
+
+		for (i32 i = 0; i < node->input_count; ++i)
 		{
 			E_RenderGraphNode* owner = node->inputs[i].owner;
 
-			if (owner == NULL) break;
+			if (!owner) break;
 
 			RecursivelyAddNodes(owner, vec);
 		}
@@ -42,23 +44,24 @@ void RecursivelyAddNodes(E_RenderGraphNode* node, E_RenderGraphNodeVector* vec)
 
 E_Image* E_GetRenderGraphNodeInputImage(E_RenderGraphNodeInput* input)
 {
+	assert(input->owner);
 	return input->owner->outputs[input->index];
 }
 
-void E_BuildRenderGraph(E_RenderGraph* graph, E_RenderGraphExecuteInfo* info, E_RenderGraphNode* lastNode)
+void E_BuildRenderGraph(E_RenderGraph* graph, E_RenderGraphExecuteInfo* info, E_RenderGraphNode* last_node)
 {
-	// Add them to a temporary vector
+	// Add the nodes to a temporary vector
 
-	E_RenderGraphNodeVector temp = {0};
-	temp.node_count = 0;
-	memset(temp.nodes, 0, sizeof(temp.nodes));
-	RecursivelyAddNodes(lastNode, &temp);
+	E_RenderGraphNodeVector* temp = malloc(sizeof(E_RenderGraphNodeVector));
+	temp->nodes = malloc(sizeof(E_RenderGraphNode*) * EUPHORBE_MAX_RENDER_GRAPH_NODES);
+	temp->node_count = 0;
+	RecursivelyAddNodes(last_node, temp);
 
 	// Add the nodes to the graph
 
-	for (i32 candidate_index = temp.node_count - 1; candidate_index >= 0; --candidate_index)
+	for (i32 candidate_index = temp->node_count - 1; candidate_index >= 0; --candidate_index)
 	{
-		E_RenderGraphNode* node = temp.nodes[candidate_index];
+		E_RenderGraphNode* node = temp->nodes[candidate_index];
 		b32 already_in_array = 0;
 
 		for (i32 i = 0; i < graph->node_vector.node_count; i++)
@@ -76,6 +79,9 @@ void E_BuildRenderGraph(E_RenderGraph* graph, E_RenderGraphExecuteInfo* info, E_
 			graph->node_vector.node_count++;
 		}
 	}
+
+	free(temp->nodes);
+	free(temp);
 
 	// Initialize 
 
@@ -100,6 +106,7 @@ void E_CleanRenderGraph(E_RenderGraph* graph, E_RenderGraphExecuteInfo* info)
 		free(node);
 	}
 
+	free(graph->node_vector.nodes);
 	free(graph);
 }
 

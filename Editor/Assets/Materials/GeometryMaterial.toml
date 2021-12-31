@@ -6,18 +6,18 @@
 	PolygonMode = "Fill"
 
 [RenderInfo]
-	ColorAttachmentCount = 1
+	ColorAttachmentCount = 2
 	DepthFormat = "D32_Float"
-	ColorFormats = ["RGBA16"]
+	ColorFormats = ["RGBA16", "RG16"]
 
 [Shaders]
 	Vertex = "Assets/Shaders/Geometry/Vertex.glsl"
 	Fragment = "Assets/Shaders/Geometry/Fragment.glsl"
 
 [DescriptorLayout]
-	Descriptors = ["UniformBuffer", "CombinedImageSampler", "CombinedImageSampler"]
-	DescriptorCount = 3
+	DescriptorSetLayouts = [[["UniformBuffer", "UniformBuffer", "CombinedImageSampler", "CombinedImageSampler"], 4], [["UniformBuffer", "CombinedImageSampler"], 2]]
+	DescriptorSetLayoutCount = 2
 
 [PushConstants]
 	HasPushConstants = 1
-	Size = 64
+	Size = 212

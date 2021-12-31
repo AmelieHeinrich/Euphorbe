@@ -37,6 +37,14 @@ struct E_ImageAttachment
     E_ClearValue clear_value;
 };
 
+// Light info
+typedef struct E_PointLight E_PointLight;
+struct E_PointLight
+{
+    vec4 position;
+    vec4 color;
+};
+
 void E_RendererInit(E_Window* window, E_RendererInitSettings settings);
 void E_RendererShutdown();
 
@@ -58,7 +66,7 @@ void E_EndGUI();
 //
 void E_BindMaterial(E_Material* material);
 void E_BindBuffer(E_Buffer* buffer);
-void E_BindMaterialInstance(E_MaterialInstance* instance, E_Material* material);
+void E_BindMaterialInstance(E_MaterialInstance* instance, E_Material* material, i32 set_index);
 
 //
 void E_Draw(u32 first, u32 count);

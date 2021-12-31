@@ -5,9 +5,11 @@
 #include <Euphorbe/Graphics/Mesh.h>
 #include <Euphorbe/Graphics/Image.h>
 #include <Euphorbe/Graphics/Material.h>
+#include <Euphorbe/Graphics/Renderer.h>
 #include <cglm/cglm.h>
 
 #define EUPHORBE_MAX_DRAWABLE_COUNT 128
+#define EUPHORBE_MAX_LIGHT_COUNT 64
 #define EUPHORBE_MAX_RENDER_NODE_OUTPUTS 8
 #define EUPHORBE_MAX_RENDER_NODE_INPUTS 8
 #define EUPHORBE_MAX_RENDER_GRAPH_NODES 16
@@ -28,15 +30,23 @@ struct E_Drawable
 {
 	E_Mesh* mesh;
 	E_MaterialInstance* material_instance;
+	
+	struct {
+		mat4 transform;
+		mat4 prev_transform;
+	} model_matrix;
 };
 
 struct E_RenderGraphExecuteInfo
 {
 	E_Drawable drawables[EUPHORBE_MAX_DRAWABLE_COUNT];
-	i32 drawable_count;
+	u32 drawable_count;
+
+	E_PointLight point_lights[EUPHORBE_MAX_LIGHT_COUNT];
 
 	mat4 projection;
 	mat4 view;
+	vec3 camera_position;
 
 	i32 width;
 	i32 height;
@@ -66,16 +76,16 @@ struct E_RenderGraphNode
 	E_RenderGraphNodeResizeFunc resize_func;
 
 	E_Image* outputs[EUPHORBE_MAX_RENDER_NODE_OUTPUTS];
-	i32 output_count;
+	u32 output_count;
 
 	E_RenderGraphNodeInput inputs[EUPHORBE_MAX_RENDER_NODE_INPUTS];
-	i32 input_count;
+	u32 input_count;
 };
 
 struct E_RenderGraphNodeVector
 {
-	E_RenderGraphNode* nodes[EUPHORBE_MAX_RENDER_GRAPH_NODES];
-	i32 node_count;
+	E_RenderGraphNode** nodes;
+	u32 node_count;
 };
 
 struct E_RenderGraph
@@ -87,7 +97,7 @@ E_RenderGraph* E_CreateRenderGraph();
 void E_RenderGraphConnectNodes(E_RenderGraphNode* src_node, u32 src_id, E_RenderGraphNode* dst_node, u32 dst_id);
 E_Image* E_GetRenderGraphNodeInputImage(E_RenderGraphNodeInput* input);
 
-void E_BuildRenderGraph(E_RenderGraph* graph, E_RenderGraphExecuteInfo* info, E_RenderGraphNode* lastNode);
+void E_BuildRenderGraph(E_RenderGraph* graph, E_RenderGraphExecuteInfo* info, E_RenderGraphNode* last_node);
 void E_CleanRenderGraph(E_RenderGraph* graph, E_RenderGraphExecuteInfo* info);
 void E_ResizeRenderGraph(E_RenderGraph* graph, E_RenderGraphExecuteInfo* info);
 void E_ExecuteRenderGraph(E_RenderGraph* graph, E_RenderGraphExecuteInfo* info);

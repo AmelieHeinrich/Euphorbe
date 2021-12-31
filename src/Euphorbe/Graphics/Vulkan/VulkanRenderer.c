@@ -949,9 +949,9 @@ void E_Vk_BindBuffer(E_VulkanBuffer* buffer, E_BufferUsage usage)
     }
 }
 
-void E_Vk_BindMaterialInstance(E_VulkanMaterialInstance* instance, E_VulkanMaterial* material)
+void E_Vk_BindMaterialInstance(E_VulkanMaterialInstance* instance, E_VulkanMaterial* material, i32 set_index)
 {
-    vkCmdBindDescriptorSets(CURRENT_CMD_BUF, VK_PIPELINE_BIND_POINT_GRAPHICS, material->pipeline_layout, 0, 1, &instance->set, 0, NULL);
+    vkCmdBindDescriptorSets(CURRENT_CMD_BUF, VK_PIPELINE_BIND_POINT_GRAPHICS, material->pipeline_layout, set_index, 1, &instance->set, 0, NULL);
 }
 
 void E_Vk_Draw(u32 first, u32 count)

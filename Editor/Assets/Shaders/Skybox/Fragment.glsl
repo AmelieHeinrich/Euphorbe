@@ -20,10 +20,6 @@ void main()
 {
     vec2 uv = SampleSphericalMap(normalize(OutPosition));
 
-    // Apply gamma correction
-    const float gamma = 2.2;
-    vec3 hdr_color = texture(HDRTexture, uv).rgb;
-
-    vec3 result = pow(hdr_color, vec3(1.0 / gamma));
-    OutColor = vec4(result, 1.0);
+    vec3 color = texture(HDRTexture, uv).rgb;
+    OutColor = vec4(color, 1.0);
 }

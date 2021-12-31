@@ -153,24 +153,30 @@ E_VulkanMaterial* E_Vk_CreateMaterial(E_MaterialCreateInfo* create_info)
     E_VulkanMaterial* result = malloc(sizeof(E_VulkanMaterial));
 
     // Make descriptor set layout
-    i32 descriptor_desc_count = 0;
-    VkDescriptorSetLayoutBinding bindings[EUPHORBE_MAX_DESCRIPTORS] = { 0 };
-    for (i32 i = 0; i < create_info->descriptor_count; i++)
+    memset(result->set_layouts, 0, sizeof(result->set_layouts));
+    result->set_layout_count = create_info->descriptor_set_layout_count;
+    for (i32 i = 0; i < create_info->descriptor_set_layout_count; i++)
     {
-        bindings[i].binding = create_info->descriptors[i].binding;
-        bindings[i].descriptorCount = 1;
-        bindings[i].descriptorType = (VkDescriptorType)create_info->descriptors[i].type;
-        bindings[i].pImmutableSamplers = NULL;
-        bindings[i].stageFlags = VK_SHADER_STAGE_ALL;
+        E_DescriptorSetLayout layout = create_info->descriptor_set_layouts[i];
+        VkDescriptorSetLayoutBinding bindings[EUPHORBE_MAX_DESCRIPTORS] = { 0 };
+
+        for (i32 j = 0; j < layout.descriptor_count; j++)
+        {
+            bindings[j].binding = layout.descriptors[j].binding;
+            bindings[j].descriptorCount = 1;
+            bindings[j].descriptorType = (VkDescriptorType)layout.descriptors[j].type;
+            bindings[j].pImmutableSamplers = NULL;
+            bindings[j].stageFlags = VK_SHADER_STAGE_ALL;
+        }
+
+        VkDescriptorSetLayoutCreateInfo layout_info = { 0 };
+        layout_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+        layout_info.bindingCount = layout.descriptor_count;
+        layout_info.pBindings = bindings;
+
+        VkResult res = vkCreateDescriptorSetLayout(rhi.device.handle, &layout_info, NULL, &result->set_layouts[i]);
+        assert(res == VK_SUCCESS);
     }
-
-    VkDescriptorSetLayoutCreateInfo layout_info = { 0 };
-    layout_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-    layout_info.bindingCount = create_info->descriptor_count;
-    layout_info.pBindings = bindings;
-
-    VkResult res = vkCreateDescriptorSetLayout(rhi.device.handle, &layout_info, NULL, &result->set_layout);
-    assert(res == VK_SUCCESS);
 
     VkShaderModule vertex_module;
     VkShaderModule fragment_module;
@@ -320,15 +326,15 @@ E_VulkanMaterial* E_Vk_CreateMaterial(E_MaterialCreateInfo* create_info)
 
     VkPipelineLayoutCreateInfo pipeline_layout_info = {0};
     pipeline_layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    pipeline_layout_info.setLayoutCount = 1;
-    pipeline_layout_info.pSetLayouts = &result->set_layout;
+    pipeline_layout_info.setLayoutCount = create_info->descriptor_set_layout_count;
+    pipeline_layout_info.pSetLayouts = result->set_layouts;
     if (create_info->has_push_constants)
     {
         pipeline_layout_info.pushConstantRangeCount = 1;
         pipeline_layout_info.pPushConstantRanges = &push_constant;
     }
 
-    res = vkCreatePipelineLayout(rhi.device.handle, &pipeline_layout_info, NULL, &result->pipeline_layout);
+    VkResult res = vkCreatePipelineLayout(rhi.device.handle, &pipeline_layout_info, NULL, &result->pipeline_layout);
     assert(res == VK_SUCCESS);
 
     VkPipelineRenderingCreateInfoKHR rendering_create_info = {0};
@@ -373,7 +379,8 @@ E_VulkanMaterial* E_Vk_CreateMaterial(E_MaterialCreateInfo* create_info)
 
 void E_Vk_FreeMaterial(E_VulkanMaterial* material)
 {
-    vkDestroyDescriptorSetLayout(rhi.device.handle, material->set_layout, NULL);
+    for (i32 i = 0; i < material->set_layout_count; i++)
+        vkDestroyDescriptorSetLayout(rhi.device.handle, material->set_layouts[i], NULL);
     vkDestroyPipeline(rhi.device.handle, material->pipeline, NULL);
     vkDestroyPipelineLayout(rhi.device.handle, material->pipeline_layout, NULL);
     free(material);
@@ -384,7 +391,7 @@ void E_Vk_PushConstants(E_VulkanMaterial* material, void* data, i64 size)
     vkCmdPushConstants(rhi.command.command_buffers[rhi.sync.image_index], material->pipeline_layout, VK_SHADER_STAGE_ALL, 0, size, data);
 }
 
-E_VulkanMaterialInstance* E_Vk_CreateMaterialInstance(E_VulkanMaterial* material)
+E_VulkanMaterialInstance* E_Vk_CreateMaterialInstance(E_VulkanMaterial* material, i32 set_layout_index)
 {
     E_VulkanMaterialInstance* material_instance = malloc(sizeof(E_VulkanMaterialInstance));
 
@@ -392,7 +399,7 @@ E_VulkanMaterialInstance* E_Vk_CreateMaterialInstance(E_VulkanMaterial* material
     allocate_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
     allocate_info.descriptorPool = rhi.global_descriptor_pool;
     allocate_info.descriptorSetCount = 1;
-    allocate_info.pSetLayouts = &material->set_layout;
+    allocate_info.pSetLayouts = &material->set_layouts[set_layout_index];
 
     VkResult res = vkAllocateDescriptorSets(rhi.device.handle, &allocate_info, &material_instance->set);
     assert(res == VK_SUCCESS);

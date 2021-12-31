@@ -95,10 +95,10 @@ void E_BindBuffer(E_Buffer* buffer)
 #endif
 }
 
-void E_BindMaterialInstance(E_MaterialInstance* instance, E_Material* material)
+void E_BindMaterialInstance(E_MaterialInstance* instance, E_Material* material, i32 set_index)
 {
 #ifdef EUPHORBE_WINDOWS
-    E_Vk_BindMaterialInstance((E_VulkanMaterialInstance*)instance->rhi_handle, (E_VulkanMaterial*)material->rhi_handle);
+    E_Vk_BindMaterialInstance((E_VulkanMaterialInstance*)instance->rhi_handle, (E_VulkanMaterial*)material->rhi_handle, set_index);
 #endif
 }
 

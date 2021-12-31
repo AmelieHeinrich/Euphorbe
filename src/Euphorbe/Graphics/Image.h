@@ -7,6 +7,7 @@ typedef enum E_ImageFormat E_ImageFormat;
 enum E_ImageFormat
 {
     E_ImageFormatRGBA8 = 37,
+    E_ImageFormatRG16 = 83,
     E_ImageFormatRGBA16 = 97,
     E_ImageFormatRGBA32 = 109,
     E_ImageFormatD32_Float = 126,
@@ -78,6 +79,7 @@ struct E_Image
 E_Image* E_MakeImage(i32 width, i32 height, E_ImageFormat format, E_ImageUsage usage);
 E_Image* E_MakeImageFromFile(const char* path);
 E_Image* E_MakeHDRImageFromFile(const char* path);
+E_Image* E_MakeCubeMap(i32 width, i32 height, E_ImageFormat format, E_ImageUsage usage);
 void E_FreeImage(E_Image* image);
 
 void E_ImageTransitionLayout(E_Image* image, E_ImageAccess srcAccess, E_ImageAccess dstAccess, E_ImageLayout old, E_ImageLayout new, E_ImagePipelineStage srcStage, E_ImagePipelineStage dstStage);

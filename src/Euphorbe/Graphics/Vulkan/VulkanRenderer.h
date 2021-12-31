@@ -100,7 +100,7 @@ void E_Vk_EndGUI();
 
 void E_Vk_BindMaterial(E_VulkanMaterial* material);
 void E_Vk_BindBuffer(E_VulkanBuffer* buffer, E_BufferUsage usage);
-void E_Vk_BindMaterialInstance(E_VulkanMaterialInstance* instance, E_VulkanMaterial* material);
+void E_Vk_BindMaterialInstance(E_VulkanMaterialInstance* instance, E_VulkanMaterial* material, i32 set_index);
 
 void E_Vk_Draw(u32 first, u32 count);
 void E_Vk_DrawIndexed(u32 first, u32 count);

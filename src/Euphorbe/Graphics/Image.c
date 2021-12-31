@@ -55,6 +55,16 @@ E_Image* E_MakeHDRImageFromFile(const char* path)
     return image;
 }
 
+E_Image* E_MakeCubeMap(i32 width, i32 height, E_ImageFormat format, E_ImageUsage usage)
+{
+    E_Image* image = malloc(sizeof(E_Image));
+
+#ifdef EUPHORBE_WINDOWS
+    image->rhi_handle = E_Vk_MakeCubeMap(width, height, format, usage);
+#endif
+    return image;
+}
+
 void E_FreeImage(E_Image* image)
 {
 #ifdef EUPHORBE_WINDOWS
@@ -75,7 +85,7 @@ void E_ImageTransitionLayout(E_Image* image, E_ImageAccess srcAccess, E_ImageAcc
     range.baseArrayLayer = 0;
     range.layerCount = VK_REMAINING_ARRAY_LAYERS;
 
-    if (image->format == E_ImageFormatRGBA8 || image->format == E_ImageFormatRGBA16)
+    if (image->format == E_ImageFormatRGBA8 || image->format == E_ImageFormatRGBA16 || image->format == E_ImageFormatRGBA32 || image->format == E_ImageFormatRG16)
         range.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
     else
         range.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;

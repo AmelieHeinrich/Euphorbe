@@ -10,6 +10,7 @@ layout (location = 2) in vec3 Normals;
 
 layout (location = 0) out vec2 OutUV;
 layout (location = 1) out vec3 OutPosition;
+layout (location = 2) out vec3 WorldPos;
 
 void main()
 {

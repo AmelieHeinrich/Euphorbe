@@ -15,8 +15,8 @@
 	Fragment = "Assets/Shaders/HDR/Fragment.glsl"
 
 [DescriptorLayout]
-	Descriptors = ["CombinedImageSampler"]
-	DescriptorCount = 1
+	DescriptorSetLayouts = [[["CombinedImageSampler"], 1]]
+	DescriptorSetLayoutCount = 1
 
 [PushConstants]
 	HasPushConstants = 1
