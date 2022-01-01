@@ -14,14 +14,31 @@ layout (push_constant) uniform HDRSettings {
 
 layout (binding = 0) uniform sampler2D color_texture;
 
+// Tonemapping curves: https://www.shadertoy.com/view/lslGzl
+// ACES: https://knarkowicz.wordpress.com/2016/01/06/aces-filmic-tone-mapping-curve/
+// ACES impl: https://github.com/TheRealMJP/BakingLab/blob/master/BakingLab/ACES.hlsl
+
 vec3 aces(vec3 color, float gamma) 
 {
-	const float a = 2.51;
-	const float b = 0.03;
-	const float c = 2.43;
-	const float d = 0.59;
-	const float e = 0.14;
-	return pow(clamp((color * (color * color + b)) / (color * (c * color + d) + e), 0.0, 1.0), vec3(1. / gamma));
+	const mat3 inputMatrix = mat3
+    (
+		vec3(0.59719, 0.07600, 0.02840),
+		vec3(0.35458, 0.90834, 0.13383),
+		vec3(0.04823, 0.01566, 0.83777)
+    );
+    
+    const mat3 outputMatrix = mat3
+    (
+		vec3(1.60475, -0.10208, -0.00327),
+		vec3(-0.53108, 1.10813, -0.07276),
+		vec3(-0.07367, -0.00605, 1.07602)
+    );
+    
+    vec3 inputColour = inputMatrix * color;
+    vec3 a = inputColour * (inputColour + vec3(0.0245786)) - vec3(0.000090537);
+    vec3 b = inputColour * (0.983729 * inputColour + 0.4329510) + 0.238081;
+    vec3 c = a / b;
+    return pow(max(outputMatrix * c, 0.0.xxx), vec3(1. / gamma));
 }
 
 vec3 filmic(vec3 color, float gamma) 

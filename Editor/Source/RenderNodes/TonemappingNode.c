@@ -30,7 +30,7 @@ void TonemappingNodeInit(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info
 	TonemappingNodeData* data = (TonemappingNodeData*)node->node_data;
 
 	data->constants.gamma_correct = 1;
-	data->constants.mode = 4; // Rom Bin Da House
+	data->constants.mode = 0; // ACES
 	
 	// Shaders
 	E_Image* color_buffer = E_GetRenderGraphNodeInputImage(&node->inputs[0]);
