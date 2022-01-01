@@ -35,8 +35,13 @@ cmake -G "Visual Studio 17 2022" -B build
 
 ## Screenshots
 
-### Screenshot from Dec 30 2021
-![Dec 30 2021](.github/30dec2021.PNG)
+### Screenshot from Jan 1 2022
+![Jan 1 2022](.github/1jan2022.PNG)
+
+
+### FXAA Demo
+![Without FXAA](.github/no_fxaa.PNG)
+![With FXAA](.github/fxaa.PNG)
 
 ## Current features
 
@@ -52,6 +57,7 @@ cmake -G "Visual Studio 17 2022" -B build
 - Resource system
 - GUI system with cimgui
 - Timer
+- FXAA anti-aliasing
 
 ## Additional information
 
