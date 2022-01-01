@@ -101,7 +101,6 @@ void main()
     // Calculate color
     vec3 N = normalize(OutNormals);
     vec3 V = normalize(CameraPos - WorldPos.xyz);
-    vec3 reflected_vector = reflect(V, N);
 
     vec3 F0 = vec3(0.04); 
     F0 = mix(F0, albedo_color.rgb, metallic);
@@ -135,7 +134,9 @@ void main()
     vec3 ambient = vec3(0.03) * albedo_color.xyz;
     vec3 color = ambient + Lo;
 
-    vec4 reflected_color = texture(Skybox, reflected_vector);
+    vec3 I = normalize(OutPos - CameraPos);
+    vec3 R = reflect(I, normalize(OutNormals));
+    vec4 reflected_color = texture(Skybox, R);
 
     if (settings.enable_reflection)
         OutColor = mix(vec4(color, 1.0), reflected_color, 0.6);

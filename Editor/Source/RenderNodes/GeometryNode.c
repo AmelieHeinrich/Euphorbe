@@ -67,7 +67,7 @@ void GeometryNodeInit(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info)
 	data->skybox_material = E_LoadResource("Assets/Materials/SkyboxMaterial.toml", E_ResourceTypeMaterial);
 	data->skybox_mesh = E_LoadResource("Assets/Models/Cube.gltf", E_ResourceTypeMesh);
 	data->skybox_instance = E_CreateMaterialInstance(data->skybox_material->as.material, 0);
-	data->hdr_skybox_texture = E_MakeHDRImageFromFile("Assets/EnvMaps/SnowyField/1k.hdr");
+	data->hdr_skybox_texture = E_MakeHDRImageFromFile("Assets/EnvMaps/SnowyHillside/4k.hdr");
 	data->skybox_enabled = 1;
 
 	data->equirectangular_cubemap_material = E_LoadResource("Assets/Materials/EquirectangularCubemapMaterial.toml", E_ResourceTypeComputeMaterial);
