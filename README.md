@@ -40,9 +40,9 @@ cmake -G "Visual Studio 17 2022" -B build
 
 
 ## FXAA Demo
-### Without:\
+### Without:
 ![Without FXAA](.github/no_fxaa.PNG)\
-### With:\
+### With:
 ![With FXAA](.github/fxaa.PNG)\
 
 ## Current features
