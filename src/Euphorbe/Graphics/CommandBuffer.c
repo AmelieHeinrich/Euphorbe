@@ -22,24 +22,11 @@ void E_FreeCommandBuffer(E_CommandBuffer* buffer)
 #endif
 }
 
-E_CommandBuffer* E_BeginSingleTimeCommands(E_CommandBufferType type)
-{
-	E_CommandBuffer* cmd_buf = malloc(sizeof(E_CommandBuffer));
-	cmd_buf->type = type;
-
-#ifdef EUPHORBE_WINDOWS
-	cmd_buf->rhi_handle = E_Vk_BeginSingleTimeCommands(type);
-#endif
-	return cmd_buf;
-}
-
-void E_EndSingleTimeCommands(E_CommandBuffer* buffer)
+void E_SubmitCommandBuffer(E_CommandBuffer* buffer)
 {
 #ifdef EUPHORBE_WINDOWS
-	E_Vk_EndSingleTimeCommands(buffer->rhi_handle);
+	E_Vk_SubmitCommandBuffer(buffer->rhi_handle);
 #endif
-
-	free(buffer);
 }
 
 void E_BeginCommandBuffer(E_CommandBuffer* cmd)

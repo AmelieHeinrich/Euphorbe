@@ -5,6 +5,8 @@
 #include <vulkan/vulkan.h>
 #include <vk_mem_alloc.h>
 
+typedef struct E_VulkanCommandBuffer E_VulkanCommandBuffer;
+
 typedef struct E_VulkanImage E_VulkanImage;
 struct E_VulkanImage
 {

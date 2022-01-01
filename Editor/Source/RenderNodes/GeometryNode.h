@@ -3,6 +3,7 @@
 
 #include <Euphorbe/Graphics/RenderGraph.h>
 #include <Euphorbe/Resource/Resource.h>
+#include <Euphorbe/Graphics/CommandBuffer.h>
 
 enum GeometryNodeOutput
 {

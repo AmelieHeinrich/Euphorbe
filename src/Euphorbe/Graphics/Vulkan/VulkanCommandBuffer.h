@@ -18,8 +18,11 @@ struct E_VulkanCommandBuffer
 
 E_VulkanCommandBuffer* E_Vk_CreateCommandBuffer(E_CommandBufferType type);
 void E_Vk_FreeCommandBuffer(E_VulkanCommandBuffer* buffer);
-E_VulkanCommandBuffer* E_Vk_BeginSingleTimeCommands(E_CommandBufferType type);
-void E_Vk_EndSingleTimeCommands(E_VulkanCommandBuffer* buffer);
+void E_Vk_SubmitCommandBuffer(E_VulkanCommandBuffer* buffer);
+
+E_VulkanCommandBuffer* E_Vk_CreateUploadCommandBuffer();
+void E_Vk_SubmitUploadCommandBuffer(E_VulkanCommandBuffer* buffer);
+
 void E_Vk_BeginCommandBuffer(E_VulkanCommandBuffer* cmd);
 void E_Vk_EndCommandBuffer(E_VulkanCommandBuffer* cmd);
 void E_Vk_CommandBufferSetViewport(E_VulkanCommandBuffer* cmd, i32 width, i32 height);

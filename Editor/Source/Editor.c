@@ -106,6 +106,7 @@ void EditorInitialiseTexturedMesh()
     editor_state.albedo_texture = E_LoadResource("Assets/Textures/Suzanne_BaseColor.png", E_ResourceTypeTexture);
     editor_state.metallic_roughness_texture = E_LoadResource("Assets/Textures/Suzanne_MetallicRoughness.png", E_ResourceTypeTexture);
 
+    // End upload
     editor_state.mesh = E_LoadResource("Assets/Models/Suzanne.gltf", E_ResourceTypeMesh);
     editor_state.material_instance = E_CreateMaterialInstance(GetGeometryNodeMaterial(editor_state.geometry_node), 0);
 

@@ -219,14 +219,13 @@ E_VulkanImage* E_Vk_MakeImageFromFile(const char* path)
     subresource_range.levelCount = 1;
 
     //
-    E_CommandBuffer* stc = E_BeginSingleTimeCommands(E_CommandBufferTypeGraphics);
-    E_VulkanCommandBuffer* rhi_handle = stc->rhi_handle;
+    E_VulkanCommandBuffer* cmd_buf = E_Vk_CreateUploadCommandBuffer();
 
-    E_Vk_Image_Memory_Barrier(rhi_handle->handle, result->image, 0, VK_ACCESS_TRANSFER_WRITE_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, subresource_range);
-    vkCmdCopyBufferToImage(rhi_handle->handle, staging_buffer, result->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &image_copy_region);
-    E_Vk_Image_Memory_Barrier(rhi_handle->handle, result->image, VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, subresource_range);
+    E_Vk_Image_Memory_Barrier(cmd_buf->handle, result->image, 0, VK_ACCESS_TRANSFER_WRITE_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, subresource_range);
+    vkCmdCopyBufferToImage(cmd_buf->handle, staging_buffer, result->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &image_copy_region);
+    E_Vk_Image_Memory_Barrier(cmd_buf->handle, result->image, VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, subresource_range);
     
-    E_EndSingleTimeCommands(stc);
+    E_Vk_SubmitUploadCommandBuffer(cmd_buf);
     //
 
     vmaDestroyBuffer(rhi.allocator, staging_buffer, staging_buffer_allocation);
@@ -357,14 +356,13 @@ E_VulkanImage* E_Vk_MakeHDRImageFromFile(const char* path)
     subresource_range.levelCount = 1;
 
     //
-    E_CommandBuffer* stc = E_BeginSingleTimeCommands(E_CommandBufferTypeGraphics);
-    E_VulkanCommandBuffer* rhi_handle = stc->rhi_handle;
+    E_VulkanCommandBuffer* cmd_buf = E_Vk_CreateUploadCommandBuffer();
 
-    E_Vk_Image_Memory_Barrier(rhi_handle->handle, result->image, 0, VK_ACCESS_TRANSFER_WRITE_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, subresource_range);
-    vkCmdCopyBufferToImage(rhi_handle->handle, staging_buffer, result->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &image_copy_region);
-    E_Vk_Image_Memory_Barrier(rhi_handle->handle, result->image, VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, subresource_range);
-
-    E_EndSingleTimeCommands(stc);
+    E_Vk_Image_Memory_Barrier(cmd_buf->handle, result->image, 0, VK_ACCESS_TRANSFER_WRITE_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, subresource_range);
+    vkCmdCopyBufferToImage(cmd_buf->handle, staging_buffer, result->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &image_copy_region);
+    E_Vk_Image_Memory_Barrier(cmd_buf->handle, result->image, VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, subresource_range);
+    
+    E_Vk_SubmitUploadCommandBuffer(cmd_buf);
     //
 
     vmaDestroyBuffer(rhi.allocator, staging_buffer, staging_buffer_allocation);

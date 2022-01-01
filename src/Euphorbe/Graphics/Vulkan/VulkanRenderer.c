@@ -420,11 +420,14 @@ void E_Vk_MakeSync()
 {
     VkResult result;
 
-    for (i32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
-        VkFenceCreateInfo fence_info = { 0 };
-        fence_info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-        fence_info.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+    VkFenceCreateInfo fence_info = { 0 };
+    fence_info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
 
+    result = vkCreateFence(rhi.device.handle, &fence_info, NULL, &rhi.command.upload_fence);
+    assert(result == VK_SUCCESS);
+
+    fence_info.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+    for (i32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
         result = vkCreateFence(rhi.device.handle, &fence_info, NULL, &rhi.sync.fences[i]);
         assert(result == VK_SUCCESS);
     }
@@ -449,6 +452,8 @@ void E_Vk_MakeCommand()
     pool_info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 
     VkResult result = vkCreateCommandPool(rhi.device.handle, &pool_info, NULL, &rhi.command.graphics_command_pool);
+    assert(result == VK_SUCCESS);
+    result = vkCreateCommandPool(rhi.device.handle, &pool_info, NULL, &rhi.command.upload_command_pool);
     assert(result == VK_SUCCESS);
 
     pool_info.queueFamilyIndex = rhi.physical_device.compute_family;
@@ -642,10 +647,10 @@ void E_Vk_InitImGui()
 
     ImGui_ImplVulkan_Init(&init_info, rhi.imgui.render_pass);
 
-    E_CommandBuffer* stc = E_BeginSingleTimeCommands(E_CommandBufferTypeGraphics);
-    E_VulkanCommandBuffer* rhi_handle = stc->rhi_handle;
-    ImGui_ImplVulkan_CreateFontsTexture(rhi_handle->handle);
-    E_EndSingleTimeCommands(stc);
+    E_VulkanCommandBuffer* stc = E_Vk_CreateUploadCommandBuffer();
+    ImGui_ImplVulkan_CreateFontsTexture(stc->handle);
+    E_Vk_SubmitUploadCommandBuffer(stc);
+
     ImGui_ImplVulkan_DestroyFontUploadObjects();
 
     for (u32 i = 0; i < FRAMES_IN_FLIGHT; i++)
@@ -707,8 +712,11 @@ void E_Vk_RendererShutdown()
 
     vkDestroySemaphore(rhi.device.handle, rhi.sync.image_available_semaphore, NULL);
     vkDestroySemaphore(rhi.device.handle, rhi.sync.image_rendered_semaphore, NULL);
+    vkDestroyCommandPool(rhi.device.handle, rhi.command.upload_command_pool, NULL);
     vkDestroyCommandPool(rhi.device.handle, rhi.command.compute_command_pool, NULL);
     vkDestroyCommandPool(rhi.device.handle, rhi.command.graphics_command_pool, NULL);
+    
+    vkDestroyFence(rhi.device.handle, rhi.command.upload_fence, NULL);
 
     for (u32 i = 0; i < FRAMES_IN_FLIGHT; i++)
     {

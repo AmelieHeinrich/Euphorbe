@@ -5,6 +5,8 @@
 #include <Euphorbe/Graphics/Image.h>
 #include <Euphorbe/Graphics/Mesh.h>
 
+typedef struct E_CommandBuffer E_CommandBuffer;
+
 typedef struct E_Material E_Material;
 
 typedef enum E_ResourceType E_ResourceType;

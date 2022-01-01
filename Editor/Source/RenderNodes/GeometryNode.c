@@ -1,7 +1,6 @@
 #include "GeometryNode.h"
 
 #include <Euphorbe/Graphics/Renderer.h>
-#include <Euphorbe/Graphics/CommandBuffer.h>
 
 typedef struct GeometryUniforms GeometryUniforms;
 struct GeometryUniforms
@@ -226,7 +225,6 @@ E_RenderGraphNode* CreateGeometryNode()
 	node->execute_func = GeometryNodeExecute;
 	node->name = "GeometryNode";
 	node->node_data = malloc(sizeof(GeometryData));
-	
 	node->input_count = 0;
 	memset(node->inputs, 0, sizeof(node->inputs));
 

@@ -21,8 +21,7 @@ struct E_CommandBuffer
 
 E_CommandBuffer* E_CreateCommandBuffer(E_CommandBufferType type);
 void E_FreeCommandBuffer(E_CommandBuffer* buffer);
-E_CommandBuffer* E_BeginSingleTimeCommands(E_CommandBufferType type);
-void E_EndSingleTimeCommands(E_CommandBuffer* buffer);
+void E_SubmitCommandBuffer(E_CommandBuffer* buffer);
 
 //
 void E_BeginCommandBuffer(E_CommandBuffer* cmd);

@@ -5,6 +5,7 @@
 
 #include <Euphorbe/Core/Log.h>
 #include <Euphorbe/Graphics/Material.h>
+#include <Euphorbe/Graphics/CommandBuffer.h>
 
 E_ResourceFile* E_LoadResource(const char* path, E_ResourceType type)
 {

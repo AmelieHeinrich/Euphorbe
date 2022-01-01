@@ -28,32 +28,7 @@ void E_Vk_FreeCommandBuffer(E_VulkanCommandBuffer* buffer)
     free(buffer);
 }
 
-E_VulkanCommandBuffer* E_Vk_BeginSingleTimeCommands(E_CommandBufferType type)
-{
-    E_VulkanCommandBuffer* cmd_buf = malloc(sizeof(E_VulkanCommandBuffer));
-    cmd_buf->type = type;
-    cmd_buf->pool_ptr = GET_CMD_BUF_POOL_PTR(type);
-
-    VkCommandBufferAllocateInfo alloc_info = { 0 };
-    alloc_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    alloc_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    alloc_info.commandPool = GET_CMD_BUF_POOL(type);
-    alloc_info.commandBufferCount = 1;
-
-    VkResult result = vkAllocateCommandBuffers(rhi.device.handle, &alloc_info, &cmd_buf->handle);
-    assert(result == VK_SUCCESS);
-
-    VkCommandBufferBeginInfo begin_info = { 0 };
-    begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    begin_info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-
-    result = vkBeginCommandBuffer(cmd_buf->handle, &begin_info);
-    assert(result == VK_SUCCESS);
-
-    return cmd_buf;
-}
-
-void E_Vk_EndSingleTimeCommands(E_VulkanCommandBuffer* buffer)
+void E_Vk_SubmitCommandBuffer(E_VulkanCommandBuffer* buffer)
 {
     VkResult result = vkEndCommandBuffer(buffer->handle);
     assert(result == VK_SUCCESS);
@@ -65,6 +40,41 @@ void E_Vk_EndSingleTimeCommands(E_VulkanCommandBuffer* buffer)
 
     vkQueueSubmit(rhi.device.graphics_queue, 1, &submit_info, VK_NULL_HANDLE);
     vkQueueWaitIdle(rhi.device.graphics_queue);
+}
+
+E_VulkanCommandBuffer* E_Vk_CreateUploadCommandBuffer()
+{
+    E_VulkanCommandBuffer* cmd_buf = malloc(sizeof(E_VulkanCommandBuffer));
+    cmd_buf->type = E_CommandBufferTypeGraphics;
+    cmd_buf->pool_ptr = &rhi.command.upload_command_pool;
+
+    VkCommandBufferAllocateInfo alloc_info = { 0 };
+    alloc_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    alloc_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    alloc_info.commandPool = rhi.command.upload_command_pool;
+    alloc_info.commandBufferCount = 1;
+
+    VkResult result = vkAllocateCommandBuffers(rhi.device.handle, &alloc_info, &cmd_buf->handle);
+    assert(result == VK_SUCCESS);
+
+    E_Vk_BeginCommandBuffer(cmd_buf);
+
+    return cmd_buf;
+}
+
+void E_Vk_SubmitUploadCommandBuffer(E_VulkanCommandBuffer* buffer)
+{
+    E_Vk_EndCommandBuffer(buffer);
+
+    VkSubmitInfo submit_info = { 0 };
+    submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    submit_info.commandBufferCount = 1;
+    submit_info.pCommandBuffers = &buffer->handle;
+
+    vkQueueSubmit(rhi.device.graphics_queue, 1, &submit_info, rhi.command.upload_fence);
+    vkWaitForFences(rhi.device.handle, 1, &rhi.command.upload_fence, VK_TRUE, INT_MAX);
+    vkResetFences(rhi.device.handle, 1, &rhi.command.upload_fence);
+    vkResetCommandPool(rhi.device.handle, rhi.command.upload_command_pool, 0);
 
     free(buffer);
 }
