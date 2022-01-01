@@ -19,6 +19,7 @@ typedef enum E_ImageLayout E_ImageLayout;
 enum E_ImageLayout
 {
     E_ImageLayoutUndefined = 0,
+    E_ImageLayoutGeneral = 1,
     E_ImageLayoutColor = 2,
     E_ImageLayoutDepth = 3,
     E_ImageLayoutDepthReadOnly = 4,

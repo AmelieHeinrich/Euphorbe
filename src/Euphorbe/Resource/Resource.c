@@ -56,11 +56,33 @@ E_ResourceFile* E_LoadResource(const char* path, E_ResourceType type)
 			return NULL;
 		}
 		break;
+	case E_ResourceTypeComputeShader:
+		resource->as.shader = malloc(sizeof(E_Shader));
+		if (resource->as.shader != NULL)
+		{
+			char* source = E_ReadFile(path, &resource->resource_size);
+
+			resource->as.shader->type = E_ShaderTypeCompute;
+			E_CompileShader(source, resource->resource_size, resource->as.shader);
+
+			free(source);
+			break;
+		}
+		else
+		{
+			E_LogError("RESOURCE SHADER ALLOCATION: Failed to allocate resource shader!");
+			assert(0);
+			return NULL;
+		}
+		break;
 	case E_ResourceTypeTexture:
 		resource->as.image = E_MakeImageFromFile(resource->path);
 		break;
 	case E_ResourceTypeMaterial:
 		resource->as.material = E_CreateMaterialFromFile(resource->path);
+		break;
+	case E_ResourceTypeComputeMaterial:
+		resource->as.material = E_CreateComputeMaterialFromFile(resource->path);
 		break;
 	case E_ResourceTypeMesh:
 		resource->as.mesh = E_LoadMesh(resource->path);
@@ -76,12 +98,14 @@ void E_FreeResource(E_ResourceFile* file)
 	{
 	case E_ResourceTypeVertexShader:
 	case E_ResourceTypeFragmentShader:
+	case E_ResourceTypeComputeShader:
 		free(file->as.shader);
 		break;
 	case E_ResourceTypeTexture:
 		E_FreeImage(file->as.image);
 		break;
 	case E_ResourceTypeMaterial:
+	case E_ResourceTypeComputeMaterial:
 		E_FreeMaterial(file->as.material);
 		break;
 	case E_ResourceTypeMesh:

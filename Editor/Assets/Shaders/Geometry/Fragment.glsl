@@ -32,7 +32,7 @@ layout (binding = 0, set = 1) uniform Lights {
     PointLight lights[MAX_LIGHT_COUNT];
 } light_settings;
 
-layout (binding = 1, set = 1) uniform sampler2D Skybox;
+layout (binding = 1, set = 1) uniform samplerCube Skybox;
 
 float DistributionGGX(vec3 N, vec3 H, float roughness)
 {
@@ -135,7 +135,7 @@ void main()
     vec3 ambient = vec3(0.03) * albedo_color.xyz;
     vec3 color = ambient + Lo;
 
-    vec4 reflected_color = texture(Skybox, reflected_vector.xy);
+    vec4 reflected_color = texture(Skybox, reflected_vector);
 
     if (settings.enable_reflection)
         OutColor = mix(vec4(color, 1.0), reflected_color, 0.6);

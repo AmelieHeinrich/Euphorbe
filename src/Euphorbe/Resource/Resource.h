@@ -15,8 +15,10 @@ enum E_ResourceType
     E_ResourceTypeUndefined = 0,
     E_ResourceTypeVertexShader,
     E_ResourceTypeFragmentShader,
+    E_ResourceTypeComputeShader,
     E_ResourceTypeTexture,
     E_ResourceTypeMaterial,
+    E_ResourceTypeComputeMaterial,
     E_ResourceTypeMesh
 };
 

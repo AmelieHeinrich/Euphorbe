@@ -57,6 +57,13 @@ void E_CommandBufferBindMaterial(E_CommandBuffer* cmd, E_Material* material)
 #endif
 }
 
+void E_CommandBufferBindComputeMaterial(E_CommandBuffer* cmd, E_Material* material)
+{
+#ifdef EUPHORBE_WINDOWS
+	E_Vk_CommandBufferBindComputeMaterial(cmd->rhi_handle, material->rhi_handle);
+#endif
+}
+
 void E_CommandBufferBindBuffer(E_CommandBuffer* cmd, E_Buffer* buffer)
 {
 #ifdef EUPHORBE_WINDOWS
@@ -71,6 +78,13 @@ void E_CommandBufferBindMaterialInstance(E_CommandBuffer* cmd, E_MaterialInstanc
 #endif
 }
 
+void E_CommandBufferBindComputeMaterialInstance(E_CommandBuffer* cmd, E_MaterialInstance* instance, E_Material* material, i32 set_index)
+{
+#ifdef EUPHORBE_WINDOWS
+	E_Vk_CommandBufferBindComputeMaterialInstance(cmd->rhi_handle, instance->rhi_handle, material->rhi_handle, set_index);
+#endif
+}
+
 void E_CommandBufferDraw(E_CommandBuffer* cmd, u32 first, u32 count)
 {
 #ifdef EUPHORBE_WINDOWS
@@ -82,6 +96,13 @@ void E_CommandBufferDrawIndexed(E_CommandBuffer* cmd, u32 first, u32 count)
 {
 #ifdef EUPHORBE_WINDOWS
 	E_Vk_CommandBufferDrawIndexed(cmd->rhi_handle, first, count);
+#endif
+}
+
+void E_CommandBufferDispatch(E_CommandBuffer* cmd, u32 groupX, u32 groupY, u32 groupZ)
+{
+#ifdef EUPHORBE_WINDOWS
+	E_Vk_CommandBufferDispatch(cmd->rhi_handle, groupX, groupY, groupZ);
 #endif
 }
 
@@ -113,9 +134,9 @@ void E_CommandBufferBlitImage(E_CommandBuffer* cmd_buf, E_Image* src, E_Image* d
 #endif
 }
 
-void E_CommandBufferImageTransitionLayout(E_CommandBuffer* cmd_buf, E_Image* image, E_ImageAccess srcAccess, E_ImageAccess dstAccess, E_ImageLayout old, E_ImageLayout new, E_ImagePipelineStage srcStage, E_ImagePipelineStage dstStage)
+void E_CommandBufferImageTransitionLayout(E_CommandBuffer* cmd_buf, E_Image* image, E_ImageAccess srcAccess, E_ImageAccess dstAccess, E_ImageLayout old, E_ImageLayout new, E_ImagePipelineStage srcStage, E_ImagePipelineStage dstStage, u32 layer)
 {
 #ifdef EUPHORBE_WINDOWS
-	E_Vk_CommandBufferImageTransitionLayout(cmd_buf->rhi_handle, image->rhi_handle, srcAccess, dstAccess, old, new, srcStage, dstStage);
+	E_Vk_CommandBufferImageTransitionLayout(cmd_buf->rhi_handle, image->rhi_handle, srcAccess, dstAccess, old, new, srcStage, dstStage, layer);
 #endif
 }

@@ -1,0 +1,10 @@
+[Shaders]
+	Compute = "Assets/Shaders/EquirectangularCubemap/Compute.glsl"
+
+[DescriptorLayout]
+	DescriptorSetLayouts = [[["StorageImage", "StorageImage"], 2]]
+	DescriptorSetLayoutCount = 1
+
+[PushConstants]
+	HasPushConstants = 0
+	Size = 32

@@ -1,6 +1,7 @@
 #include "GeometryNode.h"
 
 #include <Euphorbe/Graphics/Renderer.h>
+#include <Euphorbe/Resource/Resource.h>
 
 typedef struct GeometryUniforms GeometryUniforms;
 struct GeometryUniforms
@@ -15,17 +16,21 @@ typedef struct GeometryData GeometryData;
 struct GeometryData
 {
 	b32 first_render;
+	b32 skybox_should_layout;
 	b32 skybox_enabled;
 
 	E_Buffer* light_buffer;
 	E_MaterialInstance* light_material_instance;
 
 	E_ResourceFile* geometry_material;
+	E_ResourceFile* equirectangular_cubemap_material;
 	E_ResourceFile* skybox_material;
+	E_MaterialInstance* equirectangular_cubemap_instance;
 
 	E_ResourceFile* skybox_mesh;
 	E_MaterialInstance* skybox_instance;
-	E_Image* hdr_image;
+	E_Image* hdr_skybox_texture;
+	E_Image* cubemap;
 
 	GeometryUniforms uniforms;
 };
@@ -56,20 +61,46 @@ void GeometryNodeInit(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info)
 	node->output_count = 2;
 
 	data->first_render = 1;
+	data->skybox_should_layout = 1;
 	data->geometry_material = E_LoadResource("Assets/Materials/GeometryMaterial.toml", E_ResourceTypeMaterial);
 
 	data->skybox_material = E_LoadResource("Assets/Materials/SkyboxMaterial.toml", E_ResourceTypeMaterial);
 	data->skybox_mesh = E_LoadResource("Assets/Models/Cube.gltf", E_ResourceTypeMesh);
 	data->skybox_instance = E_CreateMaterialInstance(data->skybox_material->as.material, 0);
-	data->hdr_image = E_MakeHDRImageFromFile("Assets/EnvMaps/SnowyField/4k.hdr");
+	data->hdr_skybox_texture = E_MakeHDRImageFromFile("Assets/EnvMaps/SnowyField/1k.hdr");
 	data->skybox_enabled = 1;
 
-	E_MaterialInstanceWriteImage(data->skybox_instance, 0, data->hdr_image);
+	data->equirectangular_cubemap_material = E_LoadResource("Assets/Materials/EquirectangularCubemapMaterial.toml", E_ResourceTypeComputeMaterial);
+	data->equirectangular_cubemap_instance = E_CreateMaterialInstance(data->equirectangular_cubemap_material->as.material, 0);
+	data->cubemap = E_MakeCubeMap(1024, 1024, E_ImageFormatRGBA32, E_ImageUsageStorage | E_ImageUsageSampled);
+
+	// Begin compute shader
+
+	E_CommandBuffer* compute_cmd_buf = E_CreateCommandBuffer(E_CommandBufferTypeCompute);
+	E_BeginCommandBuffer(compute_cmd_buf);
+
+	E_CommandBufferImageTransitionLayout(compute_cmd_buf, data->hdr_skybox_texture, 0, 0, E_ImageLayoutUndefined, E_ImageLayoutGeneral, E_ImagePipelineStageTop, E_ImagePipelineStageBottom, 0);
+	E_CommandBufferImageTransitionLayout(compute_cmd_buf, data->cubemap, 0, 0, E_ImageLayoutUndefined, E_ImageLayoutGeneral, E_ImagePipelineStageTop, E_ImagePipelineStageBottom, 0);
+
+	E_MaterialInstanceWriteStorageImage(data->equirectangular_cubemap_instance, 0, data->hdr_skybox_texture);
+	E_MaterialInstanceWriteStorageImage(data->equirectangular_cubemap_instance, 1, data->cubemap);
+
+	E_CommandBufferBindComputeMaterial(compute_cmd_buf, data->equirectangular_cubemap_material->as.material);
+	E_CommandBufferBindComputeMaterialInstance(compute_cmd_buf, data->equirectangular_cubemap_instance, data->equirectangular_cubemap_material->as.material, 0);
+	E_CommandBufferDispatch(compute_cmd_buf, 1024 / 32, 1024 / 32, 6);
+
+	E_SubmitCommandBuffer(compute_cmd_buf);
+	E_FreeCommandBuffer(compute_cmd_buf);
+
+	E_FreeImage(data->hdr_skybox_texture);
+	//
+
+	E_MaterialInstanceWriteImage(data->skybox_instance, 0, data->cubemap);
 
 	data->light_buffer = E_CreateUniformBuffer(sizeof(info->point_lights));
 	data->light_material_instance = E_CreateMaterialInstance(data->geometry_material->as.material, 1);
 	E_MaterialInstanceWriteBuffer(data->light_material_instance, 0, data->light_buffer, sizeof(info->point_lights));
-	E_MaterialInstanceWriteImage(data->light_material_instance, 1, data->hdr_image);
+	E_MaterialInstanceWriteImage(data->light_material_instance, 1, data->cubemap);
 }
 
 void GeometryNodeClean(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info)
@@ -79,8 +110,11 @@ void GeometryNodeClean(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info)
 	E_FreeBuffer(data->light_buffer);
 	E_FreeMaterialInstance(data->light_material_instance);
 
+	E_FreeResource(data->equirectangular_cubemap_material);
+	E_FreeMaterialInstance(data->equirectangular_cubemap_instance);
+
 	E_FreeResource(data->skybox_mesh);
-	E_FreeImage(data->hdr_image);
+	E_FreeImage(data->cubemap);
 	E_FreeMaterialInstance(data->skybox_instance);
 	E_FreeResource(data->skybox_material);
 
@@ -105,20 +139,21 @@ void GeometryNodeExecute(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info
 	};
 
 	E_ImageLayout src_render_buffer_image_layout = data->first_render ? E_ImageLayoutUndefined : E_ImageLayoutShaderRead;
-	data->first_render = 0;
 
 	vec2 render_size = { (f32)info->width, (f32)info->height };
 
 	E_CommandBufferImageTransitionLayout(cmd_buf,node->outputs[0],
 		E_ImageAccessShaderRead, E_ImageAccessColorWrite,
 		src_render_buffer_image_layout, E_ImageLayoutColor,
-		E_ImagePipelineStageFragmentShader, E_ImagePipelineStageColorOutput);
+		E_ImagePipelineStageFragmentShader, E_ImagePipelineStageColorOutput,
+		0);
 
 	E_CommandBufferImageTransitionLayout(cmd_buf, node->outputs[1],
 		0, E_ImageAccessDepthWrite,
 		E_ImageLayoutUndefined, E_ImageLayoutDepth,
 		E_ImagePipelineStageEarlyFragment | E_ImagePipelineStageLateFragment,
-		E_ImagePipelineStageEarlyFragment | E_ImagePipelineStageLateFragment);
+		E_ImagePipelineStageEarlyFragment | E_ImagePipelineStageLateFragment,
+		0);
 
 	E_CommandBufferSetViewport(cmd_buf, info->width, info->height);
 	E_CommandBufferStartRender(cmd_buf, attachments, 2, render_size, 1);
@@ -163,6 +198,13 @@ void GeometryNodeExecute(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info
 		glm_mat4_mul(output_matrix, scale_matrix, output_matrix);
 
 		E_CommandBufferBindMaterial(cmd_buf, data->skybox_material->as.material);
+
+		if (data->skybox_should_layout)
+		{
+			E_CommandBufferImageTransitionLayout(cmd_buf, data->cubemap, 0, 0, E_ImageLayoutGeneral, E_ImageLayoutShaderRead, E_ImagePipelineStageTop, E_ImagePipelineStageFragmentShader, 0);
+			data->skybox_should_layout = 0;
+		}
+
 		E_CommandBufferPushConstants(cmd_buf, data->skybox_material->as.material, &output_matrix, sizeof(output_matrix));
 		E_CommandBufferBindMaterialInstance(cmd_buf, data->skybox_instance, data->skybox_material->as.material, 0);
 		for (i32 i = 0; i < data->skybox_mesh->as.mesh->submesh_count; i++)
@@ -200,7 +242,9 @@ void GeometryNodeExecute(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info
 	E_CommandBufferImageTransitionLayout(cmd_buf, node->outputs[0],
 		E_ImageAccessColorWrite, E_ImageAccessShaderRead,
 		E_ImageLayoutColor, E_ImageLayoutShaderRead,
-		E_ImagePipelineStageColorOutput, E_ImagePipelineStageFragmentShader);
+		E_ImagePipelineStageColorOutput, E_ImagePipelineStageFragmentShader, 0);
+
+	data->first_render = 0;
 }
 
 void GeometryNodeResize(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info)
