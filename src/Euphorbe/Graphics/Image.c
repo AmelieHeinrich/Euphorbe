@@ -74,26 +74,6 @@ void E_FreeImage(E_Image* image)
     free(image);
 }
 
-void E_ImageTransitionLayout(E_Image* image, E_ImageAccess srcAccess, E_ImageAccess dstAccess, E_ImageLayout old, E_ImageLayout new, E_ImagePipelineStage srcStage, E_ImagePipelineStage dstStage)
-{
-#ifdef EUPHORBE_WINDOWS
-    E_VulkanImage* vk_handle = (E_VulkanImage*)image->rhi_handle;
-
-    VkImageSubresourceRange range = {0};
-    range.baseMipLevel = 0;
-    range.levelCount = VK_REMAINING_MIP_LEVELS;
-    range.baseArrayLayer = 0;
-    range.layerCount = VK_REMAINING_ARRAY_LAYERS;
-
-    if (image->format == E_ImageFormatRGBA8 || image->format == E_ImageFormatRGBA16 || image->format == E_ImageFormatRGBA32 || image->format == E_ImageFormatRG16)
-        range.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    else
-        range.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
-
-    E_Vk_Image_Memory_Barrier(rhi.command.command_buffers[rhi.sync.image_index], vk_handle->image, srcAccess, dstAccess, old, new, srcStage, dstStage, range);
-#endif
-}
-
 void E_ImageResize(E_Image* image, i32 width, i32 height)
 {
     image->width = width;
@@ -101,13 +81,6 @@ void E_ImageResize(E_Image* image, i32 width, i32 height)
 
 #ifdef EUPHORBE_WINDOWS
     E_Vk_ResizeImage(image->rhi_handle, width, height);
-#endif
-}
-
-void E_ImageBlit(E_Image* src, E_Image* dst, E_ImageLayout src_layout, E_ImageLayout dst_layout)
-{
-#ifdef EUPHORBE_WINDOWS
-    E_Vk_BlitImage(src->rhi_handle, dst->rhi_handle, src_layout, dst_layout);
 #endif
 }
 

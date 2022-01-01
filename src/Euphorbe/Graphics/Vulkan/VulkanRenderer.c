@@ -13,7 +13,7 @@
 #include <cimgui.h>
 #include <cimgui_impl.h>
 
-#define CURRENT_CMD_BUF rhi.command.command_buffers[rhi.sync.image_index]
+#define CURRENT_CMD_BUF (E_VulkanCommandBuffer*)rhi.command.swapchain_command_buffers[rhi.sync.image_index]->rhi_handle
 
 E_Vk_Data rhi;
 E_RendererInitSettings rhi_settings;
@@ -40,42 +40,6 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL E_Vk_DebugMessenger(VkDebugUtilsMessageSev
         printf("%s\n", pCallbackData->pMessage);
 
     return VK_FALSE;
-}
-
-VkCommandBuffer E_Vk_SingleTimeCommands()
-{
-    VkCommandBufferAllocateInfo alloc_info = {0};
-    alloc_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    alloc_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    alloc_info.commandPool = rhi.command.graphics_command_pool;
-    alloc_info.commandBufferCount = 1;
-
-    VkCommandBuffer command_buffer;
-    VkResult result = vkAllocateCommandBuffers(rhi.device.handle, &alloc_info, &command_buffer);
-    assert(result == VK_SUCCESS);
-
-    VkCommandBufferBeginInfo begin_info = {0};
-    begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    begin_info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-
-    result = vkBeginCommandBuffer(command_buffer, &begin_info);
-    assert(result == VK_SUCCESS);
-
-    return command_buffer;
-}
-
-void E_Vk_EndSingleTimeCommands(VkCommandBuffer cmd_buf)
-{
-    VkResult result = vkEndCommandBuffer(cmd_buf);
-    assert(result == VK_SUCCESS);
-
-    VkSubmitInfo submit_info = {0};
-    submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    submit_info.commandBufferCount = 1;
-    submit_info.pCommandBuffers = &cmd_buf;
-
-    vkQueueSubmit(rhi.device.graphics_queue, 1, &submit_info, VK_NULL_HANDLE);
-    vkQueueWaitIdle(rhi.device.graphics_queue);
 }
 
 void E_Vk_MakeInstance()
@@ -251,7 +215,11 @@ void E_Vk_MakePhysicalDevice()
             if (queue_families[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)
             {
                 rhi.physical_device.graphics_family = i;
-                break;
+            }
+
+            if (queue_families[i].queueFlags & VK_QUEUE_COMPUTE_BIT)
+            {
+                rhi.physical_device.compute_family = i;
             }
         }
 
@@ -276,9 +244,18 @@ void E_Vk_MakeDevice()
     graphics_queue_create_info.queueCount = 1;
     graphics_queue_create_info.pQueuePriorities = &queuePriority;
 
+    VkDeviceQueueCreateInfo compute_queue_create_info = { 0 };
+    compute_queue_create_info.flags = 0;
+    compute_queue_create_info.pNext = NULL;
+    compute_queue_create_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+    compute_queue_create_info.queueFamilyIndex = rhi.physical_device.compute_family;
+    compute_queue_create_info.queueCount = 1;
+    compute_queue_create_info.pQueuePriorities = &queuePriority;
+
     VkPhysicalDeviceFeatures features = {0};
     features.samplerAnisotropy = 1;
     features.fillModeNonSolid = 1;
+    features.geometryShader = 1;
 
     VkPhysicalDeviceDynamicRenderingFeaturesKHR dynamic_features = { 0 };
     dynamic_features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES_KHR;
@@ -317,10 +294,13 @@ void E_Vk_MakeDevice()
     dynamic_rendering_features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES_KHR;
     dynamic_rendering_features.dynamicRendering = VK_TRUE;
 
+    VkDeviceQueueCreateInfo queue_create_infos[2] = {graphics_queue_create_info, compute_queue_create_info};
+    i32 queue_create_info_count = 2;
+
     VkDeviceCreateInfo create_info = {0};
     create_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-    create_info.queueCreateInfoCount = 1;
-    create_info.pQueueCreateInfos = &graphics_queue_create_info;
+    create_info.queueCreateInfoCount = 2;
+    create_info.pQueueCreateInfos = queue_create_infos;
     create_info.pEnabledFeatures = &features;
     create_info.enabledExtensionCount = rhi.device.extension_count;
     create_info.ppEnabledExtensionNames = (const char* const*)rhi.device.extensions;
@@ -342,6 +322,7 @@ void E_Vk_MakeDevice()
 
     volkLoadDevice(rhi.device.handle);
     vkGetDeviceQueue(rhi.device.handle, rhi.physical_device.graphics_family, 0, &rhi.device.graphics_queue);
+    vkGetDeviceQueue(rhi.device.handle, rhi.physical_device.compute_family, 0, &rhi.device.compute_queue);
 
     if (rhi_settings.log_renderer_events)
         E_LogInfo("RENDERER EVENT: Vulkan Device created");
@@ -470,16 +451,15 @@ void E_Vk_MakeCommand()
     VkResult result = vkCreateCommandPool(rhi.device.handle, &pool_info, NULL, &rhi.command.graphics_command_pool);
     assert(result == VK_SUCCESS);
 
-    rhi.command.command_buffers = malloc(sizeof(VkCommandBuffer) * FRAMES_IN_FLIGHT);
+    pool_info.queueFamilyIndex = rhi.physical_device.compute_family;
 
-    VkCommandBufferAllocateInfo alloc_info = { 0 };
-    alloc_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    alloc_info.commandPool = rhi.command.graphics_command_pool;
-    alloc_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    alloc_info.commandBufferCount = FRAMES_IN_FLIGHT;
-
-    result = vkAllocateCommandBuffers(rhi.device.handle, &alloc_info, rhi.command.command_buffers);
+    result = vkCreateCommandPool(rhi.device.handle, &pool_info, NULL, &rhi.command.compute_command_pool);
     assert(result == VK_SUCCESS);
+
+    rhi.command.swapchain_command_buffers = malloc(sizeof(VkCommandBuffer) * FRAMES_IN_FLIGHT);
+
+    for (i32 i = 0; i < FRAMES_IN_FLIGHT; i++)
+        rhi.command.swapchain_command_buffers[i] = E_CreateCommandBuffer(E_CommandBufferTypeGraphics);
 
     if (rhi_settings.log_renderer_events)
         E_LogInfo("RENDERER EVENT: Vulkan Command Objects created");
@@ -662,9 +642,10 @@ void E_Vk_InitImGui()
 
     ImGui_ImplVulkan_Init(&init_info, rhi.imgui.render_pass);
 
-    VkCommandBuffer stc = E_Vk_SingleTimeCommands();
-    ImGui_ImplVulkan_CreateFontsTexture(stc);
-    E_Vk_EndSingleTimeCommands(stc);
+    E_CommandBuffer* stc = E_BeginSingleTimeCommands(E_CommandBufferTypeGraphics);
+    E_VulkanCommandBuffer* rhi_handle = stc->rhi_handle;
+    ImGui_ImplVulkan_CreateFontsTexture(rhi_handle->handle);
+    E_EndSingleTimeCommands(stc);
     ImGui_ImplVulkan_DestroyFontUploadObjects();
 
     for (u32 i = 0; i < FRAMES_IN_FLIGHT; i++)
@@ -712,7 +693,11 @@ void E_Vk_RendererShutdown()
     ImGui_ImplVulkan_Shutdown();
 
     for (u32 i = 0; i < FRAMES_IN_FLIGHT; i++)
+    {
         vkDestroyFramebuffer(rhi.device.handle, rhi.imgui.swapchain_framebuffers[i], NULL);
+        E_FreeCommandBuffer(rhi.command.swapchain_command_buffers[i]);
+    }
+    free(rhi.command.swapchain_command_buffers);
 
     vkDestroyRenderPass(rhi.device.handle, rhi.imgui.render_pass, NULL);
     vkDestroyDescriptorPool(rhi.device.handle, rhi.imgui.descriptor_pool, NULL);
@@ -722,6 +707,7 @@ void E_Vk_RendererShutdown()
 
     vkDestroySemaphore(rhi.device.handle, rhi.sync.image_available_semaphore, NULL);
     vkDestroySemaphore(rhi.device.handle, rhi.sync.image_rendered_semaphore, NULL);
+    vkDestroyCommandPool(rhi.device.handle, rhi.command.compute_command_pool, NULL);
     vkDestroyCommandPool(rhi.device.handle, rhi.command.graphics_command_pool, NULL);
 
     for (u32 i = 0; i < FRAMES_IN_FLIGHT; i++)
@@ -745,25 +731,22 @@ void E_Vk_RendererShutdown()
 
 void E_Vk_Begin()
 {
+    E_VulkanCommandBuffer* cmd_buf = CURRENT_CMD_BUF;
+
     vkAcquireNextImageKHR(rhi.device.handle, rhi.swapchain.handle, UINT32_MAX, rhi.sync.image_available_semaphore, VK_NULL_HANDLE, &rhi.sync.image_index);
 
     vkWaitForFences(rhi.device.handle, 1, &rhi.sync.fences[rhi.sync.image_index], VK_TRUE, UINT32_MAX);
     vkResetFences(rhi.device.handle, 1, &rhi.sync.fences[rhi.sync.image_index]);
-    vkResetCommandBuffer(CURRENT_CMD_BUF, 0);
+    vkResetCommandBuffer(cmd_buf->handle, 0);
 
-    VkCommandBufferBeginInfo begin_info = { 0 };
-    begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    begin_info.pInheritanceInfo = NULL;
-    begin_info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-
-    VkResult res = vkBeginCommandBuffer(CURRENT_CMD_BUF, &begin_info);
-    assert(res == VK_SUCCESS);
+    E_BeginCommandBuffer(rhi.command.swapchain_command_buffers[rhi.sync.image_index]);
 }
 
 void E_Vk_End()
 {
-    VkResult result = vkEndCommandBuffer(CURRENT_CMD_BUF);
-    assert(result == VK_SUCCESS);
+    E_VulkanCommandBuffer* cmd_buf = CURRENT_CMD_BUF;
+
+    E_EndCommandBuffer(rhi.command.swapchain_command_buffers[rhi.sync.image_index]);
 
     // Submit
 
@@ -776,7 +759,7 @@ void E_Vk_End()
     submit_info.pWaitSemaphores = wait_semaphores;
     submit_info.pWaitDstStageMask = wait_stages;
     submit_info.commandBufferCount = 1;
-    submit_info.pCommandBuffers = &CURRENT_CMD_BUF;
+    submit_info.pCommandBuffers = &cmd_buf->handle;
 
     VkSemaphore signal_semaphores[] = { rhi.sync.image_rendered_semaphore };
     submit_info.signalSemaphoreCount = 1;
@@ -784,7 +767,7 @@ void E_Vk_End()
 
     vkResetFences(rhi.device.handle, 1, &rhi.sync.fences[rhi.sync.image_index]);
 
-    result = vkQueueSubmit(rhi.device.graphics_queue, 1, &submit_info, rhi.sync.fences[rhi.sync.image_index]);
+    VkResult result = vkQueueSubmit(rhi.device.graphics_queue, 1, &submit_info, rhi.sync.fences[rhi.sync.image_index]);
     assert(result == VK_SUCCESS);
 
     VkPresentInfoKHR present_info = { 0 };
@@ -805,99 +788,10 @@ void E_Vk_DeviceWait()
     vkDeviceWaitIdle(rhi.device.handle);
 }
 
-#pragma optimize("",off)
-void E_Vk_RendererStartRender(E_ImageAttachment* attachments, i32 attachment_count, vec2 render_size, b32 has_depth)
-{
-    u32 color_iterator = has_depth ? attachment_count - 1 : attachment_count;
-
-    VkRect2D render_area = {0};
-    render_area.extent.width = (u32)render_size[0];
-    render_area.extent.height = (u32)render_size[1];
-    render_area.offset.x = 0;
-    render_area.offset.y = 0;
-
-    VkRenderingInfoKHR rendering_info = {0};
-    rendering_info.sType = VK_STRUCTURE_TYPE_RENDERING_INFO_KHR;
-    rendering_info.renderArea = render_area;
-    rendering_info.colorAttachmentCount = color_iterator;
-    rendering_info.layerCount = 1;
-
-    // Max attachment count is 64
-    VkRenderingAttachmentInfoKHR color_attachments[64] = { 0 };
-
-    for (u32 i = 0; i < color_iterator; i++)
-    {
-        E_VulkanImage* vk_image = (E_VulkanImage*)attachments[i].image->rhi_handle;
-
-        VkClearValue clear_value = {0};
-        clear_value.color.float32[0] = attachments[i].clear_value.r;
-        clear_value.color.float32[1] = attachments[i].clear_value.g;
-        clear_value.color.float32[2] = attachments[i].clear_value.b;
-        clear_value.color.float32[3] = attachments[i].clear_value.a;
-
-        VkRenderingAttachmentInfoKHR color_attachment_info = {0};
-        color_attachment_info.sType                        = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR;
-		color_attachment_info.imageView                    = vk_image->image_view;
-		color_attachment_info.imageLayout                  = attachments[i].layout;
-		color_attachment_info.resolveMode                  = VK_RESOLVE_MODE_NONE;
-		color_attachment_info.loadOp                       = VK_ATTACHMENT_LOAD_OP_CLEAR;
-		color_attachment_info.storeOp                      = VK_ATTACHMENT_STORE_OP_STORE;
-		color_attachment_info.clearValue                   = clear_value;
-
-        color_attachments[i] = color_attachment_info;
-    }
-
-    if (has_depth)
-    {
-        E_VulkanImage* vk_image = (E_VulkanImage*)attachments[color_iterator].image->rhi_handle;
-
-        VkClearValue depth_clear_value = {0};
-        depth_clear_value.depthStencil.depth = 1.0f;
-        depth_clear_value.depthStencil.stencil = attachments[color_iterator].clear_value.stencil;
-
-        VkRenderingAttachmentInfoKHR depth_attachment = {0};
-        depth_attachment.sType                        = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR;
-        depth_attachment.imageView                    = vk_image->image_view;
-		depth_attachment.imageLayout                  = attachments[color_iterator].layout;
-		depth_attachment.resolveMode                  = VK_RESOLVE_MODE_NONE;
-		depth_attachment.loadOp                       = VK_ATTACHMENT_LOAD_OP_CLEAR;
-		depth_attachment.storeOp                      = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		depth_attachment.clearValue                   = depth_clear_value;
-
-        rendering_info.pStencilAttachment = &depth_attachment;
-        rendering_info.pDepthAttachment = &depth_attachment;
-    }
-
-    rendering_info.pColorAttachments = color_attachments;
-
-    VkViewport viewport = { 0 };
-    viewport.width = render_size[0];
-    viewport.height = render_size[1];
-    viewport.x = 0.0f;
-    viewport.y = 0.0f;
-    viewport.minDepth = 0.0f;
-    viewport.maxDepth = 1.0f;
-
-    VkRect2D scissor = { 0 };
-    scissor.offset.x = 0;
-    scissor.offset.y = 0;
-    scissor.extent.width = (u32)render_size[0];
-    scissor.extent.height = (u32)render_size[1];
-
-    vkCmdSetViewport(CURRENT_CMD_BUF, 0, 1, &viewport);
-    vkCmdSetScissor(CURRENT_CMD_BUF, 0, 1, &scissor);
-
-    vkCmdBeginRenderingKHR(CURRENT_CMD_BUF, &rendering_info);
-}
-#pragma optimize("",on)
-
-void E_Vk_RendererEndRender()
-{
-    vkCmdEndRenderingKHR(CURRENT_CMD_BUF);
-}
-
 void E_Vk_BeginGUI()
 {
+    E_VulkanCommandBuffer* cmd_buf = CURRENT_CMD_BUF;
+
     VkClearValue clear_value = { 0 };
 
     VkRenderPassBeginInfo render_pass_info = { 0 };
@@ -910,7 +804,7 @@ void E_Vk_BeginGUI()
     render_pass_info.clearValueCount = 1;
     render_pass_info.pClearValues = &clear_value;
 
-    vkCmdBeginRenderPass(CURRENT_CMD_BUF, &render_pass_info, VK_SUBPASS_CONTENTS_INLINE);
+    vkCmdBeginRenderPass(cmd_buf->handle, &render_pass_info, VK_SUBPASS_CONTENTS_INLINE);
 
     ImGui_ImplVulkan_NewFrame();
     ImGui_ImplWin32_NewFrame();
@@ -919,8 +813,10 @@ void E_Vk_BeginGUI()
 
 void E_Vk_EndGUI()
 {
+    E_VulkanCommandBuffer* cmd_buf = CURRENT_CMD_BUF;
+
     igRender();
-    ImGui_ImplVulkan_RenderDrawData(igGetDrawData(), CURRENT_CMD_BUF, VK_NULL_HANDLE);
+    ImGui_ImplVulkan_RenderDrawData(igGetDrawData(), cmd_buf->handle, VK_NULL_HANDLE);
 
     if (igGetIO()->ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
     {
@@ -928,44 +824,7 @@ void E_Vk_EndGUI()
         igRenderPlatformWindowsDefault(NULL, NULL);
     }
 
-    vkCmdEndRenderPass(CURRENT_CMD_BUF);
-}
-
-void E_Vk_BindMaterial(E_VulkanMaterial* material)
-{
-    vkCmdBindPipeline(CURRENT_CMD_BUF, VK_PIPELINE_BIND_POINT_GRAPHICS, material->pipeline);
-}
-
-void E_Vk_BindBuffer(E_VulkanBuffer* buffer, E_BufferUsage usage)
-{
-    switch (usage)
-    {
-    case E_BufferUsageVertex:
-        VkDeviceSize offsets[] = { 0 };
-        VkBuffer buffers[] = { buffer->buffer };
-        vkCmdBindVertexBuffers(CURRENT_CMD_BUF, 0, 1, buffers, offsets);
-        break;
-    case E_BufferUsageIndex:
-        vkCmdBindIndexBuffer(CURRENT_CMD_BUF, buffer->buffer, 0, VK_INDEX_TYPE_UINT32);
-        break;
-    default:
-        return;
-    }
-}
-
-void E_Vk_BindMaterialInstance(E_VulkanMaterialInstance* instance, E_VulkanMaterial* material, i32 set_index)
-{
-    vkCmdBindDescriptorSets(CURRENT_CMD_BUF, VK_PIPELINE_BIND_POINT_GRAPHICS, material->pipeline_layout, set_index, 1, &instance->set, 0, NULL);
-}
-
-void E_Vk_Draw(u32 first, u32 count)
-{
-    vkCmdDraw(CURRENT_CMD_BUF, count, 1, first, 0);
-}
-
-void E_Vk_DrawIndexed(u32 first, u32 count)
-{
-    vkCmdDrawIndexed(CURRENT_CMD_BUF, count, 1, first, 0, 0);
+    vkCmdEndRenderPass(cmd_buf->handle);
 }
 
 E_Image* E_Vk_GetSwapchainImage()
@@ -976,6 +835,11 @@ E_Image* E_Vk_GetSwapchainImage()
 u32 E_Vk_GetSwapchainImageIndex()
 {
     return rhi.sync.image_index;
+}
+
+E_CommandBuffer* E_Vk_GetSwapchainCommandBuffer()
+{
+    return rhi.command.swapchain_command_buffers[rhi.sync.image_index];
 }
 
 void E_Vk_Resize(i32 width, i32 height)

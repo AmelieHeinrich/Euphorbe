@@ -5,6 +5,7 @@
 #include <Euphorbe/Graphics/Renderer.h>
 #include <Euphorbe/Graphics/Vulkan/VulkanMaterial.h>
 #include <Euphorbe/Graphics/Vulkan/VulkanBuffer.h>
+#include <Euphorbe/Graphics/Vulkan/VulkanCommandBuffer.h>
 #include <volk.h>
 
 #include <vk_mem_alloc.h>
@@ -31,6 +32,7 @@ struct E_Vk_Data
     struct {
         VkPhysicalDevice handle;
         u32 graphics_family;
+        u32 compute_family;
         VkPhysicalDeviceProperties handle_props;
     } physical_device;
 
@@ -38,6 +40,7 @@ struct E_Vk_Data
     struct {
         VkDevice handle;
         VkQueue graphics_queue;
+        VkQueue compute_queue;
         char* extensions[64];
         i32 extension_count;
     } device;
@@ -62,8 +65,9 @@ struct E_Vk_Data
 
     // Command data
     struct {
-        VkCommandBuffer* command_buffers;
+        E_CommandBuffer** swapchain_command_buffers;
         VkCommandPool graphics_command_pool;
+        VkCommandPool compute_command_pool;
     } command;
 
     // ImGui
@@ -92,21 +96,12 @@ void E_Vk_DeviceWait();
 
 void E_Vk_Resize(i32 width, i32 height);
 
-void E_Vk_RendererStartRender(E_ImageAttachment* attachments, i32 attachment_count, vec2 render_size, b32 has_depth);
-void E_Vk_RendererEndRender();
-
 void E_Vk_BeginGUI();
 void E_Vk_EndGUI();
 
-void E_Vk_BindMaterial(E_VulkanMaterial* material);
-void E_Vk_BindBuffer(E_VulkanBuffer* buffer, E_BufferUsage usage);
-void E_Vk_BindMaterialInstance(E_VulkanMaterialInstance* instance, E_VulkanMaterial* material, i32 set_index);
-
-void E_Vk_Draw(u32 first, u32 count);
-void E_Vk_DrawIndexed(u32 first, u32 count);
-
 E_Image* E_Vk_GetSwapchainImage();
 u32 E_Vk_GetSwapchainImageIndex();
+E_CommandBuffer* E_Vk_GetSwapchainCommandBuffer();
 
 // Most useful function for dynamic rendering
 void E_Vk_Image_Memory_Barrier(VkCommandBuffer command_buffer, 
@@ -118,9 +113,5 @@ void E_Vk_Image_Memory_Barrier(VkCommandBuffer command_buffer,
                                VkPipelineStageFlags src_stage_mask,
                                VkPipelineStageFlags dst_stage_mask,
                                VkImageSubresourceRange subresource_range);
-
-// Utility stuff
-VkCommandBuffer E_Vk_SingleTimeCommands();
-void E_Vk_EndSingleTimeCommands(VkCommandBuffer cmd_buf);
 
 #endif

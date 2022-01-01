@@ -1,5 +1,8 @@
 #include "FXAANode.h"
 
+#include <Euphorbe/Graphics/Renderer.h>
+#include <Euphorbe/Graphics/CommandBuffer.h>
+
 typedef struct FXAAPushConstants FXAAPushConstants;
 struct FXAAPushConstants
 {
@@ -58,8 +61,8 @@ void FXAANodeInit(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info)
 
 	data->constants.fxaa_threshold = 1.0f / 4.0f;
 	data->constants.max_span = 8.0f;
-	data->constants.mul_reduce = 1.0 / data->constants.max_span;
-	data->constants.min_reduce = 1.0 / 128.0f;
+	data->constants.mul_reduce = 1.0f / data->constants.max_span;
+	data->constants.min_reduce = 1.0f / 128.0f;
 }
 
 void FXAANodeClean(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info)
@@ -78,15 +81,17 @@ void FXAANodeExecute(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info)
 {
 	FXAANodeData* data = (FXAANodeData*)node->node_data;
 
-	data->constants.screen_size[0] = info->width;
-	data->constants.screen_size[1] = info->height;
+	E_CommandBuffer* cmd_buf = E_GetSwapchainCommandBuffer();
+
+	data->constants.screen_size[0] = (f32)info->width;
+	data->constants.screen_size[1] = (f32)info->height;
 
 	E_ImageLayout src_layout = data->first_render ? E_ImageLayoutUndefined : E_ImageLayoutShaderRead;
 	data->first_render = 0;
 
 	vec2 render_size = { (f32)info->width, (f32)info->height };
 
-	E_ImageTransitionLayout(node->outputs[0],
+	E_CommandBufferImageTransitionLayout(cmd_buf, node->outputs[0],
 		E_ImageAccessShaderRead, E_ImageAccessColorWrite,
 		src_layout, E_ImageLayoutColor,
 		E_ImagePipelineStageFragmentShader, E_ImagePipelineStageColorOutput);
@@ -97,17 +102,18 @@ void FXAANodeExecute(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info)
 		{ node->outputs[0], E_ImageLayoutColor, color_clear},
 	};
 
-	E_RendererStartRender(attachments, 1, render_size, 0);
+	E_CommandBufferSetViewport(cmd_buf, info->width, info->height);
+	E_CommandBufferStartRender(cmd_buf, attachments, 1, render_size, 0);
 
-	E_BindMaterial(data->fxaa_material->as.material);
-	E_BindMaterialInstance(data->material_instance, data->fxaa_material->as.material, 0);
-	E_MaterialPushConstants(data->fxaa_material->as.material, &data->constants, sizeof(FXAAPushConstants));
-	E_BindBuffer(data->quad_vertex_buffer);
-	E_Draw(0, 4);
+	E_CommandBufferBindMaterial(cmd_buf, data->fxaa_material->as.material);
+	E_CommandBufferBindMaterialInstance(cmd_buf, data->material_instance, data->fxaa_material->as.material, 0);
+	E_CommandBufferPushConstants(cmd_buf, data->fxaa_material->as.material, &data->constants, sizeof(FXAAPushConstants));
+	E_CommandBufferBindBuffer(cmd_buf, data->quad_vertex_buffer);
+	E_CommandBufferDraw(cmd_buf, 0, 4);
 
-	E_RendererEndRender();
+	E_CommandBufferEndRender(cmd_buf);
 
-	E_ImageTransitionLayout(node->outputs[0],
+	E_CommandBufferImageTransitionLayout(cmd_buf, node->outputs[0],
 		E_ImageAccessColorWrite, E_ImageAccessShaderRead,
 		E_ImageLayoutColor, E_ImageLayoutShaderRead,
 		E_ImagePipelineStageColorOutput, E_ImagePipelineStageFragmentShader);

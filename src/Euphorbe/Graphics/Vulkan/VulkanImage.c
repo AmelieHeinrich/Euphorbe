@@ -219,13 +219,14 @@ E_VulkanImage* E_Vk_MakeImageFromFile(const char* path)
     subresource_range.levelCount = 1;
 
     //
-    VkCommandBuffer stc = E_Vk_SingleTimeCommands();
+    E_CommandBuffer* stc = E_BeginSingleTimeCommands(E_CommandBufferTypeGraphics);
+    E_VulkanCommandBuffer* rhi_handle = stc->rhi_handle;
 
-    E_Vk_Image_Memory_Barrier(stc, result->image, 0, VK_ACCESS_TRANSFER_WRITE_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, subresource_range);
-    vkCmdCopyBufferToImage(stc, staging_buffer, result->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &image_copy_region);
-    E_Vk_Image_Memory_Barrier(stc, result->image, VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, subresource_range);
+    E_Vk_Image_Memory_Barrier(rhi_handle->handle, result->image, 0, VK_ACCESS_TRANSFER_WRITE_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, subresource_range);
+    vkCmdCopyBufferToImage(rhi_handle->handle, staging_buffer, result->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &image_copy_region);
+    E_Vk_Image_Memory_Barrier(rhi_handle->handle, result->image, VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, subresource_range);
     
-    E_Vk_EndSingleTimeCommands(stc);
+    E_EndSingleTimeCommands(stc);
     //
 
     vmaDestroyBuffer(rhi.allocator, staging_buffer, staging_buffer_allocation);
@@ -356,13 +357,14 @@ E_VulkanImage* E_Vk_MakeHDRImageFromFile(const char* path)
     subresource_range.levelCount = 1;
 
     //
-    VkCommandBuffer stc = E_Vk_SingleTimeCommands();
+    E_CommandBuffer* stc = E_BeginSingleTimeCommands(E_CommandBufferTypeGraphics);
+    E_VulkanCommandBuffer* rhi_handle = stc->rhi_handle;
 
-    E_Vk_Image_Memory_Barrier(stc, result->image, 0, VK_ACCESS_TRANSFER_WRITE_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, subresource_range);
-    vkCmdCopyBufferToImage(stc, staging_buffer, result->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &image_copy_region);
-    E_Vk_Image_Memory_Barrier(stc, result->image, VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, subresource_range);
+    E_Vk_Image_Memory_Barrier(rhi_handle->handle, result->image, 0, VK_ACCESS_TRANSFER_WRITE_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, subresource_range);
+    vkCmdCopyBufferToImage(rhi_handle->handle, staging_buffer, result->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &image_copy_region);
+    E_Vk_Image_Memory_Barrier(rhi_handle->handle, result->image, VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, subresource_range);
 
-    E_Vk_EndSingleTimeCommands(stc);
+    E_EndSingleTimeCommands(stc);
     //
 
     vmaDestroyBuffer(rhi.allocator, staging_buffer, staging_buffer_allocation);
@@ -522,23 +524,6 @@ void E_Vk_ResizeImage(E_VulkanImage* image, i32 width, i32 height)
 
     res = vkCreateImageView(rhi.device.handle, &view_info, NULL, &image->image_view);
     assert(res == VK_SUCCESS);
-}
-
-void E_Vk_BlitImage(E_VulkanImage* src, E_VulkanImage* dst, E_ImageLayout src_layout, E_ImageLayout dst_layout)
-{
-    VkImageBlit region = {0};
-    region.srcOffsets[1].x = src->image_extent.width;
-    region.srcOffsets[1].y = src->image_extent.height;
-    region.srcOffsets[1].z = 1;
-    region.srcSubresource.layerCount = 1;
-    region.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    region.dstOffsets[1].x = dst->image_extent.width;
-    region.dstOffsets[1].y = dst->image_extent.height;
-    region.dstOffsets[1].z = 1;
-    region.dstSubresource.layerCount = 1;
-    region.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-
-    vkCmdBlitImage(rhi.command.command_buffers[rhi.sync.image_index], src->image, src_layout, dst->image, dst_layout, 1, &region, VK_FILTER_NEAREST);
 }
 
 void E_Vk_DrawImageToGUI(E_VulkanImage* image, i32 width, i32 height)

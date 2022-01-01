@@ -182,14 +182,6 @@ E_Material* E_CreateMaterialFromFile(const char* path)
 	return material;
 }
 
-void E_MaterialPushConstants(E_Material* material, void* data, i64 size)
-{
-#ifdef EUPHORBE_WINDOWS
-	E_Vk_PushConstants((E_VulkanMaterial*)material->rhi_handle, data, size);
-#endif
-}
-
-
 void E_FreeMaterial(E_Material* material)
 {
 #ifdef EUPHORBE_WINDOWS

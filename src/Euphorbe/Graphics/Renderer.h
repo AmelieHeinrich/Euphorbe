@@ -9,6 +9,8 @@
 #include "Material.h"
 #include "Buffer.h"
 
+typedef struct E_CommandBuffer E_CommandBuffer;
+
 typedef struct E_RendererInitSettings E_RendererInitSettings;
 struct E_RendererInitSettings
 {
@@ -52,25 +54,13 @@ void E_RendererBegin();
 void E_RendererEnd();
 void E_RendererWait();
 
-// Put all of your color + depth attachments in the array. Depth attachment must be at the end
-void E_RendererStartRender(E_ImageAttachment* attachments, i32 attachment_count, vec2 render_size, b32 has_depth);
-void E_RendererEndRender();
-
 E_Image* E_GetSwapchainImage();
 u32 E_GetSwapchainImageIndex();
+E_CommandBuffer* E_GetSwapchainCommandBuffer();
 
 //
 void E_BeginGUI();
 void E_EndGUI();
-
-//
-void E_BindMaterial(E_Material* material);
-void E_BindBuffer(E_Buffer* buffer);
-void E_BindMaterialInstance(E_MaterialInstance* instance, E_Material* material, i32 set_index);
-
-//
-void E_Draw(u32 first, u32 count);
-void E_DrawIndexed(u32 first, u32 count);
 
 void E_RendererResize(i32 width, i32 height);
 

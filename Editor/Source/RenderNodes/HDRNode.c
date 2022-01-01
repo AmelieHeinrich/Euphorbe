@@ -1,6 +1,7 @@
 #include "HDRNode.h"
 
 #include <Euphorbe/Graphics/Renderer.h>
+#include <Euphorbe/Graphics/CommandBuffer.h>
 
 typedef struct HDRNodeData HDRNodeData;
 struct HDRNodeData
@@ -64,6 +65,8 @@ void HDRNodeExecute(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info)
 {
 	HDRNodeData* data = (HDRNodeData*)node->node_data;
 
+	E_CommandBuffer* cmd_buf = E_GetSwapchainCommandBuffer();
+
 	vec4 uniform;
 	uniform[0] = (f32)data->enabled;
 	uniform[1] = (f32)data->exposure;
@@ -73,7 +76,7 @@ void HDRNodeExecute(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info)
 
 	vec2 render_size = { (f32)info->width, (f32)info->height };
 
-	E_ImageTransitionLayout(node->outputs[0],
+	E_CommandBufferImageTransitionLayout(cmd_buf, node->outputs[0],
 		E_ImageAccessShaderRead, E_ImageAccessColorWrite,
 		src_layout, E_ImageLayoutColor,
 		E_ImagePipelineStageFragmentShader, E_ImagePipelineStageColorOutput);
@@ -84,17 +87,18 @@ void HDRNodeExecute(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info)
 		{ node->outputs[0], E_ImageLayoutColor, color_clear},
 	};
 
-	E_RendererStartRender(attachments, 1, render_size, 0);
+	E_CommandBufferSetViewport(cmd_buf, info->width, info->height);
+	E_CommandBufferStartRender(cmd_buf, attachments, 1, render_size, 0);
 
-	E_BindMaterial(data->screen_shader->as.material);
-	E_BindMaterialInstance(data->material_instance, data->screen_shader->as.material, 0);
-	E_MaterialPushConstants(data->screen_shader->as.material, &uniform, sizeof(vec4));
-	E_BindBuffer(data->quad_vertex_buffer);
-	E_Draw(0, 4);
+	E_CommandBufferBindMaterial(cmd_buf, data->screen_shader->as.material);
+	E_CommandBufferBindMaterialInstance(cmd_buf, data->material_instance, data->screen_shader->as.material, 0);
+	E_CommandBufferPushConstants(cmd_buf, data->screen_shader->as.material, &uniform, sizeof(vec4));
+	E_CommandBufferBindBuffer(cmd_buf, data->quad_vertex_buffer);
+	E_CommandBufferDraw(cmd_buf, 0, 4);
 
-	E_RendererEndRender();
+	E_CommandBufferEndRender(cmd_buf);
 
-	E_ImageTransitionLayout(node->outputs[0],
+	E_CommandBufferImageTransitionLayout(cmd_buf, node->outputs[0],
 		E_ImageAccessColorWrite, E_ImageAccessShaderRead,
 		E_ImageLayoutColor, E_ImageLayoutTransferSource,
 		E_ImagePipelineStageColorOutput, E_ImagePipelineStageFragmentShader);

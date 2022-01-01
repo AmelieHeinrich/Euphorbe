@@ -4,8 +4,8 @@ ViewportPanel viewport_panel;
 
 void InitViewportPanel(int width, int height)
 {
-    viewport_panel.viewport_size[0] = width;
-    viewport_panel.viewport_size[1] = height;
+    viewport_panel.viewport_size[0] = (f32)width;
+    viewport_panel.viewport_size[1] = (f32)height;
 }
 
 void DrawViewportPanel(E_Image* buffer, b32* is_viewport_focused)

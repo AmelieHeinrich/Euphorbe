@@ -29,8 +29,6 @@ E_VulkanImage* E_Vk_MakeHDRImageFromFile(const char* path);
 E_VulkanImage* E_Vk_MakeCubeMap(i32 width, i32 height, E_ImageFormat format, E_ImageUsage usage);
 void E_Vk_FreeImage(E_VulkanImage* image);
 void E_Vk_ResizeImage(E_VulkanImage* image, i32 width, i32 height);
-
-void E_Vk_BlitImage(E_VulkanImage* src, E_VulkanImage* dst, E_ImageLayout src_layout, E_ImageLayout dst_layout);
 void E_Vk_DrawImageToGUI(E_VulkanImage* image, i32 width, i32 height);
 
 #endif

@@ -3,6 +3,8 @@
 
 #include <Euphorbe/Core/Common.h>
 
+typedef struct E_CommandBuffer E_CommandBuffer;
+
 typedef enum E_ImageFormat E_ImageFormat;
 enum E_ImageFormat
 {
@@ -82,11 +84,7 @@ E_Image* E_MakeImageFromFile(const char* path);
 E_Image* E_MakeHDRImageFromFile(const char* path);
 E_Image* E_MakeCubeMap(i32 width, i32 height, E_ImageFormat format, E_ImageUsage usage);
 void E_FreeImage(E_Image* image);
-
-void E_ImageTransitionLayout(E_Image* image, E_ImageAccess srcAccess, E_ImageAccess dstAccess, E_ImageLayout old, E_ImageLayout new, E_ImagePipelineStage srcStage, E_ImagePipelineStage dstStage);
 void E_ImageResize(E_Image* image, i32 width, i32 height);
-
-void E_ImageBlit(E_Image* src, E_Image* dst, E_ImageLayout src_layout, E_ImageLayout dst_layout);
 void E_ImageDrawToGUI(E_Image* image, i32 width, i32 height);
 
 #endif

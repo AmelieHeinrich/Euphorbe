@@ -125,7 +125,6 @@ struct E_MaterialInstance
 // WARNING: Vertex shader MUST contain input variables!
 E_Material* E_CreateMaterial(E_MaterialCreateInfo* create_info);
 E_Material* E_CreateMaterialFromFile(const char* path);
-void E_MaterialPushConstants(E_Material* material, void* data, i64 size);
 void E_FreeMaterial(E_Material* material);
 
 // Instances

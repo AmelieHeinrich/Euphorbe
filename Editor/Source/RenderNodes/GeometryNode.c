@@ -1,6 +1,7 @@
 #include "GeometryNode.h"
 
 #include <Euphorbe/Graphics/Renderer.h>
+#include <Euphorbe/Graphics/CommandBuffer.h>
 
 typedef struct GeometryUniforms GeometryUniforms;
 struct GeometryUniforms
@@ -94,6 +95,8 @@ void GeometryNodeExecute(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info
 {
 	GeometryData* data = (GeometryData*)node->node_data;
 
+	E_CommandBuffer* cmd_buf = E_GetSwapchainCommandBuffer();
+
 	E_ClearValue color_clear = { 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0 };
 	E_ClearValue depth_clear = { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0 };
 
@@ -107,18 +110,19 @@ void GeometryNodeExecute(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info
 
 	vec2 render_size = { (f32)info->width, (f32)info->height };
 
-	E_ImageTransitionLayout(node->outputs[0],
+	E_CommandBufferImageTransitionLayout(cmd_buf,node->outputs[0],
 		E_ImageAccessShaderRead, E_ImageAccessColorWrite,
 		src_render_buffer_image_layout, E_ImageLayoutColor,
 		E_ImagePipelineStageFragmentShader, E_ImagePipelineStageColorOutput);
 
-	E_ImageTransitionLayout(node->outputs[1],
+	E_CommandBufferImageTransitionLayout(cmd_buf, node->outputs[1],
 		0, E_ImageAccessDepthWrite,
 		E_ImageLayoutUndefined, E_ImageLayoutDepth,
 		E_ImagePipelineStageEarlyFragment | E_ImagePipelineStageLateFragment,
 		E_ImagePipelineStageEarlyFragment | E_ImagePipelineStageLateFragment);
 
-	E_RendererStartRender(attachments, 2, render_size, 1);
+	E_CommandBufferSetViewport(cmd_buf, info->width, info->height);
+	E_CommandBufferStartRender(cmd_buf, attachments, 2, render_size, 1);
 
 	// Calculate prev view matrix
 
@@ -159,42 +163,42 @@ void GeometryNodeExecute(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info
 		glm_mat4_mul(output_matrix, view_mat3, output_matrix);
 		glm_mat4_mul(output_matrix, scale_matrix, output_matrix);
 
-		E_BindMaterial(data->skybox_material->as.material);
-		E_MaterialPushConstants(data->skybox_material->as.material, &output_matrix, sizeof(output_matrix));
-		E_BindMaterialInstance(data->skybox_instance, data->skybox_material->as.material, 0);
+		E_CommandBufferBindMaterial(cmd_buf, data->skybox_material->as.material);
+		E_CommandBufferPushConstants(cmd_buf, data->skybox_material->as.material, &output_matrix, sizeof(output_matrix));
+		E_CommandBufferBindMaterialInstance(cmd_buf, data->skybox_instance, data->skybox_material->as.material, 0);
 		for (i32 i = 0; i < data->skybox_mesh->as.mesh->submesh_count; i++)
 		{
 			E_Submesh submesh = data->skybox_mesh->as.mesh->submeshes[i];
 
-			E_BindBuffer(submesh.vertex_buffer);
-			E_BindBuffer(submesh.index_buffer);
-			E_DrawIndexed(0, submesh.index_count);
+			E_CommandBufferBindBuffer(cmd_buf, submesh.vertex_buffer);
+			E_CommandBufferBindBuffer(cmd_buf, submesh.index_buffer);
+			E_CommandBufferDrawIndexed(cmd_buf, 0, submesh.index_count);
 		}
 	}
 
 	// Draw meshes
-	E_BindMaterial(data->geometry_material->as.material);
-	E_MaterialPushConstants(data->geometry_material->as.material, &upload_uniforms, sizeof(GeometryUniforms));
+	E_CommandBufferBindMaterial(cmd_buf, data->geometry_material->as.material);
+	E_CommandBufferPushConstants(cmd_buf, data->geometry_material->as.material, &upload_uniforms, sizeof(GeometryUniforms));
 	E_SetBufferData(data->light_buffer, info->point_lights, sizeof(info->point_lights));
 
 	for (u32 i = 0; i < info->drawable_count; i++)
 	{
 		E_Drawable drawable = info->drawables[i];
 
-		E_BindMaterialInstance(drawable.material_instance, data->geometry_material->as.material, 0);
-		E_BindMaterialInstance(data->light_material_instance, data->geometry_material->as.material, 1);
+		E_CommandBufferBindMaterialInstance(cmd_buf, drawable.material_instance, data->geometry_material->as.material, 0);
+		E_CommandBufferBindMaterialInstance(cmd_buf, data->light_material_instance, data->geometry_material->as.material, 1);
 		for (i32 i = 0; i < drawable.mesh->submesh_count; i++)
 		{
 			E_Submesh submesh = drawable.mesh->submeshes[i];
-			E_BindBuffer(submesh.vertex_buffer);
-			E_BindBuffer(submesh.index_buffer);
-			E_DrawIndexed(0, submesh.index_count);
+			E_CommandBufferBindBuffer(cmd_buf, submesh.vertex_buffer);
+			E_CommandBufferBindBuffer(cmd_buf, submesh.index_buffer);
+			E_CommandBufferDrawIndexed(cmd_buf, 0, submesh.index_count);
 		}
 	}
 
-	E_RendererEndRender();
+	E_CommandBufferEndRender(cmd_buf);
 
-	E_ImageTransitionLayout(node->outputs[0],
+	E_CommandBufferImageTransitionLayout(cmd_buf, node->outputs[0],
 		E_ImageAccessColorWrite, E_ImageAccessShaderRead,
 		E_ImageLayoutColor, E_ImageLayoutShaderRead,
 		E_ImagePipelineStageColorOutput, E_ImagePipelineStageFragmentShader);

@@ -39,20 +39,6 @@ void E_RendererWait()
 #endif
 }
 
-void E_RendererStartRender(E_ImageAttachment* attachments, i32 attachment_count, vec2 render_size, b32 has_depth)
-{
-#ifdef EUPHORBE_WINDOWS
-    E_Vk_RendererStartRender(attachments, attachment_count, render_size, has_depth);
-#endif
-}
-
-void E_RendererEndRender()
-{
-#ifdef EUPHORBE_WINDOWS
-    E_Vk_RendererEndRender();
-#endif
-}
-
 E_Image* E_GetSwapchainImage()
 {
 #ifdef EUPHORBE_WINDOWS
@@ -67,6 +53,13 @@ u32 E_GetSwapchainImageIndex()
 #endif
 }
 
+E_CommandBuffer* E_GetSwapchainCommandBuffer()
+{
+#ifdef EUPHORBE_WINDOWS
+    return E_Vk_GetSwapchainCommandBuffer();
+#endif
+}
+
 void E_BeginGUI()
 {
 #ifdef EUPHORBE_WINDOWS
@@ -78,41 +71,6 @@ void E_EndGUI()
 {
 #ifdef EUPHORBE_WINDOWS
     E_Vk_EndGUI();
-#endif
-}
-
-void E_BindMaterial(E_Material* material)
-{
-#ifdef EUPHORBE_WINDOWS
-    E_Vk_BindMaterial((E_VulkanMaterial*)material->rhi_handle);
-#endif
-}
-
-void E_BindBuffer(E_Buffer* buffer)
-{
-#ifdef EUPHORBE_WINDOWS
-    E_Vk_BindBuffer((E_VulkanBuffer*)buffer->rhi_handle, buffer->usage);
-#endif
-}
-
-void E_BindMaterialInstance(E_MaterialInstance* instance, E_Material* material, i32 set_index)
-{
-#ifdef EUPHORBE_WINDOWS
-    E_Vk_BindMaterialInstance((E_VulkanMaterialInstance*)instance->rhi_handle, (E_VulkanMaterial*)material->rhi_handle, set_index);
-#endif
-}
-
-void E_Draw(u32 first, u32 count)
-{
-#ifdef EUPHORBE_WINDOWS
-    E_Vk_Draw(first, count);
-#endif
-}
-
-void E_DrawIndexed(u32 first, u32 count)
-{
-#ifdef EUPHORBE_WINDOWS
-    E_Vk_DrawIndexed(first, count);
 #endif
 }
 

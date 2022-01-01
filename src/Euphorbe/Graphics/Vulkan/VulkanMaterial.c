@@ -386,11 +386,6 @@ void E_Vk_FreeMaterial(E_VulkanMaterial* material)
     free(material);
 }
 
-void E_Vk_PushConstants(E_VulkanMaterial* material, void* data, i64 size)
-{
-    vkCmdPushConstants(rhi.command.command_buffers[rhi.sync.image_index], material->pipeline_layout, VK_SHADER_STAGE_ALL, 0, size, data);
-}
-
 E_VulkanMaterialInstance* E_Vk_CreateMaterialInstance(E_VulkanMaterial* material, i32 set_layout_index)
 {
     E_VulkanMaterialInstance* material_instance = malloc(sizeof(E_VulkanMaterialInstance));
