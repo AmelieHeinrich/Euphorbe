@@ -9,6 +9,7 @@
 #include "EditorCamera.h"
 
 #include "RenderNodes/GeometryNode.h"
+#include "RenderNodes/FXAANode.h"
 #include "RenderNodes/HDRNode.h"
 #include "RenderNodes/FinalBlitNode.h"
 
@@ -34,6 +35,7 @@ struct EditorData
 	E_RenderGraphExecuteInfo execute_info;
 	
 	E_RenderGraphNode* geometry_node;
+	E_RenderGraphNode* fxaa_node;
 	E_RenderGraphNode* hdr_node;
 	E_RenderGraphNode* final_blit_node;
 

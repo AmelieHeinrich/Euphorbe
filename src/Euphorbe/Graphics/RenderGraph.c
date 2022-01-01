@@ -31,7 +31,7 @@ void RecursivelyAddNodes(E_RenderGraphNode* node, E_RenderGraphNodeVector* vec)
 		vec->nodes[vec->node_count] = node;
 		vec->node_count++;
 
-		for (i32 i = 0; i < node->input_count; ++i)
+		for (u32 i = 0; i < node->input_count; ++i)
 		{
 			E_RenderGraphNode* owner = node->inputs[i].owner;
 
@@ -64,7 +64,7 @@ void E_BuildRenderGraph(E_RenderGraph* graph, E_RenderGraphExecuteInfo* info, E_
 		E_RenderGraphNode* node = temp->nodes[candidate_index];
 		b32 already_in_array = 0;
 
-		for (i32 i = 0; i < graph->node_vector.node_count; i++)
+		for (u32 i = 0; i < graph->node_vector.node_count; i++)
 		{
 			if (graph->node_vector.nodes[i] == node) // If the node is already in the array, don't add it.
 			{
@@ -85,7 +85,7 @@ void E_BuildRenderGraph(E_RenderGraph* graph, E_RenderGraphExecuteInfo* info, E_
 
 	// Initialize 
 
-	for (i32 i = 0; i < graph->node_vector.node_count; i++)
+	for (u32 i = 0; i < graph->node_vector.node_count; i++)
 	{
 		E_RenderGraphNode* node = graph->node_vector.nodes[i];
 		node->init_func(node, info);
@@ -98,7 +98,7 @@ void E_BuildRenderGraph(E_RenderGraph* graph, E_RenderGraphExecuteInfo* info, E_
 
 void E_CleanRenderGraph(E_RenderGraph* graph, E_RenderGraphExecuteInfo* info)
 {
-	for (i32 i = 0; i < graph->node_vector.node_count; i++)
+	for (u32 i = 0; i < graph->node_vector.node_count; i++)
 	{
 		E_RenderGraphNode* node = graph->node_vector.nodes[i];
 
@@ -112,7 +112,7 @@ void E_CleanRenderGraph(E_RenderGraph* graph, E_RenderGraphExecuteInfo* info)
 
 void E_ResizeRenderGraph(E_RenderGraph* graph, E_RenderGraphExecuteInfo* info)
 {
-	for (i32 i = 0; i < graph->node_vector.node_count; i++)
+	for (u32 i = 0; i < graph->node_vector.node_count; i++)
 	{
 		E_RenderGraphNode* node = graph->node_vector.nodes[i] ;
 
@@ -122,7 +122,7 @@ void E_ResizeRenderGraph(E_RenderGraph* graph, E_RenderGraphExecuteInfo* info)
 
 void E_ExecuteRenderGraph(E_RenderGraph* graph, E_RenderGraphExecuteInfo* info)
 {
-	for (i32 i = 0; i < graph->node_vector.node_count; i++)
+	for (u32 i = 0; i < graph->node_vector.node_count; i++)
 	{
 		E_RenderGraphNode* node = graph->node_vector.nodes[i];
 

@@ -6,9 +6,9 @@
 	PolygonMode = "Fill"
 
 [RenderInfo]
-	ColorAttachmentCount = 2
+	ColorAttachmentCount = 1
 	DepthFormat = "D32_Float"
-	ColorFormats = ["RGBA16", "RG16"]
+	ColorFormats = ["RGBA16"]
 
 [Shaders]
 	Vertex = "Assets/Shaders/Geometry/Vertex.glsl"

@@ -30,11 +30,7 @@ struct E_Drawable
 {
 	E_Mesh* mesh;
 	E_MaterialInstance* material_instance;
-	
-	struct {
-		mat4 transform;
-		mat4 prev_transform;
-	} model_matrix;
+	mat4 transform;
 };
 
 struct E_RenderGraphExecuteInfo

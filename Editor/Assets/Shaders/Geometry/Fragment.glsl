@@ -4,14 +4,12 @@
 #define PI 3.14159265359
 
 layout (location = 0) out vec4 OutColor;
-layout (location = 1) out vec2 OutVelocity;
 
 layout (location = 0) in vec3 OutPos;
 layout (location = 1) in vec2 OutUV;
 layout (location = 2) in vec3 OutNormals;
 layout (location = 3) in vec4 WorldPos;
-layout (location = 4) in vec4 PreviousWorldPos;
-layout (location = 5) in vec3 CameraPos;
+layout (location = 4) in vec3 CameraPos;
 
 struct PointLight
 {
@@ -143,16 +141,4 @@ void main()
         OutColor = mix(vec4(color, 1.0), reflected_color, 0.6);
     else
         OutColor = vec4(color, 1.0);
-
-    // Velocity buffer
-
-    vec2 current  = WorldPos.xy / PreviousWorldPos.w;
-    vec2 prev     = WorldPos.xy / PreviousWorldPos.w;
-    current = current * 0.5f + 0.5f;
-    prev = prev * 0.5 + 0.5f;
-
-    vec2 delta = current - prev;
-    delta *= vec2(1.0f, -1.0f);
-
-    OutVelocity = delta;
 }

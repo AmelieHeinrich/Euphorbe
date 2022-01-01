@@ -65,13 +65,13 @@ void HDRNodeExecute(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info)
 	HDRNodeData* data = (HDRNodeData*)node->node_data;
 
 	vec4 uniform;
-	uniform[0] = data->enabled;
-	uniform[1] = data->exposure;
+	uniform[0] = (f32)data->enabled;
+	uniform[1] = (f32)data->exposure;
 
 	E_ImageLayout src_layout = data->first_render ? E_ImageLayoutUndefined : E_ImageLayoutTransferSource;
 	data->first_render = 0;
 
-	vec2 render_size = { info->width, info->height };
+	vec2 render_size = { (f32)info->width, (f32)info->height };
 
 	E_ImageTransitionLayout(node->outputs[0],
 		E_ImageAccessShaderRead, E_ImageAccessColorWrite,
@@ -140,7 +140,7 @@ void HDRNodeDrawGUI(E_RenderGraphNode* node)
 	if (hdr_enabled)
 	{
 		igDragFloat("Exposure", &data->exposure, 0.1f, 0.0f, 0.0f, "%.1f", ImGuiSliderFlags_None);
-		igCheckbox("Enable HDR", &data->enabled);
+		igCheckbox("Enable HDR", (bool*)&data->enabled);
 		igTreePop();
 	}
 }

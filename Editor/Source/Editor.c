@@ -85,10 +85,12 @@ void EditorInitialiseRenderState()
 
     editor_state.graph = E_CreateRenderGraph();
     editor_state.geometry_node = CreateGeometryNode();
+    editor_state.fxaa_node = CreateFXAANode();
     editor_state.hdr_node = CreateHDRNode();
     editor_state.final_blit_node = CreateFinalBlitNode();
 
-    E_RenderGraphConnectNodes(editor_state.geometry_node, GeometryNodeOutput_Color, editor_state.hdr_node, HDRNodeInput_Geometry);
+    E_RenderGraphConnectNodes(editor_state.geometry_node, GeometryNodeOutput_Color, editor_state.fxaa_node, FXAANodeInput_Color);
+    E_RenderGraphConnectNodes(editor_state.fxaa_node, FXAANodeOutput_ImageOut, editor_state.hdr_node, HDRNodeInput_Geometry);
     E_RenderGraphConnectNodes(editor_state.hdr_node, HDRNodeOutput_Color, editor_state.final_blit_node, FinalBlitNodeInput_ImageIn);
 
     E_BuildRenderGraph(editor_state.graph, &editor_state.execute_info, editor_state.final_blit_node);
@@ -96,10 +98,10 @@ void EditorInitialiseRenderState()
 
 void EditorInitialiseTexturedMesh()
 {
-    editor_state.material_buffer[0] = 1.0f; // Has albedo texture
-    editor_state.material_buffer[1] = 1.0f; // Has roughness texture
-    editor_state.material_buffer[2] = 1.0f; // Enable blending
-    editor_state.material_buffer[3] = 0.0f; // Don't flip UVs
+    editor_state.material_buffer[0] = 1; // Has albedo texture
+    editor_state.material_buffer[1] = 1; // Has roughness texture
+    editor_state.material_buffer[2] = 1; // Enable blending
+    editor_state.material_buffer[3] = 0; // Don't enable reflection
 
     editor_state.albedo_texture = E_LoadResource("Assets/Textures/Suzanne_BaseColor.png", E_ResourceTypeTexture);
     editor_state.metallic_roughness_texture = E_LoadResource("Assets/Textures/Suzanne_MetallicRoughness.png", E_ResourceTypeTexture);
@@ -107,26 +109,25 @@ void EditorInitialiseTexturedMesh()
     editor_state.mesh = E_LoadResource("Assets/Models/Suzanne.gltf", E_ResourceTypeMesh);
     editor_state.material_instance = E_CreateMaterialInstance(GetGeometryNodeMaterial(editor_state.geometry_node), 0);
 
-    editor_state.transform_buffer = E_CreateUniformBuffer(sizeof(editor_state.execute_info.drawables[0].model_matrix));
-    E_SetBufferData(editor_state.transform_buffer, &editor_state.execute_info.drawables[0].model_matrix, sizeof(editor_state.execute_info.drawables[0].model_matrix));
+    editor_state.transform_buffer = E_CreateUniformBuffer(sizeof(editor_state.execute_info.drawables[0].transform));
+    E_SetBufferData(editor_state.transform_buffer, &editor_state.execute_info.drawables[0].transform, sizeof(editor_state.execute_info.drawables[0].transform));
 
     editor_state.material_settings = E_CreateUniformBuffer(sizeof(vec4));
     E_SetBufferData(editor_state.material_settings, &editor_state.material_buffer, sizeof(vec4));
 
-    E_MaterialInstanceWriteBuffer(editor_state.material_instance, 0, editor_state.transform_buffer, sizeof(editor_state.execute_info.drawables[0].model_matrix));
+    E_MaterialInstanceWriteBuffer(editor_state.material_instance, 0, editor_state.transform_buffer, sizeof(editor_state.execute_info.drawables[0].transform));
     E_MaterialInstanceWriteBuffer(editor_state.material_instance, 1, editor_state.material_settings, sizeof(vec4));
     E_MaterialInstanceWriteImage(editor_state.material_instance, 2, editor_state.albedo_texture->as.image);
     E_MaterialInstanceWriteImage(editor_state.material_instance, 3, editor_state.metallic_roughness_texture->as.image);
 
     editor_state.execute_info.drawables[0].mesh = editor_state.mesh->as.mesh;
     editor_state.execute_info.drawables[0].material_instance = editor_state.material_instance;
-    glm_mat4_identity(editor_state.execute_info.drawables[0].model_matrix.transform);
-    glm_mat4_identity(editor_state.execute_info.drawables[0].model_matrix.prev_transform);
+    glm_mat4_identity(editor_state.execute_info.drawables[0].transform);
     editor_state.execute_info.drawable_count++;
 
     // Initialise directional light
-    glm_vec4_fill(editor_state.execute_info.point_lights[0].color, 10.0f);
-    glm_vec4_fill(editor_state.execute_info.point_lights[0].position, 1.0f);
+    glm_vec4_fill(editor_state.execute_info.point_lights[0].color, 100.0f);
+    glm_vec4_fill(editor_state.execute_info.point_lights[0].position, 3.0f);
 }
 
 void EditorLaunch()
@@ -143,8 +144,8 @@ void EditorAssureViewportSize()
     {
         E_RendererWait();
 
-        editor_state.execute_info.width = viewport_panel.viewport_size[0];
-        editor_state.execute_info.height = viewport_panel.viewport_size[0];
+        editor_state.execute_info.width = (i32)viewport_panel.viewport_size[0];
+        editor_state.execute_info.height = (i32)viewport_panel.viewport_size[0];
 
         E_ResizeRenderGraph(editor_state.graph, &editor_state.execute_info);
         EditorCameraResize(&editor_state.camera, (i32)viewport_panel.viewport_size[0], (i32)viewport_panel.viewport_size[1]);
@@ -173,7 +174,7 @@ void EditorDraw()
 {
     f64 start = EditorBeginProfiling();
 
-    E_SetBufferData(editor_state.transform_buffer, &editor_state.execute_info.drawables[0].model_matrix, sizeof(editor_state.execute_info.drawables[0].model_matrix));
+    E_SetBufferData(editor_state.transform_buffer, &editor_state.execute_info.drawables[0].transform, sizeof(editor_state.execute_info.drawables[0].transform));
     E_SetBufferData(editor_state.material_settings, &editor_state.material_buffer, sizeof(vec4));
     
     glm_mat4_copy(editor_state.camera.view, editor_state.execute_info.view);
@@ -196,10 +197,10 @@ void EditorDrawGUI()
     // Material Viewer
     {
         igBegin("Material Viewer", NULL, ImGuiWindowFlags_AlwaysAutoResize);
-        igCheckbox("Enable Albedo", &editor_state.material_buffer[0]);
-        igCheckbox("Enable Metallic Roughness", &editor_state.material_buffer[1]);
-        igCheckbox("Enable Blending", &editor_state.material_buffer[2]);
-        igCheckbox("Enable Skybox Reflection", &editor_state.material_buffer[3]);
+        igCheckbox("Enable Albedo", (bool*)& editor_state.material_buffer[0]);
+        igCheckbox("Enable Metallic Roughness", (bool*)&editor_state.material_buffer[1]);
+        igCheckbox("Enable Blending", (bool*)&editor_state.material_buffer[2]);
+        igCheckbox("Enable Skybox Reflection", (bool*)&editor_state.material_buffer[3]);
         igEnd();
     }
 
@@ -234,6 +235,7 @@ void EditorDrawGUI()
     {
         igBegin("Render Graph Viewer", NULL, ImGuiWindowFlags_None);
         GeometryNodeDrawGUI(editor_state.geometry_node);
+        FXAANodeDrawGUI(editor_state.fxaa_node);
         HDRNodeDrawGUI(editor_state.hdr_node);
         igEnd();
     }

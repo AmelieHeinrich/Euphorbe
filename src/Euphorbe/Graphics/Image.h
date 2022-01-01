@@ -23,7 +23,8 @@ enum E_ImageLayout
     E_ImageLayoutShaderRead = 5,
     E_ImageLayoutTransferSource = 6,
     E_ImageLayoutTransferDest = 7,
-    E_ImageLayoutSwapchainPresent = 1000001002
+    E_ImageLayoutSwapchainPresent = 1000001002,
+    E_ImageLayoutReadOnlyOptimal = 1000314000
 };
 
 typedef enum E_ImageUsage E_ImageUsage;

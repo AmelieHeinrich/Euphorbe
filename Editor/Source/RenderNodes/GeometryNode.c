@@ -7,7 +7,6 @@ struct GeometryUniforms
 {
 	mat4 projection;
 	mat4 view;
-	mat4 prev_view;
 	vec3 camera_position;
 	f32 padding;
 };
@@ -53,9 +52,8 @@ void GeometryNodeInit(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info)
 	GeometryData* data = (GeometryData*)node->node_data;
 
 	node->outputs[0] = E_MakeImage(info->width, info->height, E_ImageFormatRGBA16, E_ImageUsageRenderGraphNodeOutput);
-	node->outputs[1] = E_MakeImage(info->width, info->height, E_ImageFormatRG16, E_ImageUsageRenderGraphNodeOutput);
-	node->outputs[2] = E_MakeImage(info->width, info->height, E_ImageFormatD32_Float, E_ImageUsageDepthStencilAttachment | E_ImageUsageSampled);
-	node->output_count = 3;
+	node->outputs[1] = E_MakeImage(info->width, info->height, E_ImageFormatD32_Float, E_ImageUsageDepthStencilAttachment | E_ImageUsageSampled);
+	node->output_count = 2;
 
 	data->first_render = 1;
 	data->geometry_material = E_LoadResource("Assets/Materials/GeometryMaterial.toml", E_ResourceTypeMaterial);
@@ -86,7 +84,6 @@ void GeometryNodeClean(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info)
 	E_FreeMaterialInstance(data->skybox_instance);
 	E_FreeResource(data->skybox_material);
 
-	E_FreeImage(node->outputs[2]);
 	E_FreeImage(node->outputs[1]);
 	E_FreeImage(node->outputs[0]);
 	E_FreeResource(data->geometry_material);
@@ -102,14 +99,13 @@ void GeometryNodeExecute(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info
 
 	E_ImageAttachment attachments[3] = {
 		{ node->outputs[0], E_ImageLayoutColor, color_clear},
-		{ node->outputs[1], E_ImageLayoutColor, color_clear},
-		{ node->outputs[2], E_ImageLayoutDepth, depth_clear}
+		{ node->outputs[1], E_ImageLayoutDepth, depth_clear}
 	};
 
 	E_ImageLayout src_render_buffer_image_layout = data->first_render ? E_ImageLayoutUndefined : E_ImageLayoutShaderRead;
 	data->first_render = 0;
 
-	vec2 render_size = { info->width, info->height };
+	vec2 render_size = { (f32)info->width, (f32)info->height };
 
 	E_ImageTransitionLayout(node->outputs[0],
 		E_ImageAccessShaderRead, E_ImageAccessColorWrite,
@@ -117,34 +113,17 @@ void GeometryNodeExecute(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info
 		E_ImagePipelineStageFragmentShader, E_ImagePipelineStageColorOutput);
 
 	E_ImageTransitionLayout(node->outputs[1],
-		E_ImageAccessShaderRead, E_ImageAccessColorWrite,
-		src_render_buffer_image_layout, E_ImageLayoutColor,
-		E_ImagePipelineStageFragmentShader, E_ImagePipelineStageColorOutput);
-
-	E_ImageTransitionLayout(node->outputs[2],
 		0, E_ImageAccessDepthWrite,
 		E_ImageLayoutUndefined, E_ImageLayoutDepth,
 		E_ImagePipelineStageEarlyFragment | E_ImagePipelineStageLateFragment,
 		E_ImagePipelineStageEarlyFragment | E_ImagePipelineStageLateFragment);
 
-	E_RendererStartRender(attachments, 3, render_size, 1);
+	E_RendererStartRender(attachments, 2, render_size, 1);
 
 	// Calculate prev view matrix
 
 	mat4 projection;
 	glm_mat4_copy(info->projection, projection);
-
-	static u32 frame_counter = 0;
-
-	vec2 jitter;
-	jitter[0] = (Halton(frame_counter, 2) - 0.5f);
-	jitter[1] = (Halton(frame_counter, 3) - 0.5f);
-	glm_vec2_div(jitter, (vec2) { info->width, info->height }, jitter);
-
-	++frame_counter;
-
-	projection[2][0] = jitter[0];
-	projection[2][1] = jitter[1];
 
 	mat4 model_view;
 	glm_mat4_mul(projection, info->view, model_view);
@@ -152,8 +131,7 @@ void GeometryNodeExecute(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info
 	GeometryUniforms upload_uniforms;
 	glm_mat4_copy(info->projection, upload_uniforms.projection);
 	glm_mat4_copy(info->view, upload_uniforms.view);
-	glm_mat4_copy(data->uniforms.view, upload_uniforms.prev_view);
-	glm_vec3_copy(data->uniforms.camera_position, upload_uniforms.camera_position);
+	glm_vec3_copy(info->camera_position, upload_uniforms.camera_position);
 
 	// Draw skybox
 	// Calculate skybox model view projection matrix
@@ -199,7 +177,7 @@ void GeometryNodeExecute(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info
 	E_MaterialPushConstants(data->geometry_material->as.material, &upload_uniforms, sizeof(GeometryUniforms));
 	E_SetBufferData(data->light_buffer, info->point_lights, sizeof(info->point_lights));
 
-	for (i32 i = 0; i < info->drawable_count; i++)
+	for (u32 i = 0; i < info->drawable_count; i++)
 	{
 		E_Drawable drawable = info->drawables[i];
 
@@ -216,29 +194,20 @@ void GeometryNodeExecute(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info
 
 	E_RendererEndRender();
 
-	E_ImageTransitionLayout(node->outputs[1],
-		E_ImageAccessColorWrite, E_ImageAccessShaderRead,
-		E_ImageLayoutColor, E_ImageLayoutShaderRead,
-		E_ImagePipelineStageColorOutput, E_ImagePipelineStageFragmentShader);
-
 	E_ImageTransitionLayout(node->outputs[0],
 		E_ImageAccessColorWrite, E_ImageAccessShaderRead,
 		E_ImageLayoutColor, E_ImageLayoutShaderRead,
 		E_ImagePipelineStageColorOutput, E_ImagePipelineStageFragmentShader);
-
-	glm_mat4_copy(info->view, data->uniforms.view);
 }
 
 void GeometryNodeResize(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info)
 {
 	GeometryData* data = (GeometryData*)node->node_data;
 
-	E_FreeImage(node->outputs[2]);
 	E_FreeImage(node->outputs[1]);
 	E_FreeImage(node->outputs[0]);
 	node->outputs[0] = E_MakeImage(info->width, info->height, E_ImageFormatRGBA16, E_ImageUsageRenderGraphNodeOutput);
-	node->outputs[1] = E_MakeImage(info->width, info->height, E_ImageFormatRG16, E_ImageUsageRenderGraphNodeOutput);
-	node->outputs[2] = E_MakeImage(info->width, info->height, E_ImageFormatD32_Float, E_ImageUsageDepthStencilAttachment | E_ImageUsageSampled);
+	node->outputs[1] = E_MakeImage(info->width, info->height, E_ImageFormatD32_Float, E_ImageUsageDepthStencilAttachment | E_ImageUsageSampled);
 	data->first_render = 1;
 }
 
@@ -275,7 +244,7 @@ void GeometryNodeDrawGUI(E_RenderGraphNode* node)
 	b32 geometry_node = igTreeNodeEx_Str("Geometry Node", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_AllowItemOverlap | ImGuiTreeNodeFlags_FramePadding);
 	if (geometry_node)
 	{
-		igCheckbox("Enable Skybox", &data->skybox_enabled);
+		igCheckbox("Enable Skybox", (bool*)&data->skybox_enabled);
 		igTreePop();
 	}
 }

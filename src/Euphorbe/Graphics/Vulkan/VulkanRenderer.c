@@ -303,8 +303,12 @@ void E_Vk_MakeDevice()
             if (!strcmp(VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME, properties[i].extensionName)) {
                 rhi.device.extensions[rhi.device.extension_count++] = VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME;
             }
+
+            if (!strcmp(VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME, properties[i].extensionName)) {
+                rhi.device.extensions[rhi.device.extension_count++] = VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME;
+            }
         }
-        assert(rhi.device.extension_count == 2);
+        assert(rhi.device.extension_count == 3);
 
         free(properties);
     }
@@ -371,7 +375,7 @@ void E_Vk_MakeSwapchain()
     create_info.pQueueFamilyIndices = queue_family_indices;
     create_info.preTransform = capabilities.currentTransform;
     create_info.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-    create_info.presentMode = VK_PRESENT_MODE_FIFO_KHR;
+    create_info.presentMode = VK_PRESENT_MODE_MAILBOX_KHR;
     create_info.clipped = VK_TRUE;
     create_info.oldSwapchain = VK_NULL_HANDLE;
     if (formats)
