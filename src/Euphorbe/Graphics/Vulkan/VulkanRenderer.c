@@ -426,6 +426,9 @@ void E_Vk_MakeSync()
     result = vkCreateFence(rhi.device.handle, &fence_info, NULL, &rhi.command.upload_fence);
     assert(result == VK_SUCCESS);
 
+    result = vkCreateFence(rhi.device.handle, &fence_info, NULL, &rhi.command.compute_fence);
+    assert(result == VK_SUCCESS);
+
     fence_info.flags = VK_FENCE_CREATE_SIGNALED_BIT;
     for (i32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
         result = vkCreateFence(rhi.device.handle, &fence_info, NULL, &rhi.sync.fences[i]);
@@ -716,6 +719,7 @@ void E_Vk_RendererShutdown()
     vkDestroyCommandPool(rhi.device.handle, rhi.command.compute_command_pool, NULL);
     vkDestroyCommandPool(rhi.device.handle, rhi.command.graphics_command_pool, NULL);
     
+    vkDestroyFence(rhi.device.handle, rhi.command.compute_fence, NULL);
     vkDestroyFence(rhi.device.handle, rhi.command.upload_fence, NULL);
 
     for (u32 i = 0; i < FRAMES_IN_FLIGHT; i++)

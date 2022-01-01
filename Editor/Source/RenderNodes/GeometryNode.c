@@ -20,17 +20,22 @@ struct GeometryData
 	b32 skybox_enabled;
 
 	E_Buffer* light_buffer;
-	E_MaterialInstance* light_material_instance;
 
 	E_ResourceFile* geometry_material;
 	E_ResourceFile* equirectangular_cubemap_material;
 	E_ResourceFile* skybox_material;
+	E_ResourceFile* irradiance_material;
+
 	E_MaterialInstance* equirectangular_cubemap_instance;
+	E_MaterialInstance* irradiance_instance;
+	E_MaterialInstance* skybox_instance;
+	E_MaterialInstance* light_material_instance;
 
 	E_ResourceFile* skybox_mesh;
-	E_MaterialInstance* skybox_instance;
+
 	E_Image* hdr_skybox_texture;
 	E_Image* cubemap;
+	E_Image* irradiance;
 
 	GeometryUniforms uniforms;
 };
@@ -67,17 +72,22 @@ void GeometryNodeInit(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info)
 	data->skybox_material = E_LoadResource("Assets/Materials/SkyboxMaterial.toml", E_ResourceTypeMaterial);
 	data->skybox_mesh = E_LoadResource("Assets/Models/Cube.gltf", E_ResourceTypeMesh);
 	data->skybox_instance = E_CreateMaterialInstance(data->skybox_material->as.material, 0);
-	data->hdr_skybox_texture = E_MakeHDRImageFromFile("Assets/EnvMaps/SnowyHillside/4k.hdr");
+	data->hdr_skybox_texture = E_MakeHDRImageFromFile("Assets/EnvMaps/SnowyField/4k.hdr");
 	data->skybox_enabled = 1;
 
 	data->equirectangular_cubemap_material = E_LoadResource("Assets/Materials/EquirectangularCubemapMaterial.toml", E_ResourceTypeComputeMaterial);
+	data->irradiance_material = E_LoadResource("Assets/Materials/IrradianceMaterial.toml", E_ResourceTypeComputeMaterial);
 	data->equirectangular_cubemap_instance = E_CreateMaterialInstance(data->equirectangular_cubemap_material->as.material, 0);
-	data->cubemap = E_MakeCubeMap(1024, 1024, E_ImageFormatRGBA32, E_ImageUsageStorage | E_ImageUsageSampled);
+	data->irradiance_instance = E_CreateMaterialInstance(data->irradiance_material->as.material, 0);
+	data->cubemap = E_MakeCubeMap(512, 512, E_ImageFormatRGBA32, E_ImageUsageStorage | E_ImageUsageSampled);
+	data->irradiance = E_MakeCubeMap(32, 32, E_ImageFormatRGBA32, E_ImageUsageStorage | E_ImageUsageSampled);
 
 	// Begin compute shader
 
 	E_CommandBuffer* compute_cmd_buf = E_CreateCommandBuffer(E_CommandBufferTypeCompute);
 	E_BeginCommandBuffer(compute_cmd_buf);
+
+	// Equi to cubemap
 
 	E_CommandBufferImageTransitionLayout(compute_cmd_buf, data->hdr_skybox_texture, 0, 0, E_ImageLayoutUndefined, E_ImageLayoutGeneral, E_ImagePipelineStageTop, E_ImagePipelineStageBottom, 0);
 	E_CommandBufferImageTransitionLayout(compute_cmd_buf, data->cubemap, 0, 0, E_ImageLayoutUndefined, E_ImageLayoutGeneral, E_ImagePipelineStageTop, E_ImagePipelineStageBottom, 0);
@@ -92,7 +102,27 @@ void GeometryNodeInit(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info)
 	E_SubmitCommandBuffer(compute_cmd_buf);
 	E_FreeCommandBuffer(compute_cmd_buf);
 
+	// Irradiance
+
+	compute_cmd_buf = E_CreateCommandBuffer(E_CommandBufferTypeCompute);
+	E_BeginCommandBuffer(compute_cmd_buf);
+
+	E_CommandBufferImageTransitionLayout(compute_cmd_buf, data->irradiance, 0, 0, E_ImageLayoutUndefined, E_ImageLayoutGeneral, E_ImagePipelineStageTop, E_ImagePipelineStageBottom, 0);
+
+	E_MaterialInstanceWriteStorageImage(data->irradiance_instance, 0, data->cubemap);
+	E_MaterialInstanceWriteStorageImage(data->irradiance_instance, 1, data->irradiance);
+
+	E_CommandBufferBindComputeMaterial(compute_cmd_buf, data->irradiance_material->as.material);
+	E_CommandBufferBindComputeMaterialInstance(compute_cmd_buf, data->irradiance_instance, data->irradiance_material->as.material, 0);
+	E_CommandBufferDispatch(compute_cmd_buf, 1, 1, 6);
+
+	E_SubmitCommandBuffer(compute_cmd_buf);
+	E_FreeCommandBuffer(compute_cmd_buf);
+
+	//
+
 	E_FreeImage(data->hdr_skybox_texture);
+
 	//
 
 	E_MaterialInstanceWriteImage(data->skybox_instance, 0, data->cubemap);
@@ -101,6 +131,7 @@ void GeometryNodeInit(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info)
 	data->light_material_instance = E_CreateMaterialInstance(data->geometry_material->as.material, 1);
 	E_MaterialInstanceWriteBuffer(data->light_material_instance, 0, data->light_buffer, sizeof(info->point_lights));
 	E_MaterialInstanceWriteImage(data->light_material_instance, 1, data->cubemap);
+	E_MaterialInstanceWriteImage(data->light_material_instance, 2, data->irradiance);
 }
 
 void GeometryNodeClean(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info)
@@ -108,19 +139,22 @@ void GeometryNodeClean(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info)
 	GeometryData* data = (GeometryData*)node->node_data;
 
 	E_FreeBuffer(data->light_buffer);
-	E_FreeMaterialInstance(data->light_material_instance);
-
-	E_FreeResource(data->equirectangular_cubemap_material);
-	E_FreeMaterialInstance(data->equirectangular_cubemap_instance);
-
 	E_FreeResource(data->skybox_mesh);
-	E_FreeImage(data->cubemap);
+	
+	E_FreeMaterialInstance(data->light_material_instance);
+	E_FreeMaterialInstance(data->irradiance_instance);
+	E_FreeMaterialInstance(data->equirectangular_cubemap_instance);
 	E_FreeMaterialInstance(data->skybox_instance);
-	E_FreeResource(data->skybox_material);
 
+	E_FreeResource(data->irradiance_material);
+	E_FreeResource(data->equirectangular_cubemap_material);
+	E_FreeResource(data->skybox_material);
+	E_FreeResource(data->geometry_material);
+
+	E_FreeImage(data->irradiance);
+	E_FreeImage(data->cubemap);
 	E_FreeImage(node->outputs[1]);
 	E_FreeImage(node->outputs[0]);
-	E_FreeResource(data->geometry_material);
 	free(data);
 }
 
@@ -202,6 +236,7 @@ void GeometryNodeExecute(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info
 		if (data->skybox_should_layout)
 		{
 			E_CommandBufferImageTransitionLayout(cmd_buf, data->cubemap, 0, 0, E_ImageLayoutGeneral, E_ImageLayoutShaderRead, E_ImagePipelineStageTop, E_ImagePipelineStageFragmentShader, 0);
+			E_CommandBufferImageTransitionLayout(cmd_buf, data->irradiance, 0, 0, E_ImageLayoutGeneral, E_ImageLayoutShaderRead, E_ImagePipelineStageTop, E_ImagePipelineStageFragmentShader, 0);
 			data->skybox_should_layout = 0;
 		}
 

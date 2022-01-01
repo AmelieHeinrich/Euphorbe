@@ -33,6 +33,7 @@ layout (binding = 0, set = 1) uniform Lights {
 } light_settings;
 
 layout (binding = 1, set = 1) uniform samplerCube Skybox;
+layout (binding = 2, set = 1) uniform samplerCube irradianceMap;
 
 float DistributionGGX(vec3 N, vec3 H, float roughness)
 {
@@ -131,15 +132,12 @@ void main()
         Lo += (kD * albedo_color.xyz / PI + specular) * radiance * NdotL; 
     }   
 
-    vec3 ambient = vec3(0.03) * albedo_color.xyz;
+    vec3 kS = FresnelSchlick(max(dot(N, V), 0.0), F0);
+    vec3 kD = 1.0 - kS;
+    vec3 irradiance = texture(irradianceMap, N).rgb;
+    vec3 diffuse = irradiance * albedo_color.xyz;
+    vec3 ambient = (kD * diffuse);
     vec3 color = ambient + Lo;
 
-    vec3 I = normalize(OutPos - CameraPos);
-    vec3 R = reflect(I, normalize(OutNormals));
-    vec4 reflected_color = texture(Skybox, R);
-
-    if (settings.enable_reflection)
-        OutColor = mix(vec4(color, 1.0), reflected_color, 0.6);
-    else
-        OutColor = vec4(color, 1.0);
+    OutColor = vec4(color, 1.0);
 }

@@ -31,21 +31,27 @@ void E_Vk_FreeCommandBuffer(E_VulkanCommandBuffer* buffer)
 
 void E_Vk_SubmitCommandBuffer(E_VulkanCommandBuffer* buffer)
 {
-    VkQueue submit_queue = GET_CMD_BUF_QUEUE(buffer->type);
+    E_Vk_EndCommandBuffer(buffer);
 
-    VkResult result = vkEndCommandBuffer(buffer->handle);
-    assert(result == VK_SUCCESS);
+    VkQueue submit_queue = GET_CMD_BUF_QUEUE(buffer->type);
 
     VkSubmitInfo submit_info = { 0 };
     submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
     submit_info.commandBufferCount = 1;
     submit_info.pCommandBuffers = &buffer->handle;
 
-    vkQueueSubmit(submit_queue, 1, &submit_info, VK_NULL_HANDLE);
-    vkQueueWaitIdle(submit_queue);
-
     if (buffer->type == E_CommandBufferTypeCompute)
+    {
+        vkQueueSubmit(rhi.device.compute_queue, 1, &submit_info, rhi.command.compute_fence);
+        vkWaitForFences(rhi.device.handle, 1, &rhi.command.compute_fence, VK_TRUE, INFINITY);
+        vkResetFences(rhi.device.handle, 1, &rhi.command.compute_fence);
         vkResetCommandPool(rhi.device.handle, rhi.command.compute_command_pool, 0);
+    }
+    else
+    {
+        vkQueueSubmit(submit_queue, 1, &submit_info, VK_NULL_HANDLE);
+        vkQueueWaitIdle(submit_queue);
+    }
 }
 
 E_VulkanCommandBuffer* E_Vk_CreateUploadCommandBuffer()

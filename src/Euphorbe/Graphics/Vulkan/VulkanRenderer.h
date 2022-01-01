@@ -66,8 +66,10 @@ struct E_Vk_Data
     // Command data
     struct {
         VkCommandPool graphics_command_pool;
-        VkCommandPool compute_command_pool;
         E_CommandBuffer** swapchain_command_buffers;
+
+        VkCommandPool compute_command_pool;
+        VkFence compute_fence;
 
         VkCommandPool upload_command_pool;
         VkFence upload_fence;
