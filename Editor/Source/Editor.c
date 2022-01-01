@@ -86,12 +86,12 @@ void EditorInitialiseRenderState()
     editor_state.graph = E_CreateRenderGraph();
     editor_state.geometry_node = CreateGeometryNode();
     editor_state.fxaa_node = CreateFXAANode();
-    editor_state.hdr_node = CreateHDRNode();
+    editor_state.tonemapping_node = CreateTonemappingNode();
     editor_state.final_blit_node = CreateFinalBlitNode();
 
     E_RenderGraphConnectNodes(editor_state.geometry_node, GeometryNodeOutput_Color, editor_state.fxaa_node, FXAANodeInput_Color);
-    E_RenderGraphConnectNodes(editor_state.fxaa_node, FXAANodeOutput_ImageOut, editor_state.hdr_node, HDRNodeInput_Geometry);
-    E_RenderGraphConnectNodes(editor_state.hdr_node, HDRNodeOutput_Color, editor_state.final_blit_node, FinalBlitNodeInput_ImageIn);
+    E_RenderGraphConnectNodes(editor_state.fxaa_node, FXAANodeOutput_ImageOut, editor_state.tonemapping_node, TonemappingNodeInput_Geometry);
+    E_RenderGraphConnectNodes(editor_state.tonemapping_node, TonemappingNodeOutput_Color, editor_state.final_blit_node, FinalBlitNodeInput_ImageIn);
 
     E_BuildRenderGraph(editor_state.graph, &editor_state.execute_info, editor_state.final_blit_node);
 }
@@ -237,7 +237,7 @@ void EditorDrawGUI()
         igBegin("Render Graph Viewer", NULL, ImGuiWindowFlags_None);
         GeometryNodeDrawGUI(editor_state.geometry_node);
         FXAANodeDrawGUI(editor_state.fxaa_node);
-        HDRNodeDrawGUI(editor_state.hdr_node);
+        TonemappingNodeDrawGUI(editor_state.tonemapping_node);
         igEnd();
     }
     

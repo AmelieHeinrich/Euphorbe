@@ -1,10 +1,19 @@
-#include "HDRNode.h"
+#include "TonemappingNode.h"
 
 #include <Euphorbe/Graphics/Renderer.h>
 #include <Euphorbe/Graphics/CommandBuffer.h>
 
-typedef struct HDRNodeData HDRNodeData;
-struct HDRNodeData
+typedef struct TonemappingConstants TonemappingConstants;
+struct TonemappingConstants
+{
+	b32 gamma_correct;
+	i32 mode;
+
+	vec2 pad;
+};
+
+typedef struct TonemappingNodeData TonemappingNodeData;
+struct TonemappingNodeData
 {
 	E_ResourceFile* screen_shader;
 	E_MaterialInstance* material_instance;
@@ -13,22 +22,21 @@ struct HDRNodeData
 	b32 first_render;
 
 	// params
-	f32 exposure;
-	b32 enabled;
+	TonemappingConstants constants;
 };
 
-void HDRNodeInit(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info)
+void TonemappingNodeInit(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info)
 {
-	HDRNodeData* data = (HDRNodeData*)node->node_data;
+	TonemappingNodeData* data = (TonemappingNodeData*)node->node_data;
 
-	data->enabled = 1;
-	data->exposure = 1.0f;
+	data->constants.gamma_correct = 1;
+	data->constants.mode = 4; // Rom Bin Da House
 	
 	// Shaders
 	E_Image* color_buffer = E_GetRenderGraphNodeInputImage(&node->inputs[0]);
 	assert(color_buffer && color_buffer->rhi_handle);
 
-	data->screen_shader = E_LoadResource("Assets/Materials/HDRMaterial.toml", E_ResourceTypeMaterial);
+	data->screen_shader = E_LoadResource("Assets/Materials/TonemappingMaterial.toml", E_ResourceTypeMaterial);
 	data->material_instance = E_CreateMaterialInstance(data->screen_shader->as.material, 0);
 	E_MaterialInstanceWriteImage(data->material_instance, 0, color_buffer);
 
@@ -49,9 +57,9 @@ void HDRNodeInit(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info)
 	data->first_render = 1;
 }
 
-void HDRNodeClean(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info)
+void TonemappingNodeClean(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info)
 {
-	HDRNodeData* data = (HDRNodeData*)node->node_data;
+	TonemappingNodeData* data = (TonemappingNodeData*)node->node_data;
 
 	E_FreeImage(node->outputs[0]);
 	E_FreeBuffer(data->quad_vertex_buffer);
@@ -61,15 +69,11 @@ void HDRNodeClean(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info)
 	free(data);
 }
 
-void HDRNodeExecute(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info)
+void TonemappingNodeExecute(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info)
 {
-	HDRNodeData* data = (HDRNodeData*)node->node_data;
+	TonemappingNodeData* data = (TonemappingNodeData*)node->node_data;
 
 	E_CommandBuffer* cmd_buf = E_GetSwapchainCommandBuffer();
-
-	vec4 uniform;
-	uniform[0] = (f32)data->enabled;
-	uniform[1] = (f32)data->exposure;
 
 	E_ImageLayout src_layout = data->first_render ? E_ImageLayoutUndefined : E_ImageLayoutTransferSource;
 	data->first_render = 0;
@@ -92,7 +96,7 @@ void HDRNodeExecute(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info)
 
 	E_CommandBufferBindMaterial(cmd_buf, data->screen_shader->as.material);
 	E_CommandBufferBindMaterialInstance(cmd_buf, data->material_instance, data->screen_shader->as.material, 0);
-	E_CommandBufferPushConstants(cmd_buf, data->screen_shader->as.material, &uniform, sizeof(vec4));
+	E_CommandBufferPushConstants(cmd_buf, data->screen_shader->as.material, &data->constants, sizeof(TonemappingConstants));
 	E_CommandBufferBindBuffer(cmd_buf, data->quad_vertex_buffer);
 	E_CommandBufferDraw(cmd_buf, 0, 4);
 
@@ -104,9 +108,9 @@ void HDRNodeExecute(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info)
 		E_ImagePipelineStageColorOutput, E_ImagePipelineStageFragmentShader);
 }
 
-void HDRNodeResize(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info)
+void TonemappingNodeResize(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info)
 {
-	HDRNodeData* data = (HDRNodeData*)node->node_data;
+	TonemappingNodeData* data = (TonemappingNodeData*)node->node_data;
 
 	E_FreeImage(node->outputs[0]);
 	node->outputs[0] = E_MakeImage(info->width, info->height, E_ImageFormatRGBA16, E_ImageUsageRenderGraphNodeOutput);
@@ -118,17 +122,17 @@ void HDRNodeResize(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info)
 	E_MaterialInstanceWriteImage(data->material_instance, 0, color_buffer);
 }
 
-E_RenderGraphNode* CreateHDRNode()
+E_RenderGraphNode* CreateTonemappingNode()
 {
 	E_RenderGraphNode* node = malloc(sizeof(E_RenderGraphNode));
 
 	node->enabled = 1;
-	node->init_func = HDRNodeInit;
-	node->clean_func = HDRNodeClean;
-	node->execute_func = HDRNodeExecute;
-	node->resize_func = HDRNodeResize;
-	node->node_data = malloc(sizeof(HDRNodeData));
-	node->name = "HDRNode";
+	node->init_func = TonemappingNodeInit;
+	node->clean_func = TonemappingNodeClean;
+	node->execute_func = TonemappingNodeExecute;
+	node->resize_func = TonemappingNodeResize;
+	node->node_data = malloc(sizeof(TonemappingNodeData));
+	node->name = "Tonemapping";
 
 	node->input_count = 0;
 	memset(node->inputs, 0, sizeof(node->inputs));
@@ -136,15 +140,17 @@ E_RenderGraphNode* CreateHDRNode()
 	return node;
 }
 
-void HDRNodeDrawGUI(E_RenderGraphNode* node)
+void TonemappingNodeDrawGUI(E_RenderGraphNode* node)
 {
-	HDRNodeData* data = (HDRNodeData*)node->node_data;
+	TonemappingNodeData* data = (TonemappingNodeData*)node->node_data;
 
-	b32 hdr_enabled = igTreeNodeEx_Str("HDR Node", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_AllowItemOverlap | ImGuiTreeNodeFlags_FramePadding);
-	if (hdr_enabled)
+	static const char* modes[] = { "ACES", "Reinhard", "Luma Reinhard", "White Preserving Luma Reinhard", "Rom Bin Da House", "Filmic", "Uncharted 2", "None" };
+
+	b32 tone_enabled = igTreeNodeEx_Str("Tonemapping Node", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_AllowItemOverlap | ImGuiTreeNodeFlags_FramePadding);
+	if (tone_enabled)
 	{
-		igDragFloat("Exposure", &data->exposure, 0.1f, 0.0f, 0.0f, "%.1f", ImGuiSliderFlags_None);
-		igCheckbox("Enable HDR", (bool*)&data->enabled);
+		igCheckbox("Enable Gamma Correction", (bool*)&data->constants.gamma_correct);
+		igCombo_Str_arr("Tonemapping Algorithms", &data->constants.mode, modes, 8, 0);
 		igTreePop();
 	}
 }

@@ -10,7 +10,7 @@
 
 #include "RenderNodes/GeometryNode.h"
 #include "RenderNodes/FXAANode.h"
-#include "RenderNodes/HDRNode.h"
+#include "RenderNodes/TonemappingNode.h"
 #include "RenderNodes/FinalBlitNode.h"
 
 typedef struct EditorPerformance EditorPerformance;
@@ -36,7 +36,7 @@ struct EditorData
 	
 	E_RenderGraphNode* geometry_node;
 	E_RenderGraphNode* fxaa_node;
-	E_RenderGraphNode* hdr_node;
+	E_RenderGraphNode* tonemapping_node;
 	E_RenderGraphNode* final_blit_node;
 
 	// Textured mesh
