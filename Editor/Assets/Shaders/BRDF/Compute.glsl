@@ -19,8 +19,8 @@ void main()
 
 	vec2 size = vec2(imageSize(brdfIntMap).xy);
 	
-	float NdotV = (float(invoke.x) + 0.5) / size.x;
-	float roughness = (float(invoke.y) + 0.5) / size.y;
+	float NdotV = float(invoke.x) * (1.0 / size.x);
+	float roughness = float(invoke.y) * (1.0 / size.y);
 	
 	vec3 V;
 	V.x = sqrt(1.0 - NdotV * NdotV);
@@ -40,10 +40,11 @@ void main()
 		
 		float NdotL = max(L.z, 0.0);
 		float NdotH = max(H.z, 0.0);
-		float VdotH = max(dot(V, H), 0.0);
+		float VdotH = dot(V, H);
 		
 		if (NdotL > 0.0)
 		{
+			VdotH = max(dot(V, H), 0.0);
 			float G = SSBGeometry(N, V, L, roughness);
 			float G_Vis = (G * VdotH) / max(NdotH * NdotV, 1e-4);
 			float Fc = pow(1.0 - VdotH, 5.0);

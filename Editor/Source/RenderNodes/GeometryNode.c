@@ -96,10 +96,6 @@ void GeometryNodeInit(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info)
 	data->prefilter = E_MakeCubeMap(512, 512, E_ImageFormatRGBA32, E_ImageUsageStorage | E_ImageUsageSampled);
 	data->brdf = E_MakeImage(512, 512, E_ImageFormatRG16, E_ImageUsageStorage | E_ImageUsageSampled);
 
-	//2.5
-	//-0.5
-	//3.7
-
 	// Begin compute shader
 
 	E_CommandBuffer* compute_cmd_buf = E_CreateCommandBuffer(E_CommandBufferTypeCompute);
@@ -125,9 +121,10 @@ void GeometryNodeInit(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info)
 	compute_cmd_buf = E_CreateCommandBuffer(E_CommandBufferTypeCompute);
 	E_BeginCommandBuffer(compute_cmd_buf);
 
+	E_CommandBufferImageTransitionLayout(compute_cmd_buf, data->cubemap, 0, 0, E_ImageLayoutGeneral, E_ImageLayoutShaderRead, E_ImagePipelineStageTop, E_ImagePipelineStageComputeShader, 0);
 	E_CommandBufferImageTransitionLayout(compute_cmd_buf, data->irradiance, 0, 0, E_ImageLayoutUndefined, E_ImageLayoutGeneral, E_ImagePipelineStageTop, E_ImagePipelineStageBottom, 0);
 
-	E_MaterialInstanceWriteStorageImage(data->irradiance_instance, 0, data->cubemap);
+	E_MaterialInstanceWriteImage(data->irradiance_instance, 0, data->cubemap);
 	E_MaterialInstanceWriteStorageImage(data->irradiance_instance, 1, data->irradiance);
 
 	E_CommandBufferBindComputeMaterial(compute_cmd_buf, data->irradiance_material->as.material);
@@ -142,7 +139,6 @@ void GeometryNodeInit(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info)
 	compute_cmd_buf = E_CreateCommandBuffer(E_CommandBufferTypeCompute);
 	E_BeginCommandBuffer(compute_cmd_buf);
 
-	E_CommandBufferImageTransitionLayout(compute_cmd_buf, data->cubemap, 0, 0, E_ImageLayoutGeneral, E_ImageLayoutShaderRead, E_ImagePipelineStageTop, E_ImagePipelineStageComputeShader, 0);
 	E_CommandBufferImageTransitionLayout(compute_cmd_buf, data->prefilter, 0, 0, E_ImageLayoutUndefined, E_ImageLayoutGeneral, E_ImagePipelineStageTop, E_ImagePipelineStageBottom, 0);
 
 	E_MaterialInstanceWriteImage(data->prefilter_instance, 0, data->cubemap);

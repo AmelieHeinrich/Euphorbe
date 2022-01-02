@@ -27,7 +27,7 @@ void main()
 
     OutPos = Position;
     OutUV = UV;
-    OutNormals = mat3(model_data.model) * Normals;
+    OutNormals = transpose(inverse(mat3(model_data.model))) * Normals;
     WorldPos = model_data.model * vec4(Position, 1.0);
     CameraPos = scene.camera_pos;
 }

@@ -2,7 +2,7 @@
 	Compute = "Assets/Shaders/Irradiance/Compute.glsl"
 
 [DescriptorLayout]
-	DescriptorSetLayouts = [[["StorageImage", "StorageImage"], 2]]
+	DescriptorSetLayouts = [[["CombinedImageSampler", "StorageImage"], 2]]
 	DescriptorSetLayoutCount = 1
 
 [PushConstants]
