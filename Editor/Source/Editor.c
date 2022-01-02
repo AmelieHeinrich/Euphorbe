@@ -141,7 +141,10 @@ void EditorInitialiseTexturedMesh()
 
     // Initialise directional light
     glm_vec4_fill(editor_state.execute_info.point_lights[0].color, 100.0f);
-    glm_vec4_fill(editor_state.execute_info.point_lights[0].position, 3.0f);
+    
+    editor_state.execute_info.point_lights[0].position[0] = 2.5f;
+    editor_state.execute_info.point_lights[0].position[1] = -0.5f;
+    editor_state.execute_info.point_lights[0].position[2] = 3.7f;
 }
 
 void EditorLaunch()

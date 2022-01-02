@@ -56,7 +56,7 @@ void main()
 	A /= float(SAMPLE_COUNT);
 	B /= float(SAMPLE_COUNT);
 	
-	imageStore(brdfIntMap, ivec2(invoke.x, -invoke.y), vec4(A, B, 0.0, 1.0));
+	imageStore(brdfIntMap, invoke, vec4(A, B, 0.0, 1.0));
 }
 
 // Schlick-Beckmann geometry function.

@@ -123,7 +123,7 @@ void main()
     if (settings.has_normal)
         N = GetNormalFromMap();
     if (settings.has_ao)
-        ao = texture(AOTexture, OutUV).r;
+        ao = texture(AOTexture, vec2(OutUV.x, 1 - OutUV.y)).r;
 
     // Calculate color
     vec3 V = normalize(CameraPos - WorldPos.xyz);
@@ -158,7 +158,7 @@ void main()
         Lo += (kD * albedo_color / PI + specular) * radiance * NdotL; 
     }   
 
-    vec3 F = FresnelSchlickRoughness(max(dot(N, V), 0.0), F0, roughness);
+    vec3 F = FresnelSchlickRoughness(max(dot(N, V), 0.0), F0, 1.0 - roughness);
 
     vec3 kS = F;
     vec3 kD = 1.0 - kS;
@@ -168,10 +168,9 @@ void main()
     vec3 diffuse = irradiance * albedo_color;
 
     const float MAX_REFLECTION_LOD = 4.0;
-    vec3 prefilteredColor = textureLod(prefilterMap, R, roughness * MAX_REFLECTION_LOD).rgb;    
-    vec2 brdf = texture(brdfLut, vec2(max(dot(N, V), 0.0), roughness)).rg;
+    vec3 prefilteredColor = textureLod(prefilterMap, R,  roughness * MAX_REFLECTION_LOD).rgb;    
+    vec2 brdf  = texture(brdfLut, vec2(max(dot(N, V), 0.0), roughness)).rg;
     vec3 specular = prefilteredColor * (F * brdf.x + brdf.y);
-
     vec3 ambient = (kD * diffuse + specular) * ao;
     vec3 color = ambient + Lo;
 

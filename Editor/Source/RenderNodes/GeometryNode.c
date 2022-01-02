@@ -90,11 +90,15 @@ void GeometryNodeInit(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info)
 	data->prefilter_instance = E_CreateMaterialInstance(data->prefilter_material->as.material, 0);
 	data->brdf_instance = E_CreateMaterialInstance(data->brdf_material->as.material, 0);
 
-	data->hdr_skybox_texture = E_MakeHDRImageFromFile("Assets/EnvMaps/SnowyField/1k.hdr");
+	data->hdr_skybox_texture = E_MakeHDRImageFromFile("Assets/EnvMaps/Fireplace/4k.hdr");
 	data->cubemap = E_MakeCubeMap(512, 512, E_ImageFormatRGBA32, E_ImageUsageStorage | E_ImageUsageSampled);
-	data->irradiance = E_MakeCubeMap(32, 32, E_ImageFormatRGBA32, E_ImageUsageStorage | E_ImageUsageSampled);
+	data->irradiance = E_MakeCubeMap(128, 128, E_ImageFormatRGBA32, E_ImageUsageStorage | E_ImageUsageSampled);
 	data->prefilter = E_MakeCubeMap(512, 512, E_ImageFormatRGBA32, E_ImageUsageStorage | E_ImageUsageSampled);
 	data->brdf = E_MakeImage(512, 512, E_ImageFormatRG16, E_ImageUsageStorage | E_ImageUsageSampled);
+
+	//2.5
+	//-0.5
+	//3.7
 
 	// Begin compute shader
 
@@ -128,7 +132,7 @@ void GeometryNodeInit(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info)
 
 	E_CommandBufferBindComputeMaterial(compute_cmd_buf, data->irradiance_material->as.material);
 	E_CommandBufferBindComputeMaterialInstance(compute_cmd_buf, data->irradiance_instance, data->irradiance_material->as.material, 0);
-	E_CommandBufferDispatch(compute_cmd_buf, 32 / 32, 32 / 32, 6);
+	E_CommandBufferDispatch(compute_cmd_buf, 128 / 32, 128 / 32, 6);
 
 	E_SubmitCommandBuffer(compute_cmd_buf);
 	E_FreeCommandBuffer(compute_cmd_buf);
