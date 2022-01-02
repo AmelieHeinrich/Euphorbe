@@ -2,6 +2,7 @@
 
 #include <Euphorbe/Graphics/Renderer.h>
 #include <Euphorbe/Graphics/CommandBuffer.h>
+#include <Euphorbe/Resource/Resource.h>
 
 typedef struct TonemappingConstants TonemappingConstants;
 struct TonemappingConstants
@@ -83,7 +84,7 @@ void TonemappingNodeExecute(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* i
 	E_CommandBufferImageTransitionLayout(cmd_buf, node->outputs[0],
 		E_ImageAccessShaderRead, E_ImageAccessColorWrite,
 		src_layout, E_ImageLayoutColor,
-		E_ImagePipelineStageFragmentShader, E_ImagePipelineStageColorOutput);
+		E_ImagePipelineStageFragmentShader, E_ImagePipelineStageColorOutput, 0);
 
 	E_ClearValue color_clear = { 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0 };
 
@@ -105,7 +106,7 @@ void TonemappingNodeExecute(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* i
 	E_CommandBufferImageTransitionLayout(cmd_buf, node->outputs[0],
 		E_ImageAccessColorWrite, E_ImageAccessShaderRead,
 		E_ImageLayoutColor, E_ImageLayoutTransferSource,
-		E_ImagePipelineStageColorOutput, E_ImagePipelineStageFragmentShader);
+		E_ImagePipelineStageColorOutput, E_ImagePipelineStageFragmentShader, 0);
 }
 
 void TonemappingNodeResize(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info)
@@ -132,7 +133,7 @@ E_RenderGraphNode* CreateTonemappingNode()
 	node->execute_func = TonemappingNodeExecute;
 	node->resize_func = TonemappingNodeResize;
 	node->node_data = malloc(sizeof(TonemappingNodeData));
-	node->name = "Tonemapping";
+	node->name = "TonemappingNode";
 
 	node->input_count = 0;
 	memset(node->inputs, 0, sizeof(node->inputs));

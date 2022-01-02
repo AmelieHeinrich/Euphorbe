@@ -21,18 +21,40 @@ struct PointLight
 layout (binding = 1, set = 0) uniform MaterialSettings {
     bool has_albedo;
     bool has_metallic_roughness;
-    bool enable_blending;
-    bool enable_reflection;
+    bool has_normal;
+    bool has_ao;
 } settings;
 
 layout (binding = 2, set = 0) uniform sampler2D AlbedoTexture;
 layout (binding = 3, set = 0) uniform sampler2D MetallicRoughnessTexture;
+layout (binding = 4, set = 0) uniform sampler2D NormalTexture;
+layout (binding = 5, set = 0) uniform sampler2D AOTexture;
 
 layout (binding = 0, set = 1) uniform Lights {
     PointLight lights[MAX_LIGHT_COUNT];
 } light_settings;
 
-layout (binding = 1, set = 1) uniform sampler2D Skybox;
+layout (binding = 1, set = 1) uniform samplerCube Skybox;
+layout (binding = 2, set = 1) uniform samplerCube irradianceMap;
+layout (binding = 3, set = 1) uniform samplerCube prefilterMap;
+layout (binding = 4, set = 1) uniform sampler2D brdfLut;
+
+vec3 GetNormalFromMap()
+{
+    vec3 tangentNormal = texture(NormalTexture, OutUV).xyz * 2.0 - 1.0;
+
+    vec3 Q1  = dFdx(WorldPos.xyz);
+    vec3 Q2  = dFdy(WorldPos.xyz);
+    vec2 st1 = dFdx(OutUV);
+    vec2 st2 = dFdy(OutUV);
+
+    vec3 N   = normalize(OutNormals);
+    vec3 T  = normalize(Q1*st2.t - Q2*st1.t);
+    vec3 B  = -normalize(cross(N, T));
+    mat3 TBN = mat3(T, B, N);
+
+    return normalize(TBN * tangentNormal);
+}
 
 float DistributionGGX(vec3 N, vec3 H, float roughness)
 {
@@ -45,7 +67,7 @@ float DistributionGGX(vec3 N, vec3 H, float roughness)
     float denom = (NdotH2 * (a2 - 1.0) + 1.0);
     denom = PI * denom * denom;
 
-    return nom / denom;
+    return nom / max(denom, 0.0000001); // prevent divide by zero for roughness=0.0 and NdotH=1.0
 }
 
 float GeometrySchlickGGX(float NdotV, float roughness)
@@ -74,37 +96,41 @@ vec3 FresnelSchlick(float cosTheta, vec3 F0)
     return F0 + (1.0 - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
 }
 
+vec3 FresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness)
+{
+    return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
+}   
+
 void main()
 {
-    vec4 albedo_color;
+    vec3 albedo_color;
 
     if (settings.has_albedo)
-        albedo_color = texture(AlbedoTexture, OutUV);
+        albedo_color = pow(texture(AlbedoTexture, OutUV).rgb, vec3(2.2));
     else
-        albedo_color = vec4(1.0f);
-
-    if (settings.enable_blending)
-    {
-        if (albedo_color.a < 0.25)
-            discard;
-    }
+        albedo_color = vec3(0.0f);
 
     float metallic = 1.0f;
     float roughness = 1.0f;
+    float ao = 1.0f;
+    vec3 N = normalize(OutNormals);
 
     if (settings.has_metallic_roughness)
     {
-        metallic = texture(MetallicRoughnessTexture, OutUV).g;
-        roughness = texture(MetallicRoughnessTexture, OutUV).r;
+        metallic = texture(MetallicRoughnessTexture, OutUV).r;
+        roughness = texture(MetallicRoughnessTexture, OutUV).g;
     }
+    if (settings.has_normal)
+        N = GetNormalFromMap();
+    if (settings.has_ao)
+        ao = texture(AOTexture, OutUV).r;
 
     // Calculate color
-    vec3 N = normalize(OutNormals);
     vec3 V = normalize(CameraPos - WorldPos.xyz);
-    vec3 reflected_vector = reflect(V, N);
+    vec3 R = reflect(-V, N); 
 
     vec3 F0 = vec3(0.04); 
-    F0 = mix(F0, albedo_color.rgb, metallic);
+    F0 = mix(F0, albedo_color, metallic);
 
     vec3 Lo = vec3(0.0);
     for(int i = 0; i < MAX_LIGHT_COUNT; i++) 
@@ -119,8 +145,8 @@ void main()
         float G   = GeometrySmith(N, V, L, roughness);      
         vec3 F    = FresnelSchlick(max(dot(H, V), 0.0), F0);
            
-        vec3 numerator    = NDF * G * F; 
-        float denominator = 4 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001;
+        vec3 numerator    = NDF * G * F;
+        float denominator = 4 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001; 
         vec3 specular = numerator / denominator;
 
         vec3 kS = F;
@@ -129,16 +155,25 @@ void main()
 
         float NdotL = max(dot(N, L), 0.0);        
 
-        Lo += (kD * albedo_color.xyz / PI + specular) * radiance * NdotL; 
+        Lo += (kD * albedo_color / PI + specular) * radiance * NdotL; 
     }   
 
-    vec3 ambient = vec3(0.03) * albedo_color.xyz;
+    vec3 F = FresnelSchlickRoughness(max(dot(N, V), 0.0), F0, roughness);
+
+    vec3 kS = F;
+    vec3 kD = 1.0 - kS;
+    kD *= 1.0 - metallic;
+
+    vec3 irradiance = texture(irradianceMap, N).rgb;
+    vec3 diffuse = irradiance * albedo_color;
+
+    const float MAX_REFLECTION_LOD = 4.0;
+    vec3 prefilteredColor = textureLod(prefilterMap, R, roughness * MAX_REFLECTION_LOD).rgb;    
+    vec2 brdf = texture(brdfLut, vec2(max(dot(N, V), 0.0), roughness)).rg;
+    vec3 specular = prefilteredColor * (F * brdf.x + brdf.y);
+
+    vec3 ambient = (kD * diffuse + specular) * ao;
     vec3 color = ambient + Lo;
 
-    vec4 reflected_color = texture(Skybox, reflected_vector.xy);
-
-    if (settings.enable_reflection)
-        OutColor = mix(vec4(color, 1.0), reflected_color, 0.6);
-    else
-        OutColor = vec4(color, 1.0);
+    OutColor = vec4(color, 1.0);
 }

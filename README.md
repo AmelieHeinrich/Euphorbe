@@ -35,8 +35,8 @@ cmake -G "Visual Studio 17 2022" -B build
 
 # Screenshots
 
-## Screenshot from Jan 1 2022
-![Jan 1 2022](.github/1jan2022.PNG)
+## Screenshot from Jan 2 2022
+![Jan 2 2022](.github/2jan2022.PNG)
 
 
 ## FXAA Demo
@@ -60,6 +60,7 @@ cmake -G "Visual Studio 17 2022" -B build
 - GUI system with cimgui
 - Timer
 - FXAA anti-aliasing
+- PBR pipeline with IBL
 
 ## Additional information
 

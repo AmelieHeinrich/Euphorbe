@@ -386,6 +386,72 @@ void E_Vk_FreeMaterial(E_VulkanMaterial* material)
     free(material);
 }
 
+E_VulkanMaterial* E_Vk_CreateComputeMaterial(E_MaterialCreateInfo* create_info)
+{
+    E_VulkanMaterial* result = malloc(sizeof(E_VulkanMaterial));
+
+    // Make descriptor set layout
+    memset(result->set_layouts, 0, sizeof(result->set_layouts));
+    result->set_layout_count = create_info->descriptor_set_layout_count;
+    for (i32 i = 0; i < create_info->descriptor_set_layout_count; i++)
+    {
+        E_DescriptorSetLayout layout = create_info->descriptor_set_layouts[i];
+        VkDescriptorSetLayoutBinding bindings[EUPHORBE_MAX_DESCRIPTORS] = { 0 };
+
+        for (i32 j = 0; j < layout.descriptor_count; j++)
+        {
+            bindings[j].binding = layout.descriptors[j].binding;
+            bindings[j].descriptorCount = 1;
+            bindings[j].descriptorType = (VkDescriptorType)layout.descriptors[j].type;
+            bindings[j].pImmutableSamplers = NULL;
+            bindings[j].stageFlags = VK_SHADER_STAGE_ALL;
+        }
+
+        VkDescriptorSetLayoutCreateInfo layout_info = { 0 };
+        layout_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+        layout_info.bindingCount = layout.descriptor_count;
+        layout_info.pBindings = bindings;
+
+        VkResult res = vkCreateDescriptorSetLayout(rhi.device.handle, &layout_info, NULL, &result->set_layouts[i]);
+        assert(res == VK_SUCCESS);
+    }
+
+    VkPushConstantRange push_constant = { 0 };
+    push_constant.offset = 0;
+    push_constant.size = create_info->push_constants_size;
+    push_constant.stageFlags = VK_SHADER_STAGE_ALL;
+
+    VkPipelineLayoutCreateInfo pipeline_layout_info = { 0 };
+    pipeline_layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+    pipeline_layout_info.setLayoutCount = create_info->descriptor_set_layout_count;
+    pipeline_layout_info.pSetLayouts = result->set_layouts;
+    if (create_info->has_push_constants)
+    {
+        pipeline_layout_info.pushConstantRangeCount = 1;
+        pipeline_layout_info.pPushConstantRanges = &push_constant;
+    }
+
+    VkResult res = vkCreatePipelineLayout(rhi.device.handle, &pipeline_layout_info, NULL, &result->pipeline_layout);
+    assert(res == VK_SUCCESS);
+
+    VkShaderModule compute_shader_module;
+    E_Vk_MakeShaderModule(&compute_shader_module, create_info->compute_shader->as.shader->code, create_info->compute_shader->as.shader->code_size);
+
+    VkComputePipelineCreateInfo info = { VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO };
+    info.stage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    info.stage.stage = VK_SHADER_STAGE_COMPUTE_BIT;
+    info.stage.module = compute_shader_module;
+    info.stage.pName = "main";
+    info.layout = result->pipeline_layout;
+
+    res = vkCreateComputePipelines(rhi.device.handle, NULL, 1, &info, NULL, &result->pipeline);
+    assert(res == VK_SUCCESS);
+
+    vkDestroyShaderModule(rhi.device.handle, compute_shader_module, NULL);
+
+    return result;
+}
+
 E_VulkanMaterialInstance* E_Vk_CreateMaterialInstance(E_VulkanMaterial* material, i32 set_layout_index)
 {
     E_VulkanMaterialInstance* material_instance = malloc(sizeof(E_VulkanMaterialInstance));
@@ -432,6 +498,25 @@ void E_Vk_MaterialInstanceWriteImage(E_VulkanMaterialInstance* instance, i32 bin
     write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     write.descriptorCount = 1;
     write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    write.dstBinding = binding;
+    write.dstArrayElement = 0;
+    write.dstSet = instance->set;
+    write.pImageInfo = &image_info;
+
+    vkUpdateDescriptorSets(rhi.device.handle, 1, &write, 0, NULL);
+}
+
+void E_Vk_MaterialInstanceWriteStorageImage(E_VulkanMaterialInstance* instance, i32 binding, E_VulkanImage* image)
+{
+    VkDescriptorImageInfo image_info = { 0 };
+    image_info.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+    image_info.sampler = image->sampler;
+    image_info.imageView = image->image_view;
+
+    VkWriteDescriptorSet write = { 0 };
+    write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    write.descriptorCount = 1;
+    write.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
     write.dstBinding = binding;
     write.dstArrayElement = 0;
     write.dstSet = instance->set;

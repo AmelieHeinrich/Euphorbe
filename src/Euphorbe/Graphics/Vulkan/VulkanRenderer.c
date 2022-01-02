@@ -356,7 +356,7 @@ void E_Vk_MakeSwapchain()
     create_info.pQueueFamilyIndices = queue_family_indices;
     create_info.preTransform = capabilities.currentTransform;
     create_info.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-    create_info.presentMode = VK_PRESENT_MODE_MAILBOX_KHR;
+    create_info.presentMode = VK_PRESENT_MODE_FIFO_KHR;
     create_info.clipped = VK_TRUE;
     create_info.oldSwapchain = VK_NULL_HANDLE;
     if (formats)
@@ -424,6 +424,9 @@ void E_Vk_MakeSync()
     fence_info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
 
     result = vkCreateFence(rhi.device.handle, &fence_info, NULL, &rhi.command.upload_fence);
+    assert(result == VK_SUCCESS);
+
+    result = vkCreateFence(rhi.device.handle, &fence_info, NULL, &rhi.command.compute_fence);
     assert(result == VK_SUCCESS);
 
     fence_info.flags = VK_FENCE_CREATE_SIGNALED_BIT;
@@ -564,23 +567,23 @@ void E_Vk_InitImGui()
 
     VkDescriptorPoolSize pool_sizes[11] =
     {
-        { VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
-        { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },
-        { VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000 },
-        { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000 },
-        { VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000 },
-        { VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000 },
-        { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000 },
-        { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000 },
-        { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000 },
-        { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000 },
-        { VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000 }
+        { VK_DESCRIPTOR_TYPE_SAMPLER, 10000 },
+        { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 10000 },
+        { VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 10000 },
+        { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 10000 },
+        { VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 10000 },
+        { VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 10000 },
+        { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 10000 },
+        { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 10000 },
+        { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 10000 },
+        { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 10000 },
+        { VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 10000 }
     };
 
     VkDescriptorPoolCreateInfo pool_info = {0};
     pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
     pool_info.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
-    pool_info.maxSets = 1000;
+    pool_info.maxSets = 10000;
     pool_info.poolSizeCount = 11;
     pool_info.pPoolSizes = pool_sizes;
 
@@ -716,6 +719,7 @@ void E_Vk_RendererShutdown()
     vkDestroyCommandPool(rhi.device.handle, rhi.command.compute_command_pool, NULL);
     vkDestroyCommandPool(rhi.device.handle, rhi.command.graphics_command_pool, NULL);
     
+    vkDestroyFence(rhi.device.handle, rhi.command.compute_fence, NULL);
     vkDestroyFence(rhi.device.handle, rhi.command.upload_fence, NULL);
 
     for (u32 i = 0; i < FRAMES_IN_FLIGHT; i++)
@@ -794,6 +798,16 @@ void E_Vk_End()
 void E_Vk_DeviceWait()
 {
     vkDeviceWaitIdle(rhi.device.handle);
+}
+
+void E_Vk_DrawMemoryUsageGUI()
+{
+    VmaStats stats;
+    vmaCalculateStats(rhi.allocator, &stats);
+
+    igText("Used: %d mb", stats.total.usedBytes / 1024 / 1024);
+    igText("Unused: %d mb", stats.total.unusedBytes / 1024 / 1024);
+    igText("Allocation Count: %d", stats.total.allocationCount);
 }
 
 void E_Vk_BeginGUI()

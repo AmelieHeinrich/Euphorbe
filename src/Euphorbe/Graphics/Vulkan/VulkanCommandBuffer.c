@@ -4,6 +4,7 @@
 
 #define GET_CMD_BUF_POOL(type) type == E_CommandBufferTypeGraphics ? rhi.command.graphics_command_pool : rhi.command.compute_command_pool
 #define GET_CMD_BUF_POOL_PTR(type) type == E_CommandBufferTypeGraphics ? &rhi.command.graphics_command_pool : &rhi.command.compute_command_pool
+#define GET_CMD_BUF_QUEUE(type) type == E_CommandBufferTypeGraphics ? rhi.device.graphics_queue : rhi.device.compute_queue
 
 E_VulkanCommandBuffer* E_Vk_CreateCommandBuffer(E_CommandBufferType type)
 {
@@ -30,16 +31,27 @@ void E_Vk_FreeCommandBuffer(E_VulkanCommandBuffer* buffer)
 
 void E_Vk_SubmitCommandBuffer(E_VulkanCommandBuffer* buffer)
 {
-    VkResult result = vkEndCommandBuffer(buffer->handle);
-    assert(result == VK_SUCCESS);
+    E_Vk_EndCommandBuffer(buffer);
+
+    VkQueue submit_queue = GET_CMD_BUF_QUEUE(buffer->type);
 
     VkSubmitInfo submit_info = { 0 };
     submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
     submit_info.commandBufferCount = 1;
     submit_info.pCommandBuffers = &buffer->handle;
 
-    vkQueueSubmit(rhi.device.graphics_queue, 1, &submit_info, VK_NULL_HANDLE);
-    vkQueueWaitIdle(rhi.device.graphics_queue);
+    if (buffer->type == E_CommandBufferTypeCompute)
+    {
+        vkQueueSubmit(rhi.device.compute_queue, 1, &submit_info, rhi.command.compute_fence);
+        vkWaitForFences(rhi.device.handle, 1, &rhi.command.compute_fence, VK_TRUE, INFINITY);
+        vkResetFences(rhi.device.handle, 1, &rhi.command.compute_fence);
+        vkResetCommandPool(rhi.device.handle, rhi.command.compute_command_pool, 0);
+    }
+    else
+    {
+        vkQueueSubmit(submit_queue, 1, &submit_info, VK_NULL_HANDLE);
+        vkQueueWaitIdle(submit_queue);
+    }
 }
 
 E_VulkanCommandBuffer* E_Vk_CreateUploadCommandBuffer()
@@ -120,6 +132,11 @@ void E_Vk_CommandBufferBindMaterial(E_VulkanCommandBuffer* cmd, E_VulkanMaterial
     vkCmdBindPipeline(cmd->handle, VK_PIPELINE_BIND_POINT_GRAPHICS, material->pipeline);
 }
 
+void E_Vk_CommandBufferBindComputeMaterial(E_VulkanCommandBuffer* cmd, E_VulkanMaterial* material)
+{
+    vkCmdBindPipeline(cmd->handle, VK_PIPELINE_BIND_POINT_COMPUTE, material->pipeline);
+}
+
 void E_Vk_CommandBufferBindBuffer(E_VulkanCommandBuffer* cmd, E_VulkanBuffer* buffer, E_BufferUsage usage)
 {
     switch (usage)
@@ -142,6 +159,11 @@ void E_Vk_CommandBufferBindMaterialInstance(E_VulkanCommandBuffer* cmd, E_Vulkan
     vkCmdBindDescriptorSets(cmd->handle, VK_PIPELINE_BIND_POINT_GRAPHICS, material->pipeline_layout, set_index, 1, &instance->set, 0, NULL);
 }
 
+void E_Vk_CommandBufferBindComputeMaterialInstance(E_VulkanCommandBuffer* cmd, E_VulkanMaterialInstance* instance, E_VulkanMaterial* material, i32 set_index)
+{
+    vkCmdBindDescriptorSets(cmd->handle, VK_PIPELINE_BIND_POINT_COMPUTE, material->pipeline_layout, set_index, 1, &instance->set, 0, NULL);
+}
+
 void E_Vk_CommandBufferDraw(E_VulkanCommandBuffer* cmd, u32 first, u32 count)
 {
     vkCmdDraw(cmd->handle, count, 1, first, 0);
@@ -150,6 +172,11 @@ void E_Vk_CommandBufferDraw(E_VulkanCommandBuffer* cmd, u32 first, u32 count)
 void E_Vk_CommandBufferDrawIndexed(E_VulkanCommandBuffer* cmd, u32 first, u32 count)
 {
     vkCmdDrawIndexed(cmd->handle, count, 1, 0, 0, 0);
+}
+
+void E_Vk_CommandBufferDispatch(E_VulkanCommandBuffer* cmd, u32 groupX, u32 groupY, u32 groupZ)
+{
+    vkCmdDispatch(cmd->handle, groupX, groupY, groupZ);
 }
 
 #pragma optimize("", off)
@@ -248,12 +275,12 @@ void E_Vk_CommandBufferBlitImage(E_VulkanCommandBuffer* cmd_buf, E_VulkanImage* 
     vkCmdBlitImage(cmd_buf->handle, src->image, src_layout, dst->image, dst_layout, 1, &region, VK_FILTER_NEAREST);
 }
 
-void E_Vk_CommandBufferImageTransitionLayout(E_VulkanCommandBuffer* cmd_buf, E_VulkanImage* image, E_ImageAccess srcAccess, E_ImageAccess dstAccess, E_ImageLayout old, E_ImageLayout new, E_ImagePipelineStage srcStage, E_ImagePipelineStage dstStage)
+void E_Vk_CommandBufferImageTransitionLayout(E_VulkanCommandBuffer* cmd_buf, E_VulkanImage* image, E_ImageAccess srcAccess, E_ImageAccess dstAccess, E_ImageLayout old, E_ImageLayout new, E_ImagePipelineStage srcStage, E_ImagePipelineStage dstStage, u32 layer)
 {
     VkImageSubresourceRange range = { 0 };
     range.baseMipLevel = 0;
     range.levelCount = VK_REMAINING_MIP_LEVELS;
-    range.baseArrayLayer = 0;
+    range.baseArrayLayer = layer;
     range.layerCount = VK_REMAINING_ARRAY_LAYERS;
 
     if (image->format == E_ImageFormatRGBA8 || image->format == E_ImageFormatRGBA16 || image->format == E_ImageFormatRGBA32 || image->format == E_ImageFormatRG16)

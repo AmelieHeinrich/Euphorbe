@@ -66,8 +66,10 @@ struct E_Vk_Data
     // Command data
     struct {
         VkCommandPool graphics_command_pool;
-        VkCommandPool compute_command_pool;
         E_CommandBuffer** swapchain_command_buffers;
+
+        VkCommandPool compute_command_pool;
+        VkFence compute_fence;
 
         VkCommandPool upload_command_pool;
         VkFence upload_fence;
@@ -96,6 +98,7 @@ void E_Vk_RendererShutdown();
 void E_Vk_Begin();
 void E_Vk_End();
 void E_Vk_DeviceWait();
+void E_Vk_DrawMemoryUsageGUI();
 
 void E_Vk_Resize(i32 width, i32 height);
 

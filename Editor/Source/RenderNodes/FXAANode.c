@@ -2,6 +2,7 @@
 
 #include <Euphorbe/Graphics/Renderer.h>
 #include <Euphorbe/Graphics/CommandBuffer.h>
+#include <Euphorbe/Resource/Resource.h>
 
 typedef struct FXAAPushConstants FXAAPushConstants;
 struct FXAAPushConstants
@@ -94,7 +95,7 @@ void FXAANodeExecute(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info)
 	E_CommandBufferImageTransitionLayout(cmd_buf, node->outputs[0],
 		E_ImageAccessShaderRead, E_ImageAccessColorWrite,
 		src_layout, E_ImageLayoutColor,
-		E_ImagePipelineStageFragmentShader, E_ImagePipelineStageColorOutput);
+		E_ImagePipelineStageFragmentShader, E_ImagePipelineStageColorOutput, 0);
 
 	E_ClearValue color_clear = { 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0 };
 
@@ -116,7 +117,7 @@ void FXAANodeExecute(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info)
 	E_CommandBufferImageTransitionLayout(cmd_buf, node->outputs[0],
 		E_ImageAccessColorWrite, E_ImageAccessShaderRead,
 		E_ImageLayoutColor, E_ImageLayoutShaderRead,
-		E_ImagePipelineStageColorOutput, E_ImagePipelineStageFragmentShader);
+		E_ImagePipelineStageColorOutput, E_ImagePipelineStageFragmentShader, 0);
 }
 
 void FXAANodeResize(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info)

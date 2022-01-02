@@ -41,6 +41,7 @@ E_Material* E_CreateMaterialFromFile(const char* path)
 	memset(material, 0, sizeof(E_Material));
 	material->loaded_from_file = 1;
 	material->material_create_info = malloc(sizeof(E_MaterialCreateInfo));
+	memset(material->material_create_info, 0, sizeof(E_MaterialCreateInfo));
 
 	FILE* fp = NULL;
 	char errbuf[200] = {0};
@@ -182,6 +183,91 @@ E_Material* E_CreateMaterialFromFile(const char* path)
 	return material;
 }
 
+E_Material* E_CreateComputeMaterialFromFile(const char* path)
+{
+	E_Material* material = malloc(sizeof(E_Material));
+	memset(material, 0, sizeof(E_Material));
+	material->loaded_from_file = 1;
+	material->material_create_info = malloc(sizeof(E_MaterialCreateInfo));
+	memset(material->material_create_info, 0, sizeof(E_MaterialCreateInfo));
+
+	FILE* fp = NULL;
+	char errbuf[200] = { 0 };
+
+	fp = fopen(path, "r");
+	if (!fp)
+		E_LogError("MATERIAL READ ERROR: Failed to read file (path=%s)", path);
+
+	toml_table_t* conf = toml_parse_file(fp, errbuf, sizeof(errbuf));
+	fclose(fp);
+
+	if (!conf)
+		E_LogError("TOML READ ERROR: Failed to parse - %s", errbuf);
+
+	toml_table_t* shaders = toml_table_in(conf, "Shaders");
+	if (!shaders)
+		E_LogError("TOML READ ERROR: Failed to parse shaders - %s", errbuf);
+
+	toml_table_t* descriptor_layout = toml_table_in(conf, "DescriptorLayout");
+	if (!descriptor_layout)
+		E_LogError("TOML READ ERROR: Failed to parse descriptor layout - %s", errbuf);
+
+	toml_table_t* push_constants = toml_table_in(conf, "PushConstants");
+	if (!push_constants)
+		E_LogError("TOML READ ERROR: Failed to parse push constants - %s", errbuf);
+
+	// Shaders
+
+	toml_datum_t compute_path = toml_string_in(shaders, "Compute");
+	material->material_create_info->compute_shader = E_LoadResource(compute_path.u.s, E_ResourceTypeComputeShader);
+	free(compute_path.u.s);
+
+	// Descriptor layout
+
+	toml_datum_t descriptor_set_layout_count = toml_int_in(descriptor_layout, "DescriptorSetLayoutCount");
+	toml_array_t* descriptor_set_layouts = toml_array_in(descriptor_layout, "DescriptorSetLayouts");
+	assert(descriptor_set_layout_count.ok);
+
+	material->material_create_info->descriptor_set_layout_count = descriptor_set_layout_count.u.i;
+	for (i32 i = 0; i < material->material_create_info->descriptor_set_layout_count; i++)
+	{
+		// Get descriptor set layout info (descriptors, descriptor_count)
+		toml_array_t* data = toml_array_at(descriptor_set_layouts, i);
+		toml_array_t* descriptors = toml_array_at(data, 0);
+		toml_datum_t descriptor_count = toml_int_at(data, 1);
+		assert(descriptor_count.ok);
+
+		material->material_create_info->descriptor_set_layouts[i].descriptor_count = descriptor_count.u.i;
+
+		for (i32 j = 0; j < material->material_create_info->descriptor_set_layouts[i].descriptor_count; j++)
+		{
+			toml_datum_t descriptor_type = toml_string_at(descriptors, j);
+			assert(descriptor_type.ok);
+			material->material_create_info->descriptor_set_layouts[i].descriptors[j].type = E_GetDescriptorTypeFromString(descriptor_type.u.s);
+			material->material_create_info->descriptor_set_layouts[i].descriptors[j].binding = j;
+			free(descriptor_type.u.s);
+		}
+	}
+
+	// Push Constants
+	toml_datum_t has_push_constants = toml_int_in(push_constants, "HasPushConstants");
+	toml_datum_t push_constants_size = toml_int_in(push_constants, "Size");
+	assert(has_push_constants.ok);
+	assert(push_constants_size.ok);
+	material->material_create_info->has_push_constants = has_push_constants.u.i;
+	material->material_create_info->push_constants_size = push_constants_size.u.i;
+
+	// Finally, allocate the vulkan handle
+#ifdef EUPHORBE_WINDOWS
+	material->rhi_handle = E_Vk_CreateComputeMaterial(material->material_create_info);
+#endif
+
+	// Free the toml stuff
+	toml_free(conf);
+
+	return material;
+}
+
 void E_FreeMaterial(E_Material* material)
 {
 #ifdef EUPHORBE_WINDOWS
@@ -191,6 +277,7 @@ void E_FreeMaterial(E_Material* material)
 	{
 		if (material->material_create_info->vertex_shader) E_FreeResource(material->material_create_info->vertex_shader);
 		if (material->material_create_info->fragment_shader) E_FreeResource(material->material_create_info->fragment_shader);
+		if (material->material_create_info->compute_shader) E_FreeResource(material->material_create_info->compute_shader);
 		free(material->material_create_info);
 	}
 	free(material);
@@ -219,6 +306,13 @@ void E_MaterialInstanceWriteImage(E_MaterialInstance* instance, i32 binding, E_I
 {
 #ifdef EUPHORBE_WINDOWS
 	E_Vk_MaterialInstanceWriteImage((E_VulkanMaterialInstance*)instance->rhi_handle, binding, (E_VulkanImage*)image->rhi_handle);
+#endif
+}
+
+void E_MaterialInstanceWriteStorageImage(E_MaterialInstance* instance, i32 binding, E_Image* image)
+{
+#ifdef EUPHORBE_WINDOWS
+	E_Vk_MaterialInstanceWriteStorageImage((E_VulkanMaterialInstance*)instance->rhi_handle, binding, (E_VulkanImage*)image->rhi_handle);
 #endif
 }
 
@@ -320,6 +414,8 @@ E_DescriptorType E_GetDescriptorTypeFromString(const char* str)
 		return E_DescriptorTypeUniformBuffer;
 	if (!strcmp(str, "CombinedImageSampler"))
 		return E_DescriptorTypeCombinedImageSampler;
+	if (!strcmp(str, "StorageImage"))
+		return E_DescriptorTypeStorageImage;
 
 	return 0;
 }

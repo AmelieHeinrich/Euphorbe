@@ -37,14 +37,14 @@ void FinalBlitNodeExecute(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* inf
 	E_CommandBufferImageTransitionLayout(cmd_buf, node->outputs[0],
 		E_ImageAccessShaderRead, E_ImageAccessTransferWrite,
 		src_layout, E_ImageLayoutTransferDest,
-		E_ImagePipelineStageFragmentShader, E_ImagePipelineStageTransfer);
+		E_ImagePipelineStageFragmentShader, E_ImagePipelineStageTransfer, 0);
 
 	E_CommandBufferBlitImage(cmd_buf, E_GetRenderGraphNodeInputImage(&node->inputs[0]), node->outputs[0], E_ImageLayoutTransferSource, E_ImageLayoutTransferDest);
 
 	E_CommandBufferImageTransitionLayout(cmd_buf, node->outputs[0],
 		E_ImageAccessTransferWrite, E_ImageAccessShaderRead,
 		E_ImageLayoutTransferDest, E_ImageLayoutShaderRead,
-		E_ImagePipelineStageTransfer, E_ImagePipelineStageFragmentShader);
+		E_ImagePipelineStageTransfer, E_ImagePipelineStageFragmentShader, 0);
 }
 
 void FinalBlitNodeResize(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info)

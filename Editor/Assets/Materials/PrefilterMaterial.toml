@@ -1,0 +1,10 @@
+[Shaders]
+	Compute = "Assets/Shaders/Prefilter/Compute.glsl"
+
+[DescriptorLayout]
+	DescriptorSetLayouts = [[["CombinedImageSampler", "StorageImage"], 2]]
+	DescriptorSetLayoutCount = 1
+
+[PushConstants]
+	HasPushConstants = 1
+	Size = 16

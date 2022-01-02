@@ -66,6 +66,7 @@ typedef enum E_DescriptorType E_DescriptorType;
 enum E_DescriptorType
 {
     E_DescriptorTypeCombinedImageSampler = 1,
+    E_DescriptorTypeStorageImage = 3,
     E_DescriptorTypeUniformBuffer = 6
 };
 
@@ -97,6 +98,7 @@ struct E_MaterialCreateInfo
     // Shaders
     E_ResourceFile* vertex_shader;
     E_ResourceFile* fragment_shader;
+    E_ResourceFile* compute_shader;
 
     // Descriptors
     E_DescriptorSetLayout descriptor_set_layouts[EUPHORBE_MAX_DESCRIPTORS];
@@ -125,12 +127,14 @@ struct E_MaterialInstance
 // WARNING: Vertex shader MUST contain input variables!
 E_Material* E_CreateMaterial(E_MaterialCreateInfo* create_info);
 E_Material* E_CreateMaterialFromFile(const char* path);
+E_Material* E_CreateComputeMaterialFromFile(const char* path);
 void E_FreeMaterial(E_Material* material);
 
 // Instances
 E_MaterialInstance* E_CreateMaterialInstance(E_Material* material, i32 set_layout_index);
 void E_MaterialInstanceWriteBuffer(E_MaterialInstance* instance, i32 binding, E_Buffer* buffer, i32 buffer_size);
 void E_MaterialInstanceWriteImage(E_MaterialInstance* instance, i32 binding, E_Image* image);
+void E_MaterialInstanceWriteStorageImage(E_MaterialInstance* instance, i32 binding, E_Image* image);
 void E_FreeMaterialInstance(E_MaterialInstance* instance);
 
 #endif

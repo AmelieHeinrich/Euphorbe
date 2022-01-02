@@ -15,11 +15,16 @@ void EditorCleanup()
     E_RendererWait();
 
     E_FreeMaterialInstance(editor_state.material_instance);
+
     E_FreeResource(editor_state.mesh);
-    E_FreeBuffer(editor_state.material_settings);
-    E_FreeBuffer(editor_state.transform_buffer);
+    E_FreeResource(editor_state.ao_texture);
+    E_FreeResource(editor_state.normal_texture);
     E_FreeResource(editor_state.metallic_roughness_texture);
     E_FreeResource(editor_state.albedo_texture);
+
+    E_FreeBuffer(editor_state.material_settings);
+    E_FreeBuffer(editor_state.transform_buffer);
+  
     E_CleanRenderGraph(editor_state.graph, &editor_state.execute_info);
 
     E_RendererShutdown();
@@ -98,17 +103,21 @@ void EditorInitialiseRenderState()
 
 void EditorInitialiseTexturedMesh()
 {
+    memset(&editor_state.execute_info.drawables[0], 0, sizeof(E_Drawable));
+
     editor_state.material_buffer[0] = 1; // Has albedo texture
     editor_state.material_buffer[1] = 1; // Has roughness texture
-    editor_state.material_buffer[2] = 1; // Enable blending
-    editor_state.material_buffer[3] = 0; // Don't enable reflection
+    editor_state.material_buffer[2] = 1; // Has normal texture
+    editor_state.material_buffer[3] = 1; // Has AO texture
 
-    editor_state.albedo_texture = E_LoadResource("Assets/Textures/Suzanne_BaseColor.png", E_ResourceTypeTexture);
-    editor_state.metallic_roughness_texture = E_LoadResource("Assets/Textures/Suzanne_MetallicRoughness.png", E_ResourceTypeTexture);
+    editor_state.albedo_texture = E_LoadResource("Assets/Textures/Cerberus_BaseColor.png", E_ResourceTypeTexture);
+    editor_state.metallic_roughness_texture = E_LoadResource("Assets/Textures/Cerberus_MetallicRoughness.png", E_ResourceTypeTexture);
+    editor_state.normal_texture = E_LoadResource("Assets/Textures/Cerberus_Normal.png", E_ResourceTypeTexture);
+    editor_state.ao_texture = E_LoadResource("Assets/Textures/Cerberus_AO.png", E_ResourceTypeTexture);
 
     // End upload
-    editor_state.mesh = E_LoadResource("Assets/Models/Suzanne.gltf", E_ResourceTypeMesh);
-    editor_state.material_instance = E_CreateMaterialInstance(GetGeometryNodeMaterial(editor_state.geometry_node), 0);
+    editor_state.mesh = E_LoadResource("Assets/Models/Cerberus.gltf", E_ResourceTypeMesh);
+    editor_state.material_instance = E_CreateMaterialInstance(GetGeometryNodeMaterial(editor_state.geometry_node)->as.material, 0);
 
     editor_state.transform_buffer = E_CreateUniformBuffer(sizeof(editor_state.execute_info.drawables[0].transform));
     E_SetBufferData(editor_state.transform_buffer, &editor_state.execute_info.drawables[0].transform, sizeof(editor_state.execute_info.drawables[0].transform));
@@ -120,10 +129,14 @@ void EditorInitialiseTexturedMesh()
     E_MaterialInstanceWriteBuffer(editor_state.material_instance, 1, editor_state.material_settings, sizeof(vec4));
     E_MaterialInstanceWriteImage(editor_state.material_instance, 2, editor_state.albedo_texture->as.image);
     E_MaterialInstanceWriteImage(editor_state.material_instance, 3, editor_state.metallic_roughness_texture->as.image);
+    E_MaterialInstanceWriteImage(editor_state.material_instance, 4, editor_state.normal_texture->as.image);
+    E_MaterialInstanceWriteImage(editor_state.material_instance, 5, editor_state.ao_texture->as.image);
 
     editor_state.execute_info.drawables[0].mesh = editor_state.mesh->as.mesh;
     editor_state.execute_info.drawables[0].material_instance = editor_state.material_instance;
     glm_mat4_identity(editor_state.execute_info.drawables[0].transform);
+    glm_scale(editor_state.execute_info.drawables[0].transform, (vec3) { 0.01f, 0.01f, 0.01f });
+    glm_rotate(editor_state.execute_info.drawables[0].transform, glm_rad(-90.0f), (vec3) { 1.0f, 0.0f, 0.0f });
     editor_state.execute_info.drawable_count++;
 
     // Initialise directional light
@@ -200,8 +213,8 @@ void EditorDrawGUI()
         igBegin("Material Viewer", NULL, ImGuiWindowFlags_AlwaysAutoResize);
         igCheckbox("Enable Albedo", (bool*)& editor_state.material_buffer[0]);
         igCheckbox("Enable Metallic Roughness", (bool*)&editor_state.material_buffer[1]);
-        igCheckbox("Enable Blending", (bool*)&editor_state.material_buffer[2]);
-        igCheckbox("Enable Skybox Reflection", (bool*)&editor_state.material_buffer[3]);
+        igCheckbox("Enable Normal Map", (bool*)&editor_state.material_buffer[2]);
+        igCheckbox("Enable AO Map", (bool*)&editor_state.material_buffer[3]);
         igEnd();
     }
 
@@ -229,6 +242,14 @@ void EditorDrawGUI()
             igText("Indices: %d", editor_state.mesh->as.mesh->total_index_count);
             igTreePop();
         }
+
+        b32 memory_info = igTreeNodeEx_Str("Memory Stats", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_AllowItemOverlap | ImGuiTreeNodeFlags_FramePadding);
+        if (memory_info)
+        {
+            E_RendererDrawMemoryUsageGUI();
+            igTreePop();
+        }
+
         igEnd();
     }
 
