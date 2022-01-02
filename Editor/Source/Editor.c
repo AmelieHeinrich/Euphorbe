@@ -107,16 +107,16 @@ void EditorInitialiseTexturedMesh()
 
     editor_state.material_buffer[0] = 1; // Has albedo texture
     editor_state.material_buffer[1] = 1; // Has roughness texture
-    editor_state.material_buffer[2] = 1; // Has normal texture
-    editor_state.material_buffer[3] = 1; // Has AO texture
+    editor_state.material_buffer[2] = 0; // Has normal texture
+    editor_state.material_buffer[3] = 0; // Has AO texture
 
-    editor_state.albedo_texture = E_LoadResource("Assets/Textures/Cerberus_BaseColor.png", E_ResourceTypeTexture);
-    editor_state.metallic_roughness_texture = E_LoadResource("Assets/Textures/Cerberus_MetallicRoughness.png", E_ResourceTypeTexture);
-    editor_state.normal_texture = E_LoadResource("Assets/Textures/Cerberus_Normal.png", E_ResourceTypeTexture);
-    editor_state.ao_texture = E_LoadResource("Assets/Textures/Cerberus_AO.png", E_ResourceTypeTexture);
+    editor_state.albedo_texture = E_LoadResource("Assets/Textures/Suzanne_BaseColor.png", E_ResourceTypeTexture);
+    editor_state.metallic_roughness_texture = E_LoadResource("Assets/Textures/Suzanne_MetallicRoughness.png", E_ResourceTypeTexture);
+    editor_state.normal_texture = E_LoadResource("Assets/Textures/paving.png", E_ResourceTypeTexture); // No normal maps for suzanne
+    editor_state.ao_texture = E_LoadResource("Assets/Textures/paving2.png", E_ResourceTypeTexture); // No AO for suzanne
 
     // End upload
-    editor_state.mesh = E_LoadResource("Assets/Models/Cerberus.gltf", E_ResourceTypeMesh);
+    editor_state.mesh = E_LoadResource("Assets/Models/Suzanne.gltf", E_ResourceTypeMesh);
     editor_state.material_instance = E_CreateMaterialInstance(GetGeometryNodeMaterial(editor_state.geometry_node)->as.material, 0);
 
     editor_state.transform_buffer = E_CreateUniformBuffer(sizeof(editor_state.execute_info.drawables[0].transform));
@@ -135,8 +135,8 @@ void EditorInitialiseTexturedMesh()
     editor_state.execute_info.drawables[0].mesh = editor_state.mesh->as.mesh;
     editor_state.execute_info.drawables[0].material_instance = editor_state.material_instance;
     glm_mat4_identity(editor_state.execute_info.drawables[0].transform);
-    glm_scale(editor_state.execute_info.drawables[0].transform, (vec3) { 0.01f, 0.01f, 0.01f });
-    glm_rotate(editor_state.execute_info.drawables[0].transform, glm_rad(-90.0f), (vec3) { 1.0f, 0.0f, 0.0f });
+    //glm_scale(editor_state.execute_info.drawables[0].transform, (vec3) { 0.01f, 0.01f, 0.01f });
+    //glm_rotate(editor_state.execute_info.drawables[0].transform, glm_rad(-90.0f), (vec3) { 1.0f, 0.0f, 0.0f });
     editor_state.execute_info.drawable_count++;
 
     // Initialise directional light

@@ -8,7 +8,7 @@ layout (location = 0) out vec4 OutColor;
 layout (location = 0) in vec3 OutPos;
 layout (location = 1) in vec2 OutUV;
 layout (location = 2) in vec3 OutNormals;
-layout (location = 3) in vec4 WorldPos;
+layout (location = 3) in vec3 WorldPos;
 layout (location = 4) in vec3 CameraPos;
 
 struct PointLight
@@ -43,8 +43,8 @@ vec3 GetNormalFromMap()
 {
     vec3 tangentNormal = texture(NormalTexture, OutUV).xyz * 2.0 - 1.0;
 
-    vec3 Q1  = dFdx(WorldPos.xyz);
-    vec3 Q2  = dFdy(WorldPos.xyz);
+    vec3 Q1  = dFdx(WorldPos);
+    vec3 Q2  = dFdy(WorldPos);
     vec2 st1 = dFdx(OutUV);
     vec2 st2 = dFdy(OutUV);
 
@@ -117,16 +117,16 @@ void main()
 
     if (settings.has_metallic_roughness)
     {
-        metallic = texture(MetallicRoughnessTexture, OutUV).r;
+        metallic = texture(MetallicRoughnessTexture, OutUV).b;
         roughness = texture(MetallicRoughnessTexture, OutUV).g;
     }
     if (settings.has_normal)
         N = GetNormalFromMap();
     if (settings.has_ao)
-        ao = texture(AOTexture, vec2(OutUV.x, 1 - OutUV.y)).r;
+        ao = texture(AOTexture, OutUV).r;
 
     // Calculate color
-    vec3 V = normalize(CameraPos - WorldPos.xyz);
+    vec3 V = normalize(CameraPos - WorldPos);
     vec3 R = reflect(-V, N); 
 
     vec3 F0 = vec3(0.04); 
@@ -136,7 +136,7 @@ void main()
     for(int i = 0; i < MAX_LIGHT_COUNT; i++) 
     {
         // calculate per-light radiance
-        vec3 L = normalize(light_settings.lights[i].position.xyz - WorldPos.xyz);
+        vec3 L = normalize(light_settings.lights[i].position.xyz - WorldPos);
         vec3 H = normalize(V + L);
         float distance = length(L);
         float attenuation = 1.0 / (distance * distance);

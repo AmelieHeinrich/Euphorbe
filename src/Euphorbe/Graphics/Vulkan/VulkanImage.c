@@ -453,7 +453,7 @@ E_VulkanImage* E_Vk_MakeCubeMap(i32 width, i32 height, E_ImageFormat format, E_I
         sampler_info.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
         sampler_info.anisotropyEnable = VK_TRUE;
         sampler_info.maxAnisotropy = rhi.physical_device.handle_props.limits.maxSamplerAnisotropy;
-        sampler_info.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+        sampler_info.borderColor = VK_BORDER_COLOR_INT_OPAQUE_WHITE;
         sampler_info.unnormalizedCoordinates = VK_FALSE;
         sampler_info.compareEnable = VK_FALSE;
         sampler_info.compareOp = VK_COMPARE_OP_ALWAYS;
