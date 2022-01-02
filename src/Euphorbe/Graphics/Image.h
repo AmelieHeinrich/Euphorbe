@@ -65,6 +65,7 @@ enum E_ImagePipelineStage
     E_ImagePipelineStageFragmentShader = 0x00000080,
     E_ImagePipelineStageBottom = 0x00002000,
     E_ImagePipelineStageColorOutput = 0x00000400,
+    E_ImagePipelineStageComputeShader = 0x00000800,
     E_ImagePipelineStageTransfer = 0x00001000,
     E_ImagePipelineStageEarlyFragment = 0x00000100,
     E_ImagePipelineStageLateFragment = 0x00000200

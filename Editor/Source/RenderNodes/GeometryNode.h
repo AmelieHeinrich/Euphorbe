@@ -12,7 +12,7 @@ enum GeometryNodeOutput
 };
 
 E_RenderGraphNode* CreateGeometryNode();
-E_Material* GetGeometryNodeMaterial(E_RenderGraphNode* node);
+E_ResourceFile* GetGeometryNodeMaterial(E_RenderGraphNode* node);
 void GeometryNodeDrawGUI(E_RenderGraphNode* node);
 
 #endif

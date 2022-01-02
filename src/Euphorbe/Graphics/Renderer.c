@@ -39,6 +39,13 @@ void E_RendererWait()
 #endif
 }
 
+void E_RendererDrawMemoryUsageGUI()
+{
+#ifdef EUPHORBE_WINDOWS
+    E_Vk_DrawMemoryUsageGUI();
+#endif
+}
+
 E_Image* E_GetSwapchainImage()
 {
 #ifdef EUPHORBE_WINDOWS

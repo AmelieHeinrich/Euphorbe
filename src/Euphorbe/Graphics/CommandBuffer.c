@@ -74,7 +74,7 @@ void E_CommandBufferBindBuffer(E_CommandBuffer* cmd, E_Buffer* buffer)
 void E_CommandBufferBindMaterialInstance(E_CommandBuffer* cmd, E_MaterialInstance* instance, E_Material* material, i32 set_index)
 {
 #ifdef EUPHORBE_WINDOWS
-	E_Vk_CommandBufferBindMaterialInstance(cmd->rhi_handle, instance->rhi_handle, material->rhi_handle, set_index);
+	E_Vk_CommandBufferBindMaterialInstance((E_VulkanCommandBuffer*)cmd->rhi_handle, (E_VulkanMaterialInstance*)instance->rhi_handle, (E_VulkanMaterial*)material->rhi_handle, set_index);
 #endif
 }
 

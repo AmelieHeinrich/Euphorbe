@@ -1,0 +1,10 @@
+[Shaders]
+	Compute = "Assets/Shaders/BRDF/Compute.glsl"
+
+[DescriptorLayout]
+	DescriptorSetLayouts = [[["StorageImage"], 1]]
+	DescriptorSetLayoutCount = 1
+
+[PushConstants]
+	HasPushConstants = 0
+	Size = 16

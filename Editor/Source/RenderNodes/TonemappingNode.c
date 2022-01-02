@@ -133,7 +133,7 @@ E_RenderGraphNode* CreateTonemappingNode()
 	node->execute_func = TonemappingNodeExecute;
 	node->resize_func = TonemappingNodeResize;
 	node->node_data = malloc(sizeof(TonemappingNodeData));
-	node->name = "Tonemapping";
+	node->name = "TonemappingNode";
 
 	node->input_count = 0;
 	memset(node->inputs, 0, sizeof(node->inputs));

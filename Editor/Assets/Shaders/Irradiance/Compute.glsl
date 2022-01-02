@@ -9,12 +9,12 @@
  * adapted from their excellent article.
 */
 
-#define PI 3.141592654
-
 layout (local_size_x = 32, local_size_y = 32) in;
 
 layout (rgba32f, binding = 0) uniform readonly imageCube environmentMap;
 layout (rgba32f, binding = 1) writeonly uniform imageCube irradianceMap;
+
+#define PI 3.141592654
 
 vec3 cubeToWorld(ivec3 cubeCoord, vec2 cubeSize);
 ivec3 texToCube(vec3 texCoord, vec2 cubeSize);

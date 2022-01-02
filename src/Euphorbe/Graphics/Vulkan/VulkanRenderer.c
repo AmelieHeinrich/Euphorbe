@@ -567,23 +567,23 @@ void E_Vk_InitImGui()
 
     VkDescriptorPoolSize pool_sizes[11] =
     {
-        { VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
-        { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },
-        { VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000 },
-        { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000 },
-        { VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000 },
-        { VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000 },
-        { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000 },
-        { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000 },
-        { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000 },
-        { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000 },
-        { VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000 }
+        { VK_DESCRIPTOR_TYPE_SAMPLER, 10000 },
+        { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 10000 },
+        { VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 10000 },
+        { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 10000 },
+        { VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 10000 },
+        { VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 10000 },
+        { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 10000 },
+        { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 10000 },
+        { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 10000 },
+        { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 10000 },
+        { VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 10000 }
     };
 
     VkDescriptorPoolCreateInfo pool_info = {0};
     pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
     pool_info.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
-    pool_info.maxSets = 1000;
+    pool_info.maxSets = 10000;
     pool_info.poolSizeCount = 11;
     pool_info.pPoolSizes = pool_sizes;
 
@@ -798,6 +798,16 @@ void E_Vk_End()
 void E_Vk_DeviceWait()
 {
     vkDeviceWaitIdle(rhi.device.handle);
+}
+
+void E_Vk_DrawMemoryUsageGUI()
+{
+    VmaStats stats;
+    vmaCalculateStats(rhi.allocator, &stats);
+
+    igText("Used: %d mb", stats.total.usedBytes / 1024 / 1024);
+    igText("Unused: %d mb", stats.total.unusedBytes / 1024 / 1024);
+    igText("Allocation Count: %d", stats.total.allocationCount);
 }
 
 void E_Vk_BeginGUI()
