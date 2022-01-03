@@ -25,6 +25,10 @@ struct EditorPerformance
 typedef struct EditorData EditorData;
 struct EditorData
 {
+	// Config
+	E_CVarSystem* cvar_sys;
+
+	// Window and misc
 	E_Window* window;
 	b32 is_viewport_focused;
 	f32 last_frame;

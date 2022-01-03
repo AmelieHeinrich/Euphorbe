@@ -1,0 +1,15 @@
+[CVarTable]
+		Table = [
+				["BOOL", "editor_dark", true],
+				["BOOL", "enable_fxaa", true],
+				["BOOL", "gamma_correction", true],
+				["BOOL", "enable_skybox", true],
+				["BOOL", "log_renderer_events", true],
+				["BOOL", "log_found_layers", false],
+				["BOOL", "enable_debug", true],
+				["BOOL", "gui_should_clear", true],
+				["DOUBLE", "camera_friction", 10.0],
+				["DOUBLE", "camera_max_velocity", 15.0],
+				["DOUBLE", "camera_acceleration", 20.0 ],
+				["INT", "tonemapping_curve", 0]
+		]

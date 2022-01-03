@@ -30,8 +30,8 @@ void TonemappingNodeInit(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info
 {
 	TonemappingNodeData* data = (TonemappingNodeData*)node->node_data;
 
-	data->constants.gamma_correct = 1;
-	data->constants.mode = 0; // ACES
+	data->constants.gamma_correct = E_GetCVar(info->cvar_table_ptr, "gamma_correction").u.b;
+	data->constants.mode = E_GetCVar(info->cvar_table_ptr, "tonemapping_curve").u.i;
 	
 	// Shaders
 	E_Image* color_buffer = E_GetRenderGraphNodeInputImage(&node->inputs[0]);
@@ -133,6 +133,7 @@ E_RenderGraphNode* CreateTonemappingNode()
 	node->execute_func = TonemappingNodeExecute;
 	node->resize_func = TonemappingNodeResize;
 	node->node_data = malloc(sizeof(TonemappingNodeData));
+	memset(node->node_data, 0, sizeof(node->node_data));
 	node->name = "TonemappingNode";
 
 	node->input_count = 0;
@@ -150,7 +151,7 @@ void TonemappingNodeDrawGUI(E_RenderGraphNode* node)
 	b32 tone_enabled = igTreeNodeEx_Str("Tonemapping Node", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_AllowItemOverlap | ImGuiTreeNodeFlags_FramePadding);
 	if (tone_enabled)
 	{
-		igCheckbox("Enable Gamma Correction", (bool*)&data->constants.gamma_correct);
+		igCheckbox("Enable Gamma Correction", &data->constants.gamma_correct);
 		igCombo_Str_arr("Tonemapping Algorithms", &data->constants.mode, modes, 8, 0);
 		igTreePop();
 	}

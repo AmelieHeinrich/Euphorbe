@@ -75,7 +75,7 @@ void GeometryNodeInit(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info)
 	data->skybox_should_layout = 1;
 
 	data->skybox_mesh = E_LoadResource("Assets/Models/Cube.gltf", E_ResourceTypeMesh);
-	data->skybox_enabled = 1;
+	data->skybox_enabled = E_GetCVar(info->cvar_table_ptr, "enable_skybox").u.b;
 
 	data->geometry_material = E_LoadResource("Assets/Materials/GeometryMaterial.toml", E_ResourceTypeMaterial);
 	data->skybox_material = E_LoadResource("Assets/Materials/SkyboxMaterial.toml", E_ResourceTypeMaterial);
@@ -274,6 +274,15 @@ void GeometryNodeExecute(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info
 	glm_mat4_copy(info->view, upload_uniforms.view);
 	glm_vec3_copy(info->camera_position, upload_uniforms.camera_position);
 
+	// Transition the layouts of the different environment map textures whether or not the skybox is enabled 
+	if (data->skybox_should_layout)
+	{
+		E_CommandBufferImageTransitionLayout(cmd_buf, data->irradiance, 0, 0, E_ImageLayoutGeneral, E_ImageLayoutShaderRead, E_ImagePipelineStageTop, E_ImagePipelineStageFragmentShader, 0);
+		E_CommandBufferImageTransitionLayout(cmd_buf, data->prefilter, 0, 0, E_ImageLayoutGeneral, E_ImageLayoutShaderRead, E_ImagePipelineStageTop, E_ImagePipelineStageFragmentShader, 0);
+		E_CommandBufferImageTransitionLayout(cmd_buf, data->brdf, 0, 0, E_ImageLayoutGeneral, E_ImageLayoutShaderRead, E_ImagePipelineStageTop, E_ImagePipelineStageFragmentShader, 0);
+		data->skybox_should_layout = 0;
+	}
+
 	// Draw skybox
 	// Calculate skybox model view projection matrix
 	if (data->skybox_enabled)
@@ -301,14 +310,6 @@ void GeometryNodeExecute(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info
 		glm_mat4_mul(output_matrix, scale_matrix, output_matrix);
 
 		E_CommandBufferBindMaterial(cmd_buf, data->skybox_material->as.material);
-
-		if (data->skybox_should_layout)
-		{
-			E_CommandBufferImageTransitionLayout(cmd_buf, data->irradiance, 0, 0, E_ImageLayoutGeneral, E_ImageLayoutShaderRead, E_ImagePipelineStageTop, E_ImagePipelineStageFragmentShader, 0);
-			E_CommandBufferImageTransitionLayout(cmd_buf, data->prefilter, 0, 0, E_ImageLayoutGeneral, E_ImageLayoutShaderRead, E_ImagePipelineStageTop, E_ImagePipelineStageFragmentShader, 0);
-			E_CommandBufferImageTransitionLayout(cmd_buf, data->brdf, 0, 0, E_ImageLayoutGeneral, E_ImageLayoutShaderRead, E_ImagePipelineStageTop, E_ImagePipelineStageFragmentShader, 0);
-			data->skybox_should_layout = 0;
-		}
 
 		E_CommandBufferPushConstants(cmd_buf, data->skybox_material->as.material, &output_matrix, sizeof(output_matrix));
 		E_CommandBufferBindMaterialInstance(cmd_buf, data->skybox_instance, data->skybox_material->as.material, 0);
@@ -374,6 +375,7 @@ E_RenderGraphNode* CreateGeometryNode()
 	node->execute_func = GeometryNodeExecute;
 	node->name = "GeometryNode";
 	node->node_data = malloc(sizeof(GeometryData));
+	memset(node->node_data, 0, sizeof(node->node_data));
 	node->input_count = 0;
 	memset(node->inputs, 0, sizeof(node->inputs));
 
@@ -395,7 +397,7 @@ void GeometryNodeDrawGUI(E_RenderGraphNode* node)
 	b32 geometry_node = igTreeNodeEx_Str("Geometry Node", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_AllowItemOverlap | ImGuiTreeNodeFlags_FramePadding);
 	if (geometry_node)
 	{
-		igCheckbox("Enable Skybox", (bool*)&data->skybox_enabled);
+		igCheckbox("Enable Skybox", &data->skybox_enabled);
 		igTreePop();
 	}
 }

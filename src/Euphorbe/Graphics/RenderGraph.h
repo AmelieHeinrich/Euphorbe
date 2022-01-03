@@ -2,6 +2,7 @@
 #define EUPHORBE_RENDER_GRAPH_H
 
 #include <Euphorbe/Core/Common.h>
+#include <Euphorbe/Core/CVar.h>
 #include <Euphorbe/Graphics/Mesh.h>
 #include <Euphorbe/Graphics/Image.h>
 #include <Euphorbe/Graphics/Material.h>
@@ -35,6 +36,8 @@ struct E_Drawable
 
 struct E_RenderGraphExecuteInfo
 {
+	E_CVarSystem* cvar_table_ptr;
+
 	E_Drawable drawables[EUPHORBE_MAX_DRAWABLE_COUNT];
 	u32 drawable_count;
 

@@ -29,6 +29,8 @@ void EditorCleanup()
 
     E_RendererShutdown();
     E_FreeWindow(editor_state.window);
+
+    E_FreeCVarSystem(&editor_state.cvar_sys);
 }
 
 void EditorUpdate()
@@ -66,14 +68,17 @@ void EditorResize(i32 width, i32 height)
 
 void EditorInitialiseWindow()
 {
+    E_CreateCVarSystem("Assets/Configs/DefaultConfig.toml", &editor_state.cvar_sys);
+
     editor_state.running = 1;
+    editor_state.execute_info.cvar_table_ptr = &editor_state.cvar_sys;
 
     // Initialise Euphorbe
     E_RendererInitSettings settings = { 0 };
-    settings.log_found_layers = 0;
-    settings.log_renderer_events = 1;
-    settings.enable_debug = 1;
-    settings.gui_should_clear = 1;
+    settings.log_found_layers = E_GetCVar(&editor_state.cvar_sys, "log_found_layers").u.b;
+    settings.log_renderer_events = E_GetCVar(&editor_state.cvar_sys, "log_renderer_events").u.b;
+    settings.enable_debug = E_GetCVar(&editor_state.cvar_sys, "enable_debug").u.b;
+    settings.gui_should_clear = E_GetCVar(&editor_state.cvar_sys, "gui_should_clear").u.b;
 
     editor_state.window = E_CreateWindow(1280, 720, "Euphorbe Editor");
     E_RendererInit(editor_state.window, settings);
