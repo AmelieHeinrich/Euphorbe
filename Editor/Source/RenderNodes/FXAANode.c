@@ -57,7 +57,7 @@ void FXAANodeInit(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info)
 
 	// Setup fxaa data
 	memset(&data->constants, 0, sizeof(FXAAPushConstants));
-	data->constants.fxaa_enabled = 1;
+	data->constants.fxaa_enabled = E_GetCVar(info->cvar_table_ptr, "enable_fxaa").u.b;
 	data->constants.show_edges = 0;
 
 	data->constants.fxaa_threshold = 1.0f / 4.0f;
@@ -144,6 +144,7 @@ E_RenderGraphNode* CreateFXAANode()
 	node->execute_func = FXAANodeExecute;
 	node->name = "FXAANode";
 	node->node_data = malloc(sizeof(FXAANodeData));
+	memset(node->node_data, 0, sizeof(node->node_data));
 
 	node->input_count = 0;
 	memset(node->inputs, 0, sizeof(node->inputs));

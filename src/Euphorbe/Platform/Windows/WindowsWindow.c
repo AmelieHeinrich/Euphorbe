@@ -64,7 +64,7 @@ LRESULT CALLBACK WinProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
     return 0;
 }
 
-E_WindowsWindow* E_CreateWindowsWindow(i32* width, i32* height, const char* title)
+E_WindowsWindow* E_CreateWindowsWindow(i32* width, i32* height, const char* title, b32 dark_mode)
 {
     E_WindowsWindow* result = malloc(sizeof(E_WindowsWindow));
     if (result)
@@ -109,7 +109,10 @@ E_WindowsWindow* E_CreateWindowsWindow(i32* width, i32* height, const char* titl
         ImGuiStyle* style = igGetStyle();
         io->ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
-        igStyleColorsDark(NULL);
+        if (dark_mode)
+            igStyleColorsDark(NULL);
+        else
+            igStyleColorsLight(NULL);
 
         ImGui_ImplWin32_Init(result->hwnd);
 

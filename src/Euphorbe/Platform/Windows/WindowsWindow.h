@@ -16,7 +16,7 @@ struct E_WindowsWindow
     E_WindowScrollCallback scroll_callback;
 };
 
-E_WindowsWindow* E_CreateWindowsWindow(i32* width, i32* height, const char* title);
+E_WindowsWindow* E_CreateWindowsWindow(i32* width, i32* height, const char* title, b32 dark_mode);
 void E_LaunchWindowsWindow(E_WindowsWindow* window);
 void E_FreeWindowsWindow(E_WindowsWindow* window);
 void E_UpdateWindowsWindow(E_WindowsWindow* window);

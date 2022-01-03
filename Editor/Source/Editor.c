@@ -29,6 +29,8 @@ void EditorCleanup()
 
     E_RendererShutdown();
     E_FreeWindow(editor_state.window);
+
+    E_FreeCVarSystem(&editor_state.cvar_sys);
 }
 
 void EditorUpdate()
@@ -49,6 +51,8 @@ void EditorUpdate()
         EditorEndRender();
 
         if (editor_state.is_viewport_focused)
+            EditorCameraProcessMouse(&editor_state.camera, dt);
+        if (editor_state.is_viewport_focused)
             EditorUpdateCameraInput(dt);
         EditorCameraUpdate(&editor_state.camera, dt);
 
@@ -66,16 +70,19 @@ void EditorResize(i32 width, i32 height)
 
 void EditorInitialiseWindow()
 {
+    E_CreateCVarSystem("Assets/Configs/DefaultConfig.toml", &editor_state.cvar_sys);
+
     editor_state.running = 1;
+    editor_state.execute_info.cvar_table_ptr = &editor_state.cvar_sys;
 
     // Initialise Euphorbe
     E_RendererInitSettings settings = { 0 };
-    settings.log_found_layers = 0;
-    settings.log_renderer_events = 1;
-    settings.enable_debug = 1;
-    settings.gui_should_clear = 1;
+    settings.log_found_layers = E_GetCVar(&editor_state.cvar_sys, "log_found_layers").u.b;
+    settings.log_renderer_events = E_GetCVar(&editor_state.cvar_sys, "log_renderer_events").u.b;
+    settings.enable_debug = E_GetCVar(&editor_state.cvar_sys, "enable_debug").u.b;
+    settings.gui_should_clear = E_GetCVar(&editor_state.cvar_sys, "gui_should_clear").u.b;
 
-    editor_state.window = E_CreateWindow(1280, 720, "Euphorbe Editor");
+    editor_state.window = E_CreateWindow(1280, 720, "Euphorbe Editor", E_GetCVar(&editor_state.cvar_sys, "dark_mode").u.b);
     E_RendererInit(editor_state.window, settings);
 
     E_TimerInit();
@@ -209,7 +216,7 @@ void EditorDrawGUI()
     EditorCreateDockspace();
 
     E_LogDraw();
-    DrawViewportPanel(editor_state.final_blit_node->outputs[0], &editor_state.is_viewport_focused);
+    DrawViewportPanel(editor_state.final_blit_node->outputs[0], &editor_state.is_viewport_focused, &editor_state.is_viewport_hovered);
 
     // Material Viewer
     {
@@ -317,7 +324,7 @@ void EditorDestroyDockspace()
 
 void EditorScroll(f32 scroll)
 {
-    if (editor_state.is_viewport_focused)
+    if (editor_state.is_viewport_focused && editor_state.is_viewport_hovered)
         EditorCameraOnMouseScroll(&editor_state.camera, scroll);
 }
 

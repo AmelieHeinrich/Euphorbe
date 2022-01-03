@@ -4,6 +4,8 @@
 // Core
 #include "Core/Common.h"
 #include "Core/Log.h"
+#include "Core/Map.h"
+#include "Core/CVar.h"
 
 // Platform
 #include "Platform/Window.h"

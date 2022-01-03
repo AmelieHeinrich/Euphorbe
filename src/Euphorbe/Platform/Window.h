@@ -16,7 +16,7 @@ struct E_Window
     void* platform_data;
 };
 
-E_Window* E_CreateWindow(i32 width, i32 height, const char* title);
+E_Window* E_CreateWindow(i32 width, i32 height, const char* title, b32 dark_mode);
 void E_LaunchWindow(E_Window* window);
 void E_FreeWindow(E_Window* window);
 b32 E_IsWindowOpen(E_Window* window);

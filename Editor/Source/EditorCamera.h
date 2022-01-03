@@ -44,6 +44,7 @@ struct EditorCamera
 void EditorCameraInit(EditorCamera* camera);
 void EditorCameraUpdate(EditorCamera* camera, f32 dt);
 void EditorCameraProcessInput(EditorCamera* camera, f32 dt);
+void EditorCameraProcessMouse(EditorCamera* camera, f32 dt);
 void EditorCameraOnMouseScroll(EditorCamera* camera, f32 scroll);
 void EditorCameraResize(EditorCamera* camera, i32 width, i32 height);
 

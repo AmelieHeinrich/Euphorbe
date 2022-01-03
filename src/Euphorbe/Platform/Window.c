@@ -4,7 +4,7 @@
     #include "Windows/WindowsWindow.h"
 #endif
 
-E_Window* E_CreateWindow(i32 width, i32 height, const char* title)
+E_Window* E_CreateWindow(i32 width, i32 height, const char* title, b32 dark_mode)
 {
     assert(width != 0 && height != 0);
 
@@ -14,7 +14,7 @@ E_Window* E_CreateWindow(i32 width, i32 height, const char* title)
     window->title = title;
 
 #ifdef EUPHORBE_WINDOWS
-    window->platform_data = E_CreateWindowsWindow(&window->width, &window->height, title);
+    window->platform_data = E_CreateWindowsWindow(&window->width, &window->height, title, dark_mode);
 #endif
 
     return window;
