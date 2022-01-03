@@ -14,6 +14,6 @@ struct ViewportPanel
 extern ViewportPanel viewport_panel;
 
 void InitViewportPanel(int width, int height);
-void DrawViewportPanel(E_Image* buffer, b32* is_viewport_focused);
+void DrawViewportPanel(E_Image* buffer, b32* is_viewport_focused, b32* is_viewport_hovered);
 
 #endif

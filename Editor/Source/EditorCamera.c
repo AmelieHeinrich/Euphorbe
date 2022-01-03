@@ -94,8 +94,11 @@ void EditorCameraProcessInput(EditorCamera* camera, f32 dt)
 
 	glm_vec3_add(camera->position, (vec3) { camera->velocity[0] * dt, camera->velocity[1] * dt, camera->velocity[2] * dt }, camera->position);
 
-	// mouse
+	EditorCameraUpdateVectors(camera);
+}
 
+void EditorCameraProcessMouse(EditorCamera* camera, f32 dt)
+{
 	f32 mouse_x = E_GetMousePosX();
 	f32 mouse_y = E_GetMousePosY();
 

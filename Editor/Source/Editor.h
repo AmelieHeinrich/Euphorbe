@@ -31,6 +31,7 @@ struct EditorData
 	// Window and misc
 	E_Window* window;
 	b32 is_viewport_focused;
+	b32 is_viewport_hovered;
 	f32 last_frame;
 	b32 running;
 

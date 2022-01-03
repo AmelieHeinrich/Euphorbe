@@ -8,13 +8,14 @@ void InitViewportPanel(int width, int height)
     viewport_panel.viewport_size[1] = (f32)height;
 }
 
-void DrawViewportPanel(E_Image* buffer, b32* is_viewport_focused)
+void DrawViewportPanel(E_Image* buffer, b32* is_viewport_focused, b32* is_viewport_hovered)
 {
     igPushStyleVar_Float(ImGuiStyleVar_WindowPadding, 0.0f);
 
     igBegin("Viewport", NULL, ImGuiWindowFlags_None);
 
-    *is_viewport_focused = igIsWindowFocused(ImGuiFocusedFlags_None) && igIsWindowHovered(ImGuiFocusedFlags_None);
+    *is_viewport_focused = igIsWindowFocused(ImGuiFocusedFlags_None);
+    *is_viewport_hovered = igIsWindowHovered(ImGuiFocusedFlags_None);
     ImVec2 panel_content_size = { 0.0f, 0.0f };
     igGetContentRegionAvail(&panel_content_size);
 

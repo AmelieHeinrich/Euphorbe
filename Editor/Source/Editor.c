@@ -51,6 +51,8 @@ void EditorUpdate()
         EditorEndRender();
 
         if (editor_state.is_viewport_focused)
+            EditorCameraProcessMouse(&editor_state.camera, dt);
+        if (editor_state.is_viewport_focused)
             EditorUpdateCameraInput(dt);
         EditorCameraUpdate(&editor_state.camera, dt);
 
@@ -214,7 +216,7 @@ void EditorDrawGUI()
     EditorCreateDockspace();
 
     E_LogDraw();
-    DrawViewportPanel(editor_state.final_blit_node->outputs[0], &editor_state.is_viewport_focused);
+    DrawViewportPanel(editor_state.final_blit_node->outputs[0], &editor_state.is_viewport_focused, &editor_state.is_viewport_hovered);
 
     // Material Viewer
     {
@@ -322,7 +324,7 @@ void EditorDestroyDockspace()
 
 void EditorScroll(f32 scroll)
 {
-    if (editor_state.is_viewport_focused)
+    if (editor_state.is_viewport_focused && editor_state.is_viewport_hovered)
         EditorCameraOnMouseScroll(&editor_state.camera, scroll);
 }
 
