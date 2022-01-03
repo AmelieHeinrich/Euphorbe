@@ -82,7 +82,7 @@ void EditorInitialiseWindow()
     settings.enable_debug = E_GetCVar(&editor_state.cvar_sys, "enable_debug").u.b;
     settings.gui_should_clear = E_GetCVar(&editor_state.cvar_sys, "gui_should_clear").u.b;
 
-    editor_state.window = E_CreateWindow(1280, 720, "Euphorbe Editor");
+    editor_state.window = E_CreateWindow(1280, 720, "Euphorbe Editor", E_GetCVar(&editor_state.cvar_sys, "dark_mode").u.b);
     E_RendererInit(editor_state.window, settings);
 
     E_TimerInit();

@@ -1,6 +1,6 @@
 [CVarTable]
 		Table = [
-				["BOOL", "editor_dark", true],
+				["BOOL", "dark_mode", true],
 				["BOOL", "enable_fxaa", true],
 				["BOOL", "gamma_correction", true],
 				["BOOL", "enable_skybox", true],
