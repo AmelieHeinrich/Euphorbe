@@ -41,6 +41,9 @@ cmake -G "Visual Studio 17 2022" -B build
 ## Screenshot from Jan 2 2022
 ![Jan 2 2022](.github/2jan2022.PNG)
 
+# Contributing
+
+## Contributions to Euphorbe is accepted and encouraged ; let's make a great engine together!
 
 ## FXAA Demo
 ### Without:
