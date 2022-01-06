@@ -10,6 +10,7 @@ enum E_ImageFormat
 {
     E_ImageFormatRGBA8 = 37,
     E_ImageFormatRG16 = 83,
+    E_ImageFormatRGBA16_Unorm = 91,
     E_ImageFormatRGBA16 = 97,
     E_ImageFormatRGBA32 = 109,
     E_ImageFormatD32_Float = 126,

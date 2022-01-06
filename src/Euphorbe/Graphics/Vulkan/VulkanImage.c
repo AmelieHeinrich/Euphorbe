@@ -13,6 +13,8 @@ VkImageAspectFlags EuphorbeFormatToVulkanAspect(E_ImageFormat format)
         return VK_IMAGE_ASPECT_COLOR_BIT;
     case E_ImageFormatRG16:
         return VK_IMAGE_ASPECT_COLOR_BIT;
+    case E_ImageFormatRGBA16_Unorm:
+        return VK_IMAGE_ASPECT_COLOR_BIT;
     case E_ImageFormatRGBA16:
         return VK_IMAGE_ASPECT_COLOR_BIT;
     case E_ImageFormatRGBA32:
@@ -255,15 +257,15 @@ E_VulkanImage* E_Vk_MakeImageFromFile(const char* path)
 E_VulkanImage* E_Vk_MakeHDRImageFromFile(const char* path)
 {
     E_VulkanImage* result = malloc(sizeof(E_VulkanImage));
-    result->cube_map = 0;
+    result->cube_map = 1;
 
     stbi_set_flip_vertically_on_load(1);
     i32 width = 0, height = 0, channels = 0;
-    f32* data = stbi_loadf(path, &width, &height, &channels, STBI_rgb_alpha);
-    VkDeviceSize image_size = width * height * 16; // Force alpha channel
+    void* data = stbi_load_16(path, &width, &height, &channels, STBI_rgb_alpha);
+    VkDeviceSize image_size = width * height * 4 * sizeof(u16); // Force alpha channel
 
-    result->format = VK_FORMAT_R32G32B32A32_SFLOAT;
-    result->euphorbe_format = E_ImageFormatRGBA32;
+    result->format = VK_FORMAT_R16G16B16A16_UNORM;
+    result->euphorbe_format = E_ImageFormatRGBA16_Unorm;
     result->image_extent.width = width;
     result->image_extent.height = height;
 
@@ -305,19 +307,6 @@ E_VulkanImage* E_Vk_MakeHDRImageFromFile(const char* path)
 
     res = vkCreateSampler(rhi.device.handle, &sampler_info, NULL, &result->sampler);
     assert(res == VK_SUCCESS);
-
-    VkDescriptorSetLayout set_layout = ImGui_ImplVulkan_GetDescriptorSetLayout();
-    for (int i = 0; i < FRAMES_IN_FLIGHT; i++)
-    {
-        VkDescriptorSetAllocateInfo alloc_info = { 0 };
-        alloc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-        alloc_info.descriptorSetCount = 1;
-        alloc_info.pSetLayouts = &set_layout;
-        alloc_info.descriptorPool = rhi.imgui.descriptor_pool;
-
-        res = vkAllocateDescriptorSets(rhi.device.handle, &alloc_info, &result->gui_descriptor_set[i]);
-        assert(res == VK_SUCCESS);
-    }
 
     VkBuffer staging_buffer = VK_NULL_HANDLE;
     VmaAllocation staging_buffer_allocation = VK_NULL_HANDLE;
@@ -431,7 +420,7 @@ E_VulkanImage* E_Vk_MakeCubeMap(i32 width, i32 height, E_ImageFormat format, E_I
         view_info.image = result->image;
         view_info.viewType = VK_IMAGE_VIEW_TYPE_CUBE;
         view_info.format = result->format;
-        view_info.subresourceRange.aspectMask = EuphorbeFormatToVulkanAspect(format);
+        view_info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
         view_info.subresourceRange.baseMipLevel = 0;
         view_info.subresourceRange.levelCount = 1;
         view_info.subresourceRange.baseArrayLayer = 0;

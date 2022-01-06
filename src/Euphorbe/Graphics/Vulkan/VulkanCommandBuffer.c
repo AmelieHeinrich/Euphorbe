@@ -283,7 +283,7 @@ void E_Vk_CommandBufferImageTransitionLayout(E_VulkanCommandBuffer* cmd_buf, E_V
     range.baseArrayLayer = layer;
     range.layerCount = VK_REMAINING_ARRAY_LAYERS;
 
-    if (image->format == E_ImageFormatRGBA8 || image->format == E_ImageFormatRGBA16 || image->format == E_ImageFormatRGBA32 || image->format == E_ImageFormatRG16)
+    if (image->format == E_ImageFormatRGBA8 || image->format == E_ImageFormatRGBA16 || image->format == E_ImageFormatRGBA32 || image->format == E_ImageFormatRG16 || image->format == E_ImageFormatRGBA16_Unorm)
         range.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
     else
         range.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;

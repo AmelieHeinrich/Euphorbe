@@ -91,9 +91,9 @@ void GeometryNodeInit(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info)
 	data->brdf_instance = E_CreateMaterialInstance(data->brdf_material->as.material, 0);
 
 	data->hdr_skybox_texture = E_MakeHDRImageFromFile("Assets/EnvMaps/SnowyField/4k.hdr");
-	data->cubemap = E_MakeCubeMap(512, 512, E_ImageFormatRGBA32, E_ImageUsageStorage | E_ImageUsageSampled);
-	data->irradiance = E_MakeCubeMap(128, 128, E_ImageFormatRGBA32, E_ImageUsageStorage | E_ImageUsageSampled);
-	data->prefilter = E_MakeCubeMap(512, 512, E_ImageFormatRGBA32, E_ImageUsageStorage | E_ImageUsageSampled);
+	data->cubemap = E_MakeCubeMap(512, 512, E_ImageFormatRGBA16_Unorm, E_ImageUsageStorage | E_ImageUsageSampled);
+	data->irradiance = E_MakeCubeMap(128, 128, E_ImageFormatRGBA16_Unorm, E_ImageUsageStorage | E_ImageUsageSampled);
+	data->prefilter = E_MakeCubeMap(512, 512, E_ImageFormatRGBA16_Unorm, E_ImageUsageStorage | E_ImageUsageSampled);
 	data->brdf = E_MakeImage(512, 512, E_ImageFormatRG16, E_ImageUsageStorage | E_ImageUsageSampled);
 
 	// Begin compute shader

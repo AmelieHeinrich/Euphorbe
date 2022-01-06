@@ -13,8 +13,8 @@
 
 layout (local_size_x = 32, local_size_y = 32) in;
 
-layout (rgba32f, binding = 0) uniform readonly image2D equirectangularMap;
-layout (rgba32f, binding = 1) writeonly uniform imageCube environmentMap;
+layout (rgba16f, binding = 0) uniform readonly image2D equirectangularMap;
+layout (rgba16f, binding = 1) writeonly uniform imageCube environmentMap;
 
 vec3 cubeToWorld(ivec3 cubeCoord, vec2 cubeSize);
 ivec3 texToCube(vec3 texCoord, vec2 cubeSize);

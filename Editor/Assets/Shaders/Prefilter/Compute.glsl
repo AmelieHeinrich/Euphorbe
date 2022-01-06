@@ -12,7 +12,7 @@
 layout (local_size_x = 32, local_size_y = 32) in;
 
 layout (binding = 0) uniform samplerCube environmentMap;
-layout (rgba32f, binding = 1) writeonly uniform imageCube prefilterMap;
+layout (rgba16f, binding = 1) writeonly uniform imageCube prefilterMap;
 
 layout (push_constant) uniform ParameterBuffer {
 	vec4 u_iblParams;

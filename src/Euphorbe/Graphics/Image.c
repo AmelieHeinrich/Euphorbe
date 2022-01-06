@@ -41,7 +41,7 @@ E_Image* E_MakeImageFromFile(const char* path)
 E_Image* E_MakeHDRImageFromFile(const char* path)
 {
     E_Image* image = malloc(sizeof(E_Image));
-    image->format = E_ImageFormatRGBA32;
+    image->format = E_ImageFormatRGBA16;
 
 #ifdef EUPHORBE_WINDOWS
     image->rhi_handle = E_Vk_MakeHDRImageFromFile(path);
