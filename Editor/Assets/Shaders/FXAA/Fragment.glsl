@@ -5,7 +5,8 @@ layout (location = 1) in vec2 OutUV;
 
 layout (location = 0) out vec4 OutColor;
 
-layout (binding = 0, set = 0) uniform sampler2D color_image;
+layout (binding = 0, set = 0) uniform sampler screen_sampler;
+layout (binding = 1, set = 0) uniform texture2D color_image;
 
 layout (push_constant) uniform FXAASettings {
 	// FXAA enabled
@@ -20,13 +21,13 @@ layout (push_constant) uniform FXAASettings {
 	float max_span;
 } settings;
 
-vec3 apply_fxaa(vec4 uv, sampler2D tex, vec2 rcpFrame)
+vec3 apply_fxaa(vec4 uv, texture2D tex, sampler samp, vec2 rcpFrame)
 {
-	vec3 rgbNW = textureLod(tex, uv.zw, 0.0).xyz;
-    vec3 rgbNE = textureLod(tex, uv.zw + vec2(1,0) * rcpFrame.xy, 0.0).xyz;
-    vec3 rgbSW = textureLod(tex, uv.zw + vec2(0,1) * rcpFrame.xy, 0.0).xyz;
-    vec3 rgbSE = textureLod(tex, uv.zw + vec2(1,1) * rcpFrame.xy, 0.0).xyz;
-    vec3 rgbM  = textureLod(tex, uv.xy, 0.0).xyz;
+	vec3 rgbNW = textureLod(sampler2D(tex, samp), uv.zw, 0.0).xyz;
+    vec3 rgbNE = textureLod(sampler2D(tex, samp), uv.zw + vec2(1,0) * rcpFrame.xy, 0.0).xyz;
+    vec3 rgbSW = textureLod(sampler2D(tex, samp), uv.zw + vec2(0,1) * rcpFrame.xy, 0.0).xyz;
+    vec3 rgbSE = textureLod(sampler2D(tex, samp), uv.zw + vec2(1,1) * rcpFrame.xy, 0.0).xyz;
+    vec3 rgbM  = textureLod(sampler2D(tex, samp), uv.xy, 0.0).xyz;
 
     vec3 luma = vec3(0.299, 0.587, 0.114);
     float lumaNW = dot(rgbNW, luma);
@@ -52,11 +53,11 @@ vec3 apply_fxaa(vec4 uv, sampler2D tex, vec2 rcpFrame)
           dir * rcpDirMin)) * rcpFrame.xy;
 
     vec3 rgbA = (1.0/2.0) * (
-        textureLod(tex, uv.xy + dir * (1.0/3.0 - 0.5), 0.0).xyz +
-        textureLod(tex, uv.xy + dir * (2.0/3.0 - 0.5), 0.0).xyz);
+        textureLod(sampler2D(tex, samp), uv.xy + dir * (1.0/3.0 - 0.5), 0.0).xyz +
+        textureLod(sampler2D(tex, samp), uv.xy + dir * (2.0/3.0 - 0.5), 0.0).xyz);
     vec3 rgbB = rgbA * (1.0/2.0) + (1.0/4.0) * (
-        textureLod(tex, uv.xy + dir * (0.0/3.0 - 0.5), 0.0).xyz +
-        textureLod(tex, uv.xy + dir * (3.0/3.0 - 0.5), 0.0).xyz);
+        textureLod(sampler2D(tex, samp), uv.xy + dir * (0.0/3.0 - 0.5), 0.0).xyz +
+        textureLod(sampler2D(tex, samp), uv.xy + dir * (3.0/3.0 - 0.5), 0.0).xyz);
     
     float lumaB = dot(rgbB, luma);
 
@@ -75,18 +76,12 @@ void main()
     if (settings.enabled)
     {
         vec4 uv = vec4( uv2, uv2 - (rcpFrame * (0.5 + settings.luma_threshold)));
-	    col = apply_fxaa(uv, color_image, 1.0 / settings.screen_size.xy);
+	    col = apply_fxaa(uv, color_image, screen_sampler, 1.0 / settings.screen_size.xy);
     }
     else
     {
-        col = texture(color_image, OutUV).xyz;
+        col = texture(sampler2D(color_image, screen_sampler), OutUV).xyz;
     }
-
-    // Show edges for debug purposes.	
-	if (settings.show_edges)
-	{
-		col.g = 1.0;
-	}
     
     OutColor = vec4(col, 1.0);
 }

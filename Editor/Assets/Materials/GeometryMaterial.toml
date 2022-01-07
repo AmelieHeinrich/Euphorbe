@@ -15,7 +15,10 @@
 	Fragment = "Assets/Shaders/Geometry/Fragment.glsl"
 
 [DescriptorLayout]
-	DescriptorSetLayouts = [[["UniformBuffer", "UniformBuffer", "CombinedImageSampler", "CombinedImageSampler", "CombinedImageSampler", "CombinedImageSampler"], 6], [["UniformBuffer", "CombinedImageSampler", "CombinedImageSampler", "CombinedImageSampler", "CombinedImageSampler", "CombinedImageSampler"], 5]]
+	DescriptorSetLayouts = [
+		[ ["UniformBuffer", "UniformBuffer", "Sampler", "SampledImage", "SampledImage", "SampledImage", "SampledImage"], 7], 
+		[ ["UniformBuffer", "Sampler", "Sampler", "SampledImage", "SampledImage", "SampledImage", "SampledImage", "SampledImage"], 7]
+	]
 	DescriptorSetLayoutCount = 2
 
 [PushConstants]

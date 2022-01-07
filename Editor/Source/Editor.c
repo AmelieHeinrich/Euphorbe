@@ -27,6 +27,8 @@ void EditorCleanup()
   
     E_CleanRenderGraph(editor_state.graph, &editor_state.execute_info);
 
+    E_FreeDefaultSamplers();
+
     E_RendererShutdown();
     E_FreeWindow(editor_state.window);
 
@@ -84,6 +86,7 @@ void EditorInitialiseWindow()
 
     editor_state.window = E_CreateWindow(1280, 720, "Euphorbe Editor", E_GetCVar(&editor_state.cvar_sys, "dark_mode").u.b);
     E_RendererInit(editor_state.window, settings);
+    E_InitDefaultSamplers();
 
     E_TimerInit();
 
@@ -134,20 +137,19 @@ void EditorInitialiseTexturedMesh()
 
     E_MaterialInstanceWriteBuffer(editor_state.material_instance, 0, editor_state.transform_buffer, sizeof(editor_state.execute_info.drawables[0].transform));
     E_MaterialInstanceWriteBuffer(editor_state.material_instance, 1, editor_state.material_settings, sizeof(vec4));
-    E_MaterialInstanceWriteImage(editor_state.material_instance, 2, editor_state.albedo_texture->as.image);
-    E_MaterialInstanceWriteImage(editor_state.material_instance, 3, editor_state.metallic_roughness_texture->as.image);
-    E_MaterialInstanceWriteImage(editor_state.material_instance, 4, editor_state.normal_texture->as.image);
-    E_MaterialInstanceWriteImage(editor_state.material_instance, 5, editor_state.ao_texture->as.image);
+    E_MaterialInstanceWriteSampler(editor_state.material_instance, 2, E_LinearSampler);
+    E_MaterialInstanceWriteSampledImage(editor_state.material_instance, 3, editor_state.albedo_texture->as.image);
+    E_MaterialInstanceWriteSampledImage(editor_state.material_instance, 4, editor_state.metallic_roughness_texture->as.image);
+    E_MaterialInstanceWriteSampledImage(editor_state.material_instance, 5, editor_state.normal_texture->as.image);
+    E_MaterialInstanceWriteSampledImage(editor_state.material_instance, 6, editor_state.ao_texture->as.image);
 
     editor_state.execute_info.drawables[0].mesh = editor_state.mesh->as.mesh;
     editor_state.execute_info.drawables[0].material_instance = editor_state.material_instance;
     glm_mat4_identity(editor_state.execute_info.drawables[0].transform);
-    //glm_scale(editor_state.execute_info.drawables[0].transform, (vec3) { 0.01f, 0.01f, 0.01f });
-    //glm_rotate(editor_state.execute_info.drawables[0].transform, glm_rad(-90.0f), (vec3) { 1.0f, 0.0f, 0.0f });
     editor_state.execute_info.drawable_count++;
 
     // Initialise directional light
-    glm_vec4_fill(editor_state.execute_info.point_lights[0].color, 100.0f);
+    glm_vec4_fill(editor_state.execute_info.point_lights[0].color, 10.0f);
     
     editor_state.execute_info.point_lights[0].position[0] = 2.5f;
     editor_state.execute_info.point_lights[0].position[1] = -0.5f;

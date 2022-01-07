@@ -84,9 +84,71 @@ void E_ImageResize(E_Image* image, i32 width, i32 height)
 #endif
 }
 
-void E_ImageDrawToGUI(E_Image* image, i32 width, i32 height)
+void E_ImageDrawToGUI(E_Image* image, i32 width, i32 height, E_Sampler* sampler)
 {
 #ifdef EUPHORBE_WINDOWS
-    E_Vk_DrawImageToGUI(image->rhi_handle, width, height);
+    E_Vk_DrawImageToGUI(image->rhi_handle, width, height, sampler->rhi_handle);
 #endif
+}
+
+E_Sampler* E_LinearSampler;
+E_Sampler* E_NearestSampler;
+E_Sampler* E_CubemapSampler;
+
+void E_InitDefaultSamplers()
+{
+#ifdef EUPHORBE_WINDOWS
+    E_Vk_InitDefaultSamplers();
+#endif
+
+    E_LinearSampler = malloc(sizeof(E_Sampler));
+    E_LinearSampler->address_mode = E_ImageAddressModeRepeat;
+    E_LinearSampler->filter = E_ImageFilterLinear;
+
+    E_NearestSampler = malloc(sizeof(E_Sampler));
+    E_NearestSampler->address_mode = E_ImageAddressModeRepeat;
+    E_NearestSampler->filter = E_ImageFilterNearest;
+
+    E_CubemapSampler = malloc(sizeof(E_Sampler));
+    E_CubemapSampler->address_mode = E_ImageAddressModeClampToBorder;
+    E_CubemapSampler->filter = E_ImageFilterLinear;
+
+#ifdef EUPHORBE_WINDOWS
+    E_LinearSampler->rhi_handle = E_Vk_LinearSampler;
+    E_NearestSampler->rhi_handle = E_Vk_NearestSampler;
+    E_CubemapSampler->rhi_handle = E_Vk_CubemapSampler;
+#endif
+}
+
+void E_FreeDefaultSamplers()
+{
+    free(E_LinearSampler);
+    free(E_NearestSampler);
+    free(E_CubemapSampler);
+
+#ifdef EUPHORBE_WINDOWS
+    E_Vk_FreeDefaultSamplers();
+#endif 
+}
+
+E_Sampler* E_CreateSampler(E_ImageAddressMode mode, E_ImageFilter filter)
+{
+    E_Sampler* sampler = malloc(sizeof(E_Sampler));
+    sampler->address_mode = mode;
+    sampler->filter = filter;
+
+#ifdef EUPHORBE_WINDOWS
+    sampler->rhi_handle = E_Vk_CreateSampler(mode, filter);
+#endif 
+
+    return sampler;
+}
+
+void E_FreeSampler(E_Sampler* sampler)
+{
+#ifdef EUPHORBE_WINDOWS
+    E_Vk_FreeSampler(sampler->rhi_handle);
+#endif
+
+    free(sampler);
 }

@@ -79,24 +79,6 @@ E_VulkanImage* E_Vk_MakeImage(i32 width, i32 height, E_ImageFormat format, E_Ima
         res = vkCreateImageView(rhi.device.handle, &view_info, NULL, &result->image_view);
         assert(res == VK_SUCCESS);
 
-        VkSamplerCreateInfo sampler_info = {0};
-        sampler_info.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-        sampler_info.magFilter = VK_FILTER_LINEAR;
-        sampler_info.minFilter = VK_FILTER_LINEAR;
-        sampler_info.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-        sampler_info.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-        sampler_info.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-        sampler_info.anisotropyEnable = VK_TRUE;
-        sampler_info.maxAnisotropy = rhi.physical_device.handle_props.limits.maxSamplerAnisotropy;
-        sampler_info.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
-        sampler_info.unnormalizedCoordinates = VK_FALSE;
-        sampler_info.compareEnable = VK_FALSE;
-        sampler_info.compareOp = VK_COMPARE_OP_ALWAYS;
-        sampler_info.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-
-        res = vkCreateSampler(rhi.device.handle, &sampler_info, NULL, &result->sampler);
-        assert(res == VK_SUCCESS);
-
         VkDescriptorSetLayout set_layout = ImGui_ImplVulkan_GetDescriptorSetLayout();
 
         for (int i = 0; i < FRAMES_IN_FLIGHT; i++)
@@ -151,24 +133,6 @@ E_VulkanImage* E_Vk_MakeImageFromFile(const char* path)
     allocation.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 
     VkResult res = vmaCreateImage(rhi.allocator, &image_create_info, &allocation, &result->image, &result->allocation, &result->allocation_info);
-    assert(res == VK_SUCCESS);
-
-    VkSamplerCreateInfo sampler_info = { 0 };
-    sampler_info.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-    sampler_info.magFilter = VK_FILTER_LINEAR;
-    sampler_info.minFilter = VK_FILTER_LINEAR;
-    sampler_info.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-    sampler_info.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-    sampler_info.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-    sampler_info.anisotropyEnable = VK_TRUE;
-    sampler_info.maxAnisotropy = rhi.physical_device.handle_props.limits.maxSamplerAnisotropy;
-    sampler_info.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
-    sampler_info.unnormalizedCoordinates = VK_FALSE;
-    sampler_info.compareEnable = VK_FALSE;
-    sampler_info.compareOp = VK_COMPARE_OP_ALWAYS;
-    sampler_info.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-
-    res = vkCreateSampler(rhi.device.handle, &sampler_info, NULL, &result->sampler);
     assert(res == VK_SUCCESS);
 
     VkDescriptorSetLayout set_layout = ImGui_ImplVulkan_GetDescriptorSetLayout();
@@ -288,24 +252,6 @@ E_VulkanImage* E_Vk_MakeHDRImageFromFile(const char* path)
     allocation.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 
     VkResult res = vmaCreateImage(rhi.allocator, &image_create_info, &allocation, &result->image, &result->allocation, &result->allocation_info);
-    assert(res == VK_SUCCESS);
-
-    VkSamplerCreateInfo sampler_info = { 0 };
-    sampler_info.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-    sampler_info.magFilter = VK_FILTER_LINEAR;
-    sampler_info.minFilter = VK_FILTER_LINEAR;
-    sampler_info.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-    sampler_info.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-    sampler_info.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-    sampler_info.anisotropyEnable = VK_TRUE;
-    sampler_info.maxAnisotropy = rhi.physical_device.handle_props.limits.maxSamplerAnisotropy;
-    sampler_info.borderColor = VK_BORDER_COLOR_INT_OPAQUE_WHITE;
-    sampler_info.unnormalizedCoordinates = VK_FALSE;
-    sampler_info.compareEnable = VK_FALSE;
-    sampler_info.compareOp = VK_COMPARE_OP_NEVER;
-    sampler_info.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-
-    res = vkCreateSampler(rhi.device.handle, &sampler_info, NULL, &result->sampler);
     assert(res == VK_SUCCESS);
 
     VkBuffer staging_buffer = VK_NULL_HANDLE;
@@ -433,24 +379,6 @@ E_VulkanImage* E_Vk_MakeCubeMap(i32 width, i32 height, E_ImageFormat format, E_I
         res = vkCreateImageView(rhi.device.handle, &view_info, NULL, &result->image_view);
         assert(res == VK_SUCCESS);
 
-        VkSamplerCreateInfo sampler_info = { 0 };
-        sampler_info.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-        sampler_info.magFilter = VK_FILTER_LINEAR;
-        sampler_info.minFilter = VK_FILTER_LINEAR;
-        sampler_info.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
-        sampler_info.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
-        sampler_info.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
-        sampler_info.anisotropyEnable = VK_TRUE;
-        sampler_info.maxAnisotropy = rhi.physical_device.handle_props.limits.maxSamplerAnisotropy;
-        sampler_info.borderColor = VK_BORDER_COLOR_INT_OPAQUE_WHITE;
-        sampler_info.unnormalizedCoordinates = VK_FALSE;
-        sampler_info.compareEnable = VK_FALSE;
-        sampler_info.compareOp = VK_COMPARE_OP_ALWAYS;
-        sampler_info.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-
-        res = vkCreateSampler(rhi.device.handle, &sampler_info, NULL, &result->sampler);
-        assert(res == VK_SUCCESS);
-
         return result;
     }
 
@@ -461,7 +389,6 @@ void E_Vk_FreeImage(E_VulkanImage* image)
 {
     for (int i = 0; i < FRAMES_IN_FLIGHT; i++)
         if (!image->cube_map) vkFreeDescriptorSets(rhi.device.handle, rhi.imgui.descriptor_pool, 1, &image->gui_descriptor_set[i]);
-    vkDestroySampler(rhi.device.handle, image->sampler, NULL);
     vkDestroyImageView(rhi.device.handle, image->image_view, NULL);
     vmaDestroyImage(rhi.allocator, image->image, image->allocation);
     free(image);
@@ -514,7 +441,7 @@ void E_Vk_ResizeImage(E_VulkanImage* image, i32 width, i32 height)
     assert(res == VK_SUCCESS);
 }
 
-void E_Vk_DrawImageToGUI(E_VulkanImage* image, i32 width, i32 height)
+void E_Vk_DrawImageToGUI(E_VulkanImage* image, i32 width, i32 height, E_VulkanSampler* sampler)
 {
     ImVec2 size = { (f32)width, (f32)height };
 
@@ -523,6 +450,58 @@ void E_Vk_DrawImageToGUI(E_VulkanImage* image, i32 width, i32 height)
     ImVec4 color = { 1.0f, 1.0f, 1.0f, 1.0f };
     ImVec4 border = { 0.0f, 0.0f, 0.0f, 0.0f };
 
-    ImGui_ImplVulkan_AddTexture(image->image_view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, image->sampler, image->gui_descriptor_set[rhi.sync.image_index]);
+    ImGui_ImplVulkan_AddTexture(image->image_view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, sampler->sampler, image->gui_descriptor_set[rhi.sync.image_index]);
     igImage(image->gui_descriptor_set[rhi.sync.image_index], size, uv0, uv1, color, border);
+}
+
+E_VulkanSampler* E_Vk_NearestSampler;
+E_VulkanSampler* E_Vk_LinearSampler;
+E_VulkanSampler* E_Vk_CubemapSampler;
+
+void E_Vk_InitDefaultSamplers()
+{
+    E_Vk_NearestSampler = E_Vk_CreateSampler(E_ImageAddressModeRepeat, E_ImageFilterNearest);
+    E_Vk_LinearSampler = E_Vk_CreateSampler(E_ImageAddressModeRepeat, E_ImageFilterLinear);
+    E_Vk_CubemapSampler = E_Vk_CreateSampler(E_ImageAddressModeClampToBorder, E_ImageFilterLinear);
+}
+
+void E_Vk_FreeDefaultSamplers()
+{
+    E_Vk_FreeSampler(E_Vk_NearestSampler);
+    E_Vk_FreeSampler(E_Vk_LinearSampler);
+    E_Vk_FreeSampler(E_Vk_CubemapSampler);
+}
+
+E_VulkanSampler* E_Vk_CreateSampler(E_ImageAddressMode mode, E_ImageFilter filter)
+{
+    E_VulkanSampler* sampler = malloc(sizeof(E_VulkanSampler));
+
+    VkSamplerCreateInfo sampler_info = { 0 };
+    sampler_info.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+    sampler_info.magFilter = (VkFilter)filter;
+    sampler_info.minFilter = (VkFilter)filter;
+    sampler_info.addressModeU = (VkSamplerAddressMode)mode;
+    sampler_info.addressModeV = (VkSamplerAddressMode)mode;
+    sampler_info.addressModeW = (VkSamplerAddressMode)mode;
+    sampler_info.anisotropyEnable = VK_TRUE;
+    sampler_info.maxAnisotropy = rhi.physical_device.handle_props.limits.maxSamplerAnisotropy;
+    sampler_info.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+    sampler_info.unnormalizedCoordinates = VK_FALSE;
+    sampler_info.compareEnable = VK_FALSE;
+    sampler_info.compareOp = VK_COMPARE_OP_ALWAYS;
+    sampler_info.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+
+    VkResult res = vkCreateSampler(rhi.device.handle, &sampler_info, NULL, &sampler->sampler);
+    assert(res == VK_SUCCESS);
+
+    sampler->filter = (VkFilter)filter;
+    sampler->address_mode = (VkSamplerAddressMode)mode;
+
+    return sampler;
+}
+
+void E_Vk_FreeSampler(E_VulkanSampler* sampler)
+{
+    vkDestroySampler(rhi.device.handle, sampler->sampler, NULL);
+    free(sampler);
 }

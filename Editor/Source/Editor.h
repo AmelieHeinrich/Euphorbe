@@ -26,7 +26,7 @@ typedef struct EditorData EditorData;
 struct EditorData
 {
 	// Config
-	E_CVarSystem* cvar_sys;
+	E_CVarSystem cvar_sys;
 
 	// Window and misc
 	E_Window* window;

@@ -15,7 +15,7 @@
 	Fragment = "Assets/Shaders/FXAA/Fragment.glsl"
 
 [DescriptorLayout]
-	DescriptorSetLayouts = [[["CombinedImageSampler"], 1]]
+	DescriptorSetLayouts = [[["Sampler", "SampledImage"], 2]]
 	DescriptorSetLayoutCount = 1
 
 [PushConstants]

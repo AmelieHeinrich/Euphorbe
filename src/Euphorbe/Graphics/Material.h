@@ -65,7 +65,9 @@ struct E_MaterialRenderInfo
 typedef enum E_DescriptorType E_DescriptorType;
 enum E_DescriptorType
 {
+    E_DescriptorTypeSampler = 0,
     E_DescriptorTypeCombinedImageSampler = 1,
+    E_DescriptorTypeSampledImage = 2,
     E_DescriptorTypeStorageImage = 3,
     E_DescriptorTypeUniformBuffer = 6
 };
@@ -133,8 +135,10 @@ void E_FreeMaterial(E_Material* material);
 // Instances
 E_MaterialInstance* E_CreateMaterialInstance(E_Material* material, i32 set_layout_index);
 void E_MaterialInstanceWriteBuffer(E_MaterialInstance* instance, i32 binding, E_Buffer* buffer, i32 buffer_size);
-void E_MaterialInstanceWriteImage(E_MaterialInstance* instance, i32 binding, E_Image* image);
-void E_MaterialInstanceWriteStorageImage(E_MaterialInstance* instance, i32 binding, E_Image* image);
+void E_MaterialInstanceWriteSampler(E_MaterialInstance* instance, i32 binding, E_Sampler* sampler);
+void E_MaterialInstanceWriteSampledImage(E_MaterialInstance* instance, i32 binding, E_Image* image);
+void E_MaterialInstanceWriteImage(E_MaterialInstance* instance, i32 binding, E_Image* image, E_Sampler* sampler);
+void E_MaterialInstanceWriteStorageImage(E_MaterialInstance* instance, i32 binding, E_Image* image, E_Sampler* sampler);
 void E_FreeMaterialInstance(E_MaterialInstance* instance);
 
 #endif

@@ -487,11 +487,49 @@ void E_Vk_MaterialInstanceWriteBuffer(E_VulkanMaterialInstance* instance, i32 bi
     vkUpdateDescriptorSets(rhi.device.handle, 1, &write, 0, NULL);
 }
 
-void E_Vk_MaterialInstanceWriteImage(E_VulkanMaterialInstance* instance, i32 binding, E_VulkanImage* image)
+void E_Vk_MaterialInstanceWriteSampler(E_VulkanMaterialInstance* instance, i32 binding, E_VulkanSampler* sampler)
+{
+    VkDescriptorImageInfo image_info = { 0 };
+    image_info.imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    image_info.sampler = sampler->sampler;
+    image_info.imageView = VK_NULL_HANDLE;
+
+    VkWriteDescriptorSet write = { 0 };
+    write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    write.descriptorCount = 1;
+    write.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
+    write.dstBinding = binding;
+    write.dstArrayElement = 0;
+    write.dstSet = instance->set;
+    write.pImageInfo = &image_info;
+
+    vkUpdateDescriptorSets(rhi.device.handle, 1, &write, 0, NULL);
+}
+
+void E_Vk_MaterialInstanceWriteSampledImage(E_VulkanMaterialInstance* instance, i32 binding, E_VulkanImage* image)
 {
     VkDescriptorImageInfo image_info = { 0 };
     image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-    image_info.sampler = image->sampler;
+    image_info.sampler = VK_NULL_HANDLE;
+    image_info.imageView = image->image_view;
+
+    VkWriteDescriptorSet write = { 0 };
+    write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    write.descriptorCount = 1;
+    write.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+    write.dstBinding = binding;
+    write.dstArrayElement = 0;
+    write.dstSet = instance->set;
+    write.pImageInfo = &image_info;
+
+    vkUpdateDescriptorSets(rhi.device.handle, 1, &write, 0, NULL);
+}
+
+void E_Vk_MaterialInstanceWriteImage(E_VulkanMaterialInstance* instance, i32 binding, E_VulkanImage* image, E_VulkanSampler* sampler)
+{
+    VkDescriptorImageInfo image_info = { 0 };
+    image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    image_info.sampler = sampler->sampler;
     image_info.imageView = image->image_view;
 
     VkWriteDescriptorSet write = { 0 };
@@ -506,11 +544,11 @@ void E_Vk_MaterialInstanceWriteImage(E_VulkanMaterialInstance* instance, i32 bin
     vkUpdateDescriptorSets(rhi.device.handle, 1, &write, 0, NULL);
 }
 
-void E_Vk_MaterialInstanceWriteStorageImage(E_VulkanMaterialInstance* instance, i32 binding, E_VulkanImage* image)
+void E_Vk_MaterialInstanceWriteStorageImage(E_VulkanMaterialInstance* instance, i32 binding, E_VulkanImage* image, E_VulkanSampler* sampler)
 {
     VkDescriptorImageInfo image_info = { 0 };
     image_info.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-    image_info.sampler = image->sampler;
+    image_info.sampler = sampler->sampler;
     image_info.imageView = image->image_view;
 
     VkWriteDescriptorSet write = { 0 };

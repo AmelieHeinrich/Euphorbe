@@ -17,7 +17,7 @@ layout (location = 2) out vec3 OutNormals;
 layout (location = 3) out vec3 WorldPos;
 layout (location = 4) out vec3 CameraPos;
 
-layout (binding = 0) uniform ModelData {
+layout (binding = 0, set = 0) uniform ModelData {
     mat4 model;
 } model_data;
 

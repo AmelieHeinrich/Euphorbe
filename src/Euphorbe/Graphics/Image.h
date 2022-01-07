@@ -72,6 +72,30 @@ enum E_ImagePipelineStage
     E_ImagePipelineStageLateFragment = 0x00000200
 };
 
+typedef enum E_ImageFilter E_ImageFilter;
+enum E_ImageFilter
+{
+    E_ImageFilterNearest = 0,
+    E_ImageFilterLinear = 1
+};
+
+typedef enum E_ImageAddressMode E_ImageAddressMode;
+enum E_ImageAddressMode
+{
+    E_ImageAddressModeRepeat = 0,
+    E_ImageAddressModeMirroredRepeat = 1,
+    E_ImageAddressModeClampToEdge = 2,
+    E_ImageAddressModeClampToBorder = 3
+};
+
+typedef struct E_Sampler E_Sampler;
+struct E_Sampler
+{
+    E_ImageFilter filter;
+    E_ImageAddressMode address_mode;
+    void* rhi_handle;
+};
+
 typedef struct E_Image E_Image;
 struct E_Image
 {
@@ -88,6 +112,17 @@ E_Image* E_MakeHDRImageFromFile(const char* path);
 E_Image* E_MakeCubeMap(i32 width, i32 height, E_ImageFormat format, E_ImageUsage usage);
 void E_FreeImage(E_Image* image);
 void E_ImageResize(E_Image* image, i32 width, i32 height);
-void E_ImageDrawToGUI(E_Image* image, i32 width, i32 height);
+void E_ImageDrawToGUI(E_Image* image, i32 width, i32 height, E_Sampler* sampler);
+
+// Sampler stuff
+void E_InitDefaultSamplers();
+void E_FreeDefaultSamplers();
+
+extern E_Sampler* E_NearestSampler;
+extern E_Sampler* E_LinearSampler;
+extern E_Sampler* E_CubemapSampler;
+
+E_Sampler* E_CreateSampler(E_ImageAddressMode mode, E_ImageFilter filter);
+void E_FreeSampler(E_Sampler* sampler);
 
 #endif

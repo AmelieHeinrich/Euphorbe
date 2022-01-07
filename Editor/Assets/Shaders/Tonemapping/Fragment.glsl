@@ -1,5 +1,7 @@
 #version 450
 
+#extension GL_KHR_vulkan_glsl: enable
+
 layout (location = 0) out vec4 OutColor;
 
 layout (location = 0) in vec3 OutPosition;
@@ -12,7 +14,8 @@ layout (push_constant) uniform HDRSettings {
 	vec2 padding_0;
 } settings;
 
-layout (binding = 0) uniform sampler2D color_texture;
+layout (binding = 0, set = 0) uniform sampler screen_sampler;
+layout (binding = 1, set = 0) uniform texture2D color_texture;
 
 // Tonemapping curves: https://www.shadertoy.com/view/lslGzl
 // ACES: https://knarkowicz.wordpress.com/2016/01/06/aces-filmic-tone-mapping-curve/
@@ -101,7 +104,7 @@ vec3 uncharted2(vec3 color, float gamma) {
 
 void main()
 {
-	vec3 color = texture(color_texture, OutUV).rgb;
+	vec3 color = texture(sampler2D(color_texture, screen_sampler), OutUV).rgb;
 	float gamma;
 
 	if (settings.gamma_correction)

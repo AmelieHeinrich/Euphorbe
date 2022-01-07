@@ -22,7 +22,7 @@ void DrawViewportPanel(E_Image* buffer, b32* is_viewport_focused, b32* is_viewpo
     viewport_panel.viewport_size[0] = panel_content_size.x;
     viewport_panel.viewport_size[1] = panel_content_size.y;
 
-    E_ImageDrawToGUI(buffer, (i32)viewport_panel.viewport_size[0], (i32)viewport_panel.viewport_size[1]);
+    E_ImageDrawToGUI(buffer, (i32)viewport_panel.viewport_size[0], (i32)viewport_panel.viewport_size[1], E_NearestSampler);
     igEnd();
 
     igPopStyleVar(0);

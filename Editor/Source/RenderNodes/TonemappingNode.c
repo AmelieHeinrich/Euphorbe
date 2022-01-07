@@ -31,7 +31,7 @@ void TonemappingNodeInit(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info
 	TonemappingNodeData* data = (TonemappingNodeData*)node->node_data;
 
 	data->constants.gamma_correct = E_GetCVar(info->cvar_table_ptr, "gamma_correction").u.b;
-	data->constants.mode = E_GetCVar(info->cvar_table_ptr, "tonemapping_curve").u.i;
+	data->constants.mode = (i32)E_GetCVar(info->cvar_table_ptr, "tonemapping_curve").u.i;
 	
 	// Shaders
 	E_Image* color_buffer = E_GetRenderGraphNodeInputImage(&node->inputs[0]);
@@ -39,7 +39,8 @@ void TonemappingNodeInit(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info
 
 	data->screen_shader = E_LoadResource("Assets/Materials/TonemappingMaterial.toml", E_ResourceTypeMaterial);
 	data->material_instance = E_CreateMaterialInstance(data->screen_shader->as.material, 0);
-	E_MaterialInstanceWriteImage(data->material_instance, 0, color_buffer);
+	E_MaterialInstanceWriteSampler(data->material_instance, 0, E_LinearSampler);
+	E_MaterialInstanceWriteSampledImage(data->material_instance, 1, color_buffer);
 
 	// Screen Quad
 	f32 quad_vertices[] = {
@@ -120,7 +121,7 @@ void TonemappingNodeResize(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* in
 	E_Image* color_buffer = E_GetRenderGraphNodeInputImage(&node->inputs[0]);
 	assert(color_buffer && color_buffer->rhi_handle);
 
-	E_MaterialInstanceWriteImage(data->material_instance, 0, color_buffer);
+	E_MaterialInstanceWriteSampledImage(data->material_instance, 1, color_buffer);
 }
 
 E_RenderGraphNode* CreateTonemappingNode()

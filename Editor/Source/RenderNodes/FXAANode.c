@@ -37,7 +37,9 @@ void FXAANodeInit(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info)
 	data->material_instance = E_CreateMaterialInstance(data->fxaa_material->as.material, 0);
 	
 	E_Image* color_input = E_GetRenderGraphNodeInputImage(&node->inputs[0]);
-	E_MaterialInstanceWriteImage(data->material_instance, 0, color_input);
+
+	E_MaterialInstanceWriteSampler(data->material_instance, 0, E_LinearSampler);
+	E_MaterialInstanceWriteSampledImage(data->material_instance, 1, color_input);
 
 	// Screen Quad
 	f32 quad_vertices[] = {
@@ -128,7 +130,7 @@ void FXAANodeResize(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info)
 	node->outputs[0] = E_MakeImage(info->width, info->height, E_ImageFormatRGBA16, E_ImageUsageRenderGraphNodeOutput);
 
 	E_Image* color_input = E_GetRenderGraphNodeInputImage(&node->inputs[0]);
-	E_MaterialInstanceWriteImage(data->material_instance, 0, color_input);
+	E_MaterialInstanceWriteSampledImage(data->material_instance, 1, color_input);
 
 	data->first_render = 1;
 }

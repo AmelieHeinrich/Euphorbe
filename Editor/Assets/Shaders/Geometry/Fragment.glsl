@@ -25,23 +25,26 @@ layout (binding = 1, set = 0) uniform MaterialSettings {
     bool has_ao;
 } settings;
 
-layout (binding = 2, set = 0) uniform sampler2D AlbedoTexture;
-layout (binding = 3, set = 0) uniform sampler2D MetallicRoughnessTexture;
-layout (binding = 4, set = 0) uniform sampler2D NormalTexture;
-layout (binding = 5, set = 0) uniform sampler2D AOTexture;
+layout (binding = 2, set = 0) uniform sampler TextureSampler;
+layout (binding = 3, set = 0) uniform texture2D AlbedoTexture;
+layout (binding = 4, set = 0) uniform texture2D MetallicRoughnessTexture;
+layout (binding = 5, set = 0) uniform texture2D NormalTexture;
+layout (binding = 6, set = 0) uniform texture2D AOTexture;
 
 layout (binding = 0, set = 1) uniform Lights {
     PointLight lights[MAX_LIGHT_COUNT];
 } light_settings;
 
-layout (binding = 1, set = 1) uniform samplerCube Skybox;
-layout (binding = 2, set = 1) uniform samplerCube irradianceMap;
-layout (binding = 3, set = 1) uniform samplerCube prefilterMap;
-layout (binding = 4, set = 1) uniform sampler2D brdfLut;
+layout (binding = 1, set = 1) uniform sampler cubemap_sampler;
+layout (binding = 2, set = 1) uniform sampler brdf_sampler;
+layout (binding = 3, set = 1) uniform textureCube Skybox;
+layout (binding = 4, set = 1) uniform textureCube irradianceMap;
+layout (binding = 5, set = 1) uniform textureCube prefilterMap;
+layout (binding = 6, set = 1) uniform texture2D brdfLut;
 
 vec3 GetNormalFromMap()
 {
-    vec3 tangentNormal = texture(NormalTexture, OutUV).xyz * 2.0 - 1.0;
+    vec3 tangentNormal = texture(sampler2D(NormalTexture, TextureSampler), OutUV).xyz * 2.0 - 1.0;
 
     vec3 Q1  = dFdx(WorldPos);
     vec3 Q2  = dFdy(WorldPos);
@@ -106,7 +109,7 @@ void main()
     vec3 albedo;
 
     if (settings.has_albedo)
-        albedo = pow(texture(AlbedoTexture, OutUV).rgb, vec3(2.2));
+        albedo = pow(texture(sampler2D(AlbedoTexture, TextureSampler), OutUV).rgb, vec3(2.2));
     else
         albedo = vec3(0.0f);
 
@@ -117,13 +120,13 @@ void main()
 
     if (settings.has_metallic_roughness)
     {
-        metallic = texture(MetallicRoughnessTexture, OutUV).b;
-        roughness = texture(MetallicRoughnessTexture, OutUV).g;
+        metallic = texture(sampler2D(MetallicRoughnessTexture, TextureSampler), OutUV).b;
+        roughness = texture(sampler2D(MetallicRoughnessTexture, TextureSampler), OutUV).g;
     }
     if (settings.has_normal)
         N = GetNormalFromMap();
     if (settings.has_ao)
-        ao = texture(AOTexture, OutUV).r;
+        ao = texture(sampler2D(AOTexture, TextureSampler), OutUV).r;
 
     // Calculate color
     vec3 V = normalize(CameraPos - WorldPos);
@@ -175,13 +178,13 @@ void main()
     vec3 kD = 1.0 - kS;
     kD *= 1.0 - metallic;
 
-    vec3 irradiance = texture(irradianceMap, N).rgb;
+    vec3 irradiance = texture(samplerCube(irradianceMap, cubemap_sampler), N).rgb;
     vec3 diffuse = irradiance * albedo;
 
     const float MAX_REFLECTION_LOD = 4.0;
-    vec3 prefilteredColor = textureLod(prefilterMap, R, roughness * MAX_REFLECTION_LOD).rgb;   
+    vec3 prefilteredColor = textureLod(samplerCube(prefilterMap, cubemap_sampler), R, roughness * MAX_REFLECTION_LOD).rgb;   
     vec2 brdf_uv = vec2(max(dot(N, V), 0.0), roughness);
-    vec2 brdf  = texture(brdfLut, brdf_uv).rg;
+    vec2 brdf  = texture(sampler2D(brdfLut, brdf_sampler), brdf_uv).rg;
     vec3 specular = prefilteredColor * (F * brdf.x + brdf.y);
 
     vec3 ambient = (kD * diffuse + specular) * ao;

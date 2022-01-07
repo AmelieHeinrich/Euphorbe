@@ -106,8 +106,8 @@ void GeometryNodeInit(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info)
 	E_CommandBufferImageTransitionLayout(compute_cmd_buf, data->hdr_skybox_texture, 0, 0, E_ImageLayoutUndefined, E_ImageLayoutGeneral, E_ImagePipelineStageTop, E_ImagePipelineStageBottom, 0);
 	E_CommandBufferImageTransitionLayout(compute_cmd_buf, data->cubemap, 0, 0, E_ImageLayoutUndefined, E_ImageLayoutGeneral, E_ImagePipelineStageTop, E_ImagePipelineStageBottom, 0);
 
-	E_MaterialInstanceWriteStorageImage(data->equirectangular_cubemap_instance, 0, data->hdr_skybox_texture);
-	E_MaterialInstanceWriteStorageImage(data->equirectangular_cubemap_instance, 1, data->cubemap);
+	E_MaterialInstanceWriteStorageImage(data->equirectangular_cubemap_instance, 0, data->hdr_skybox_texture, E_NearestSampler);
+	E_MaterialInstanceWriteStorageImage(data->equirectangular_cubemap_instance, 1, data->cubemap, E_CubemapSampler);
 
 	E_CommandBufferBindComputeMaterial(compute_cmd_buf, data->equirectangular_cubemap_material->as.material);
 	E_CommandBufferBindComputeMaterialInstance(compute_cmd_buf, data->equirectangular_cubemap_instance, data->equirectangular_cubemap_material->as.material, 0);
@@ -124,8 +124,8 @@ void GeometryNodeInit(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info)
 	E_CommandBufferImageTransitionLayout(compute_cmd_buf, data->cubemap, 0, 0, E_ImageLayoutGeneral, E_ImageLayoutShaderRead, E_ImagePipelineStageTop, E_ImagePipelineStageComputeShader, 0);
 	E_CommandBufferImageTransitionLayout(compute_cmd_buf, data->irradiance, 0, 0, E_ImageLayoutUndefined, E_ImageLayoutGeneral, E_ImagePipelineStageTop, E_ImagePipelineStageBottom, 0);
 
-	E_MaterialInstanceWriteImage(data->irradiance_instance, 0, data->cubemap);
-	E_MaterialInstanceWriteStorageImage(data->irradiance_instance, 1, data->irradiance);
+	E_MaterialInstanceWriteImage(data->irradiance_instance, 0, data->cubemap, E_CubemapSampler);
+	E_MaterialInstanceWriteStorageImage(data->irradiance_instance, 1, data->irradiance, E_CubemapSampler);
 
 	E_CommandBufferBindComputeMaterial(compute_cmd_buf, data->irradiance_material->as.material);
 	E_CommandBufferBindComputeMaterialInstance(compute_cmd_buf, data->irradiance_instance, data->irradiance_material->as.material, 0);
@@ -141,8 +141,8 @@ void GeometryNodeInit(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info)
 
 	E_CommandBufferImageTransitionLayout(compute_cmd_buf, data->prefilter, 0, 0, E_ImageLayoutUndefined, E_ImageLayoutGeneral, E_ImagePipelineStageTop, E_ImagePipelineStageBottom, 0);
 
-	E_MaterialInstanceWriteImage(data->prefilter_instance, 0, data->cubemap);
-	E_MaterialInstanceWriteStorageImage(data->prefilter_instance, 1, data->prefilter);
+	E_MaterialInstanceWriteImage(data->prefilter_instance, 0, data->cubemap, E_CubemapSampler);
+	E_MaterialInstanceWriteStorageImage(data->prefilter_instance, 1, data->prefilter, E_CubemapSampler);
 
 	E_CommandBufferBindComputeMaterial(compute_cmd_buf, data->prefilter_material->as.material);
 	E_CommandBufferBindComputeMaterialInstance(compute_cmd_buf, data->prefilter_instance, data->prefilter_material->as.material, 0);
@@ -170,7 +170,7 @@ void GeometryNodeInit(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info)
 	E_BeginCommandBuffer(compute_cmd_buf);
 
 	E_CommandBufferImageTransitionLayout(compute_cmd_buf, data->brdf, 0, 0, E_ImageLayoutUndefined, E_ImageLayoutGeneral, E_ImagePipelineStageTop, E_ImagePipelineStageBottom, 0);
-	E_MaterialInstanceWriteStorageImage(data->brdf_instance, 0, data->brdf);
+	E_MaterialInstanceWriteStorageImage(data->brdf_instance, 0, data->brdf, E_NearestSampler);
 
 	E_CommandBufferBindComputeMaterial(compute_cmd_buf, data->brdf_material->as.material);
 	E_CommandBufferBindComputeMaterialInstance(compute_cmd_buf, data->brdf_instance, data->brdf_material->as.material, 0);
@@ -185,15 +185,18 @@ void GeometryNodeInit(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info)
 
 	//
 
-	E_MaterialInstanceWriteImage(data->skybox_instance, 0, data->cubemap);
+	E_MaterialInstanceWriteSampler(data->skybox_instance, 0, E_CubemapSampler);
+	E_MaterialInstanceWriteSampledImage(data->skybox_instance, 1, data->cubemap);
 
 	data->light_buffer = E_CreateUniformBuffer(sizeof(info->point_lights));
 	data->light_material_instance = E_CreateMaterialInstance(data->geometry_material->as.material, 1);
 	E_MaterialInstanceWriteBuffer(data->light_material_instance, 0, data->light_buffer, sizeof(info->point_lights));
-	E_MaterialInstanceWriteImage(data->light_material_instance, 1, data->cubemap);
-	E_MaterialInstanceWriteImage(data->light_material_instance, 2, data->irradiance);
-	E_MaterialInstanceWriteImage(data->light_material_instance, 3, data->prefilter);
-	E_MaterialInstanceWriteImage(data->light_material_instance, 4, data->brdf);
+	E_MaterialInstanceWriteSampler(data->light_material_instance, 1, E_CubemapSampler);
+	E_MaterialInstanceWriteSampler(data->light_material_instance, 2, E_NearestSampler);
+	E_MaterialInstanceWriteSampledImage(data->light_material_instance, 3, data->cubemap);
+	E_MaterialInstanceWriteSampledImage(data->light_material_instance, 4, data->irradiance);
+	E_MaterialInstanceWriteSampledImage(data->light_material_instance, 5, data->prefilter);
+	E_MaterialInstanceWriteSampledImage(data->light_material_instance, 6, data->brdf);
 }
 
 void GeometryNodeClean(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info)

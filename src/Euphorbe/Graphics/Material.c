@@ -302,17 +302,31 @@ void E_MaterialInstanceWriteBuffer(E_MaterialInstance* instance, i32 binding, E_
 #endif
 }
 
-void E_MaterialInstanceWriteImage(E_MaterialInstance* instance, i32 binding, E_Image* image)
+void E_MaterialInstanceWriteSampler(E_MaterialInstance* instance, i32 binding, E_Sampler* sampler)
 {
 #ifdef EUPHORBE_WINDOWS
-	E_Vk_MaterialInstanceWriteImage((E_VulkanMaterialInstance*)instance->rhi_handle, binding, (E_VulkanImage*)image->rhi_handle);
+	E_Vk_MaterialInstanceWriteSampler(instance->rhi_handle, binding, sampler->rhi_handle);
 #endif
 }
 
-void E_MaterialInstanceWriteStorageImage(E_MaterialInstance* instance, i32 binding, E_Image* image)
+void E_MaterialInstanceWriteSampledImage(E_MaterialInstance* instance, i32 binding, E_Image* image)
 {
 #ifdef EUPHORBE_WINDOWS
-	E_Vk_MaterialInstanceWriteStorageImage((E_VulkanMaterialInstance*)instance->rhi_handle, binding, (E_VulkanImage*)image->rhi_handle);
+	E_Vk_MaterialInstanceWriteSampledImage(instance->rhi_handle, binding, image->rhi_handle);
+#endif
+}
+
+void E_MaterialInstanceWriteImage(E_MaterialInstance* instance, i32 binding, E_Image* image, E_Sampler* sampler)
+{
+#ifdef EUPHORBE_WINDOWS
+	E_Vk_MaterialInstanceWriteImage((E_VulkanMaterialInstance*)instance->rhi_handle, binding, (E_VulkanImage*)image->rhi_handle, (E_VulkanSampler*)sampler->rhi_handle);
+#endif
+}
+
+void E_MaterialInstanceWriteStorageImage(E_MaterialInstance* instance, i32 binding, E_Image* image, E_Sampler* sampler)
+{
+#ifdef EUPHORBE_WINDOWS
+	E_Vk_MaterialInstanceWriteStorageImage((E_VulkanMaterialInstance*)instance->rhi_handle, binding, (E_VulkanImage*)image->rhi_handle, (E_VulkanSampler*)sampler->rhi_handle);
 #endif
 }
 
@@ -416,6 +430,10 @@ E_DescriptorType E_GetDescriptorTypeFromString(const char* str)
 		return E_DescriptorTypeCombinedImageSampler;
 	if (!strcmp(str, "StorageImage"))
 		return E_DescriptorTypeStorageImage;
+	if (!strcmp(str, "SampledImage"))
+		return E_DescriptorTypeSampledImage;
+	if (!strcmp(str, "Sampler"))
+		return E_DescriptorTypeSampler;
 
 	return 0;
 }
