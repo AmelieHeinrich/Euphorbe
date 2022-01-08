@@ -201,6 +201,9 @@ void E_Vk_MakePhysicalDevice()
 
     vkGetPhysicalDeviceProperties(rhi.physical_device.handle, &rhi.physical_device.handle_props);
 
+    rhi.physical_device.features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+    vkGetPhysicalDeviceFeatures2(rhi.physical_device.handle, &rhi.physical_device.features);
+
     // Find queue families
     u32 queue_family_count = 0;
     vkGetPhysicalDeviceQueueFamilyProperties(rhi.physical_device.handle, &queue_family_count, NULL);
@@ -256,10 +259,21 @@ void E_Vk_MakeDevice()
     features.samplerAnisotropy = 1;
     features.fillModeNonSolid = 1;
     features.geometryShader = 1;
+    features.pipelineStatisticsQuery = 1;
+
+    rhi.physical_device.features.features = features;
+
+    VkPhysicalDeviceMeshShaderFeaturesNV mesh_shader_features = { 0 };
+    mesh_shader_features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_NV;
+    mesh_shader_features.taskShader = VK_TRUE;
+    mesh_shader_features.meshShader = VK_TRUE;
 
     VkPhysicalDeviceDynamicRenderingFeaturesKHR dynamic_features = { 0 };
     dynamic_features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES_KHR;
     dynamic_features.dynamicRendering = 1;
+    dynamic_features.pNext = &mesh_shader_features;
+
+    rhi.physical_device.features.pNext = &dynamic_features;
 
     u32 extension_count = 0;
     vkEnumerateDeviceExtensionProperties(rhi.physical_device.handle, NULL, &extension_count, NULL);
@@ -298,10 +312,6 @@ void E_Vk_MakeDevice()
         free(properties);
     }
 
-    VkPhysicalDeviceDynamicRenderingFeaturesKHR dynamic_rendering_features = { 0 };
-    dynamic_rendering_features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES_KHR;
-    dynamic_rendering_features.dynamicRendering = VK_TRUE;
-
     VkDeviceQueueCreateInfo queue_create_infos[2] = {graphics_queue_create_info, compute_queue_create_info};
     i32 queue_create_info_count = 2;
 
@@ -309,10 +319,9 @@ void E_Vk_MakeDevice()
     create_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
     create_info.queueCreateInfoCount = 2;
     create_info.pQueueCreateInfos = queue_create_infos;
-    create_info.pEnabledFeatures = &features;
     create_info.enabledExtensionCount = rhi.device.extension_count;
     create_info.ppEnabledExtensionNames = (const char* const*)rhi.device.extensions;
-
+    create_info.pNext = &rhi.physical_device.features;
     if (rhi_settings.enable_debug)
     {
         create_info.enabledLayerCount = rhi.instance.layer_count;
@@ -323,7 +332,6 @@ void E_Vk_MakeDevice()
         create_info.enabledLayerCount = 0;
         create_info.ppEnabledLayerNames = NULL;
     }
-    create_info.pNext = &dynamic_rendering_features;
 
     VkResult result = vkCreateDevice(rhi.physical_device.handle, &create_info, NULL, &rhi.device.handle);
     assert(result == VK_SUCCESS);

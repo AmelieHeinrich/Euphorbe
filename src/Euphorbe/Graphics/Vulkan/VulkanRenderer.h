@@ -34,6 +34,7 @@ struct E_Vk_Data
         u32 graphics_family;
         u32 compute_family;
         VkPhysicalDeviceProperties handle_props;
+        VkPhysicalDeviceFeatures2 features;
     } physical_device;
 
     // Device data
