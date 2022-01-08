@@ -33,7 +33,8 @@ struct E_Vk_Data
         VkPhysicalDevice handle;
         u32 graphics_family;
         u32 compute_family;
-        VkPhysicalDeviceProperties handle_props;
+        VkPhysicalDeviceMeshShaderPropertiesNV mesh_shader_props;
+        VkPhysicalDeviceProperties2 handle_props;
         VkPhysicalDeviceFeatures2 features;
     } physical_device;
 

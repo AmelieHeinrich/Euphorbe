@@ -199,7 +199,11 @@ void E_Vk_MakePhysicalDevice()
         free(devices);
     }
 
-    vkGetPhysicalDeviceProperties(rhi.physical_device.handle, &rhi.physical_device.handle_props);
+    rhi.physical_device.handle_props.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+    rhi.physical_device.mesh_shader_props.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_PROPERTIES_NV;
+
+    rhi.physical_device.handle_props.pNext = &rhi.physical_device.mesh_shader_props;
+    vkGetPhysicalDeviceProperties2(rhi.physical_device.handle, &rhi.physical_device.handle_props);
 
     rhi.physical_device.features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
     vkGetPhysicalDeviceFeatures2(rhi.physical_device.handle, &rhi.physical_device.features);
@@ -829,7 +833,7 @@ void E_Vk_DrawMemoryUsageGUI()
 
 void E_Vk_DrawGraphicsCardInfo()
 {
-    igText("GPU Name: %s", rhi.physical_device.handle_props.deviceName);
+    igText("GPU Name: %s", rhi.physical_device.handle_props.properties.deviceName);
 
     b32 instance_list = igTreeNodeEx_Str("Enabled Instance Extensions", ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_AllowItemOverlap | ImGuiTreeNodeFlags_FramePadding);
     if (instance_list)
@@ -852,13 +856,13 @@ void E_Vk_DrawGraphicsCardInfo()
     b32 device_limits = igTreeNodeEx_Str("Device Limits", ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_AllowItemOverlap | ImGuiTreeNodeFlags_FramePadding);
     if (device_limits)
     {
-        igText("maxSamplerAnisotropy: %f", rhi.physical_device.handle_props.limits.maxSamplerAnisotropy);
-        igText("maxBoundDescriptorSets: %u", rhi.physical_device.handle_props.limits.maxBoundDescriptorSets);
-        igText("maxComputeWorkGroupCount: %u", rhi.physical_device.handle_props.limits.maxComputeWorkGroupCount);
-        igText("maxComputeWorkGroupInvocations: %u", rhi.physical_device.handle_props.limits.maxComputeWorkGroupInvocations);
-        igText("maxComputeWorkGroupSize: %u", rhi.physical_device.handle_props.limits.maxComputeWorkGroupSize);
-        igText("maxDrawIndirectCount: %u", rhi.physical_device.handle_props.limits.maxDrawIndirectCount);
-        igText("timestampPeriod: %f", rhi.physical_device.handle_props.limits.timestampPeriod);
+        igText("maxSamplerAnisotropy: %f", rhi.physical_device.handle_props.properties.limits.maxSamplerAnisotropy);
+        igText("maxBoundDescriptorSets: %u", rhi.physical_device.handle_props.properties.limits.maxBoundDescriptorSets);
+        igText("maxComputeWorkGroupCount: %u", rhi.physical_device.handle_props.properties.limits.maxComputeWorkGroupCount);
+        igText("maxComputeWorkGroupInvocations: %u", rhi.physical_device.handle_props.properties.limits.maxComputeWorkGroupInvocations);
+        igText("maxComputeWorkGroupSize: %u", rhi.physical_device.handle_props.properties.limits.maxComputeWorkGroupSize);
+        igText("maxDrawIndirectCount: %u", rhi.physical_device.handle_props.properties.limits.maxDrawIndirectCount);
+        igText("timestampPeriod: %f", rhi.physical_device.handle_props.properties.limits.timestampPeriod);
 
         igTreePop();
     }
