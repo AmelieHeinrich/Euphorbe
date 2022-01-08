@@ -30,6 +30,7 @@ typedef struct E_RenderGraphNodeVector E_RenderGraphNodeVector;
 struct E_Drawable
 {
 	E_Mesh* mesh;
+	E_MaterialInstance* geometry_instance; // Contains transform, vertex buffer and meshlet buffer
 	E_MaterialInstance* material_instance;
 	mat4 transform;
 };

@@ -111,6 +111,16 @@ void E_CommandBufferDrawIndexed(E_CommandBuffer* cmd, u32 first, u32 count)
 	E_CurrentRendererStatistics.total_triangle_count += count / 3;
 }
 
+void E_CommandBufferDrawMeshlets(E_CommandBuffer* cmd, u32 first, u32 count)
+{
+#ifdef EUPHORBE_WINDOWS
+	E_Vk_CommandBufferDrawMeshlets(cmd->rhi_handle, first, count);
+#endif
+
+	E_CurrentRendererStatistics.total_draw_calls += 1;
+	E_CurrentRendererStatistics.total_meshlet_count += count;
+}
+
 void E_CommandBufferDispatch(E_CommandBuffer* cmd, u32 groupX, u32 groupY, u32 groupZ)
 {
 #ifdef EUPHORBE_WINDOWS

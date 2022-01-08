@@ -267,10 +267,19 @@ void E_Vk_MakeDevice()
 
     rhi.physical_device.features.features = features;
 
+    VkPhysicalDevice16BitStorageFeatures features16 = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_16BIT_STORAGE_FEATURES };
+    features16.storageBuffer16BitAccess = true;
+
+    VkPhysicalDevice8BitStorageFeaturesKHR features8 = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_8BIT_STORAGE_FEATURES_KHR };
+    features8.storageBuffer8BitAccess = true;
+    features8.uniformAndStorageBuffer8BitAccess = true;
+    features8.pNext = &features16;
+
     VkPhysicalDeviceMeshShaderFeaturesNV mesh_shader_features = { 0 };
     mesh_shader_features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_NV;
     mesh_shader_features.taskShader = VK_TRUE;
     mesh_shader_features.meshShader = VK_TRUE;
+    mesh_shader_features.pNext = &features8;
 
     VkPhysicalDeviceDynamicRenderingFeaturesKHR dynamic_features = { 0 };
     dynamic_features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES_KHR;
@@ -310,8 +319,16 @@ void E_Vk_MakeDevice()
             if (!strcmp(VK_NV_MESH_SHADER_EXTENSION_NAME, properties[i].extensionName)) {
                 rhi.device.extensions[rhi.device.extension_count++] = VK_NV_MESH_SHADER_EXTENSION_NAME;
             }
+
+            if (!strcmp(VK_KHR_16BIT_STORAGE_EXTENSION_NAME, properties[i].extensionName)) {
+                rhi.device.extensions[rhi.device.extension_count++] = VK_KHR_16BIT_STORAGE_EXTENSION_NAME;
+            }
+
+            if (!strcmp(VK_KHR_8BIT_STORAGE_EXTENSION_NAME, properties[i].extensionName)) {
+                rhi.device.extensions[rhi.device.extension_count++] = VK_KHR_8BIT_STORAGE_EXTENSION_NAME;
+            }
         }
-        assert(rhi.device.extension_count == 5);
+        assert(rhi.device.extension_count == 7);
 
         free(properties);
     }

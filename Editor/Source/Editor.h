@@ -34,6 +34,7 @@ struct EditorData
 	b32 is_viewport_hovered;
 	f32 last_frame;
 	b32 running;
+	b32 mesh_shader_enabled;
 
 	// Render state
 	E_RenderGraph* graph;
@@ -45,7 +46,7 @@ struct EditorData
 	E_RenderGraphNode* final_blit_node;
 
 	// Textured mesh
-	E_ResourceFile* mesh;
+	E_Mesh* mesh;
 
 	E_ResourceFile* albedo_texture;
 	E_ResourceFile* metallic_roughness_texture;
@@ -54,6 +55,7 @@ struct EditorData
 
 	E_Buffer* transform_buffer;
 	E_Buffer* material_settings;
+
 	b32 material_buffer[4];
 	E_MaterialInstance* material_instance;
 

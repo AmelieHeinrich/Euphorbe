@@ -54,6 +54,7 @@ struct E_RendererStats
     u32 total_vertex_count;
     u32 total_index_count;
     u32 total_triangle_count;
+    u32 total_meshlet_count;
     u32 total_draw_calls;
 };
 

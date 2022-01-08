@@ -499,7 +499,7 @@ E_VulkanMaterialInstance* E_Vk_CreateMaterialInstance(E_VulkanMaterial* material
     return material_instance;
 }
 
-void E_Vk_MaterialInstanceWriteBuffer(E_VulkanMaterialInstance* instance, i32 binding, E_VulkanBuffer* buffer, i32 buffer_size)
+void E_Vk_MaterialInstanceWriteBuffer(E_VulkanMaterialInstance* instance, i32 binding, E_VulkanBuffer* buffer, i64 buffer_size)
 {
     VkDescriptorBufferInfo buffer_info = { 0 };
     buffer_info.buffer = buffer->buffer;
@@ -518,7 +518,7 @@ void E_Vk_MaterialInstanceWriteBuffer(E_VulkanMaterialInstance* instance, i32 bi
     vkUpdateDescriptorSets(rhi.device.handle, 1, &write, 0, NULL);
 }
 
-void E_Vk_MaterialInstanceWriteStorageBuffer(E_VulkanMaterialInstance* instance, i32 binding, E_VulkanBuffer* buffer, i32 buffer_size)
+void E_Vk_MaterialInstanceWriteStorageBuffer(E_VulkanMaterialInstance* instance, i32 binding, E_VulkanBuffer* buffer, i64 buffer_size)
 {
     VkDescriptorBufferInfo buffer_info = { 0 };
     buffer_info.buffer = buffer->buffer;

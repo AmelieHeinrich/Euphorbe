@@ -36,6 +36,7 @@ void E_CommandBufferBindMaterialInstance(E_CommandBuffer* cmd, E_MaterialInstanc
 void E_CommandBufferBindComputeMaterialInstance(E_CommandBuffer* cmd, E_MaterialInstance* instance, E_Material* material, i32 set_index);
 void E_CommandBufferDraw(E_CommandBuffer* cmd, u32 first, u32 count);
 void E_CommandBufferDrawIndexed(E_CommandBuffer* cmd, u32 first, u32 count);
+void E_CommandBufferDrawMeshlets(E_CommandBuffer* cmd, u32 first, u32 count);
 void E_CommandBufferDispatch(E_CommandBuffer* cmd, u32 groupX, u32 groupY, u32 groupZ);
 void E_CommandBufferStartRender(E_CommandBuffer* cmd, E_ImageAttachment* attachments, i32 attachment_count, vec2 render_size, b32 has_depth);
 void E_CommandBufferEndRender(E_CommandBuffer* cmd);

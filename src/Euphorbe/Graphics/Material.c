@@ -316,14 +316,14 @@ E_MaterialInstance* E_CreateMaterialInstance(E_Material* material, i32 set_layou
 	return instance;
 }
 
-void E_MaterialInstanceWriteBuffer(E_MaterialInstance* instance, i32 binding, E_Buffer* buffer, i32 buffer_size)
+void E_MaterialInstanceWriteBuffer(E_MaterialInstance* instance, i32 binding, E_Buffer* buffer, i64 buffer_size)
 {
 #ifdef EUPHORBE_WINDOWS
 	E_Vk_MaterialInstanceWriteBuffer((E_VulkanMaterialInstance*)instance->rhi_handle, binding, (E_VulkanBuffer*)buffer->rhi_handle, buffer_size);
 #endif
 }
 
-void E_MaterialInstanceWriteStorageBuffer(E_MaterialInstance* instance, i32 binding, E_Buffer* buffer, i32 buffer_size)
+void E_MaterialInstanceWriteStorageBuffer(E_MaterialInstance* instance, i32 binding, E_Buffer* buffer, i64 buffer_size)
 {
 #ifdef EUPHORBE_WINDOWS
 	E_Vk_MaterialInstanceWriteStorageBuffer(instance->rhi_handle, binding, buffer->rhi_handle, buffer_size);

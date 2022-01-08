@@ -16,7 +16,7 @@ void EditorCleanup()
 
     E_FreeMaterialInstance(editor_state.material_instance);
 
-    E_FreeResource(editor_state.mesh);
+    E_FreeMesh(editor_state.mesh);
     E_FreeResource(editor_state.ao_texture);
     E_FreeResource(editor_state.normal_texture);
     E_FreeResource(editor_state.metallic_roughness_texture);
@@ -76,6 +76,7 @@ void EditorInitialiseWindow()
 
     editor_state.running = 1;
     editor_state.execute_info.cvar_table_ptr = &editor_state.cvar_sys;
+    editor_state.mesh_shader_enabled = E_GetCVar(&editor_state.cvar_sys, "enable_mesh_shaders").u.b;
 
     // Initialise Euphorbe
     E_RendererInitSettings settings = { 0 };
@@ -125,12 +126,15 @@ void EditorInitialiseTexturedMesh()
     editor_state.normal_texture = E_LoadResource("Assets/Textures/paving.png", E_ResourceTypeTexture); // No normal maps for suzanne
     editor_state.ao_texture = E_LoadResource("Assets/Textures/paving2.png", E_ResourceTypeTexture); // No AO for suzanne
 
-    // End upload
-    editor_state.mesh = E_LoadResource("Assets/Models/Suzanne.gltf", E_ResourceTypeMesh);
-    editor_state.material_instance = E_CreateMaterialInstance(GetGeometryNodeMaterial(editor_state.geometry_node)->as.material, 0);
+    editor_state.mesh = E_LoadMesh(GetGeometryNodeMaterial(editor_state.geometry_node)->as.material, "Assets/Models/Suzanne.gltf");
 
     editor_state.transform_buffer = E_CreateUniformBuffer(sizeof(editor_state.execute_info.drawables[0].transform));
     E_SetBufferData(editor_state.transform_buffer, &editor_state.execute_info.drawables[0].transform, sizeof(editor_state.execute_info.drawables[0].transform));
+
+    if (editor_state.mesh_shader_enabled)
+        editor_state.material_instance = E_CreateMaterialInstance(GetGeometryNodeMaterial(editor_state.geometry_node)->as.material, 1);
+    else
+        editor_state.material_instance = E_CreateMaterialInstance(GetGeometryNodeMaterial(editor_state.geometry_node)->as.material, 0);
 
     editor_state.material_settings = E_CreateUniformBuffer(sizeof(vec4));
     E_SetBufferData(editor_state.material_settings, &editor_state.material_buffer, sizeof(vec4));
@@ -143,7 +147,7 @@ void EditorInitialiseTexturedMesh()
     E_MaterialInstanceWriteSampledImage(editor_state.material_instance, 5, editor_state.normal_texture->as.image);
     E_MaterialInstanceWriteSampledImage(editor_state.material_instance, 6, editor_state.ao_texture->as.image);
 
-    editor_state.execute_info.drawables[0].mesh = editor_state.mesh->as.mesh;
+    editor_state.execute_info.drawables[0].mesh = editor_state.mesh;
     editor_state.execute_info.drawables[0].material_instance = editor_state.material_instance;
     glm_mat4_identity(editor_state.execute_info.drawables[0].transform);
     editor_state.execute_info.drawable_count++;

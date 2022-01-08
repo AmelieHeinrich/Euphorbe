@@ -33,6 +33,7 @@ void E_Vk_CommandBufferBindMaterialInstance(E_VulkanCommandBuffer* cmd, E_Vulkan
 void E_Vk_CommandBufferBindComputeMaterialInstance(E_VulkanCommandBuffer* cmd, E_VulkanMaterialInstance* instance, E_VulkanMaterial* material, i32 set_index);
 void E_Vk_CommandBufferDraw(E_VulkanCommandBuffer* cmd, u32 first, u32 count);
 void E_Vk_CommandBufferDrawIndexed(E_VulkanCommandBuffer* cmd, u32 first, u32 count);
+void E_Vk_CommandBufferDrawMeshlets(E_VulkanCommandBuffer* cmd, u32 start, u32 count);
 void E_Vk_CommandBufferDispatch(E_VulkanCommandBuffer* cmd, u32 groupX, u32 groupY, u32 groupZ);
 void E_Vk_CommandBufferStartRender(E_VulkanCommandBuffer* cmd, E_ImageAttachment* attachments, i32 attachment_count, vec2 render_size, b32 has_depth);
 void E_Vk_CommandBufferEndRender(E_VulkanCommandBuffer* cmd);

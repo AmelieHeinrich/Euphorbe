@@ -174,6 +174,11 @@ void E_Vk_CommandBufferDrawIndexed(E_VulkanCommandBuffer* cmd, u32 first, u32 co
     vkCmdDrawIndexed(cmd->handle, count, 1, 0, 0, 0);
 }
 
+void E_Vk_CommandBufferDrawMeshlets(E_VulkanCommandBuffer* cmd, u32 start, u32 count)
+{
+    vkCmdDrawMeshTasksNV(cmd->handle, count, start);
+}
+
 void E_Vk_CommandBufferDispatch(E_VulkanCommandBuffer* cmd, u32 groupX, u32 groupY, u32 groupZ)
 {
     vkCmdDispatch(cmd->handle, groupX, groupY, groupZ);

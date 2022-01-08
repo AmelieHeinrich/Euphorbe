@@ -3,7 +3,7 @@
 	DepthOperation = "Less"
 	FrontFace = "CCW"
 	PrimitiveTopology = "TriangleList"
-	PolygonMode = "Fill"
+	PolygonMode = "Line"
 
 [RenderInfo]
 	ColorAttachmentCount = 1
@@ -13,12 +13,12 @@
 [Shaders]
 	EnableMeshShaders = true
 	Mesh = "Assets/Shaders/Geometry/Mesh.glsl"
-	Fragment = "Assets/Shaders/Geometry/Fragment.glsl"
+	Fragment = "Assets/Shaders/Geometry/MeshFragment.glsl"
 
 [DescriptorLayout]
 	DescriptorSetLayouts = [
-		[ ["UniformBuffer", "StorageBuffer", "StorageBuffer"], 3],
-		[ ["UniformBuffer", "Sampler", "SampledImage", "SampledImage", "SampledImage", "SampledImage"], 6], 
+		[ ["StorageBuffer", "StorageBuffer"], 2],
+		[ ["UniformBuffer", "UniformBuffer", "Sampler", "SampledImage", "SampledImage", "SampledImage", "SampledImage"], 7], 
 		[ ["UniformBuffer", "Sampler", "Sampler", "SampledImage", "SampledImage", "SampledImage", "SampledImage", "SampledImage"], 7]
 	]
 	DescriptorSetLayoutCount = 3

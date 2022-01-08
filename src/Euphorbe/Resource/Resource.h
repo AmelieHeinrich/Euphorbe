@@ -3,7 +3,6 @@
 
 #include <Euphorbe/Graphics/ShaderCompiler.h>
 #include <Euphorbe/Graphics/Image.h>
-#include <Euphorbe/Graphics/Mesh.h>
 
 typedef struct E_CommandBuffer E_CommandBuffer;
 
@@ -20,8 +19,7 @@ enum E_ResourceType
     E_ResourceTypeMeshShader,
     E_ResourceTypeTexture,
     E_ResourceTypeMaterial,
-    E_ResourceTypeComputeMaterial,
-    E_ResourceTypeMesh
+    E_ResourceTypeComputeMaterial
 };
 
 typedef struct E_ResourceFile E_ResourceFile;
@@ -35,7 +33,6 @@ struct E_ResourceFile
         E_Shader* shader;
         E_Image* image;
         E_Material* material;
-        E_Mesh* mesh;
     } as;
 };
 

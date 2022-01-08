@@ -122,9 +122,6 @@ E_ResourceFile* E_LoadResource(const char* path, E_ResourceType type)
 	case E_ResourceTypeComputeMaterial:
 		resource->as.material = E_CreateComputeMaterialFromFile(resource->path);
 		break;
-	case E_ResourceTypeMesh:
-		resource->as.mesh = E_LoadMesh(resource->path);
-		break;
 	}
 
 	return resource;
@@ -147,9 +144,6 @@ void E_FreeResource(E_ResourceFile* file)
 	case E_ResourceTypeMaterial:
 	case E_ResourceTypeComputeMaterial:
 		E_FreeMaterial(file->as.material);
-		break;
-	case E_ResourceTypeMesh:
-		E_FreeMesh(file->as.mesh);
 		break;
 	case E_ResourceTypeUndefined:
 		break;
