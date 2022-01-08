@@ -1,4 +1,5 @@
 [Shaders]
+	EnableMeshShaders = false
 	Compute = "Assets/Shaders/EquirectangularCubemap/Compute.glsl"
 
 [DescriptorLayout]

@@ -125,17 +125,37 @@ E_Material* E_CreateMaterialFromFile(const char* path)
 
 	// Shaders
 
-	toml_datum_t vertex_path = toml_string_in(shaders, "Vertex");
-	toml_datum_t fragment_path = toml_string_in(shaders, "Fragment");
+	toml_datum_t mesh_shader_enabled = toml_bool_in(shaders, "EnableMeshShaders");
+	assert(mesh_shader_enabled.ok);
+	material->material_create_info->mesh_shader_enabled = mesh_shader_enabled.u.b;
+	
+	if (!mesh_shader_enabled.u.b)
+	{
+		toml_datum_t vertex_path = toml_string_in(shaders, "Vertex");
+		toml_datum_t fragment_path = toml_string_in(shaders, "Fragment");
 
-	assert(vertex_path.ok);
-	assert(fragment_path.ok);
+		assert(vertex_path.ok);
+		assert(fragment_path.ok);
 
-	material->material_create_info->vertex_shader = E_LoadResource(vertex_path.u.s, E_ResourceTypeVertexShader);
-	material->material_create_info->fragment_shader = E_LoadResource(fragment_path.u.s, E_ResourceTypeFragmentShader);
+		material->material_create_info->vertex_shader = E_LoadResource(vertex_path.u.s, E_ResourceTypeVertexShader);
+		material->material_create_info->fragment_shader = E_LoadResource(fragment_path.u.s, E_ResourceTypeFragmentShader);
 
-	free(vertex_path.u.s);
-	free(fragment_path.u.s);
+		free(vertex_path.u.s);
+		free(fragment_path.u.s);
+	}
+	else
+	{
+		toml_datum_t mesh_path = toml_string_in(shaders, "Mesh");
+		toml_datum_t fragment_path = toml_string_in(shaders, "Fragment");
+
+		assert(mesh_path.ok && fragment_path.ok);
+
+		material->material_create_info->mesh_shader = E_LoadResource(mesh_path.u.s, E_ResourceTypeMeshShader);
+		material->material_create_info->fragment_shader = E_LoadResource(fragment_path.u.s, E_ResourceTypeFragmentShader);
+
+		free(mesh_path.u.s);
+		free(fragment_path.u.s);
+	}
 
 	// Descriptor layout
 
@@ -278,6 +298,7 @@ void E_FreeMaterial(E_Material* material)
 		if (material->material_create_info->vertex_shader) E_FreeResource(material->material_create_info->vertex_shader);
 		if (material->material_create_info->fragment_shader) E_FreeResource(material->material_create_info->fragment_shader);
 		if (material->material_create_info->compute_shader) E_FreeResource(material->material_create_info->compute_shader);
+		if (material->material_create_info->mesh_shader) E_FreeResource(material->material_create_info->mesh_shader);
 		free(material->material_create_info);
 	}
 	free(material);

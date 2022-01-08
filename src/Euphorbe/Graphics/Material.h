@@ -98,9 +98,11 @@ struct E_MaterialCreateInfo
     E_MaterialRenderInfo render_info;
 
     // Shaders
+    b32 mesh_shader_enabled;
     E_ResourceFile* vertex_shader;
     E_ResourceFile* fragment_shader;
     E_ResourceFile* compute_shader;
+    E_ResourceFile* mesh_shader;
 
     // Descriptors
     E_DescriptorSetLayout descriptor_set_layouts[EUPHORBE_MAX_DESCRIPTORS];

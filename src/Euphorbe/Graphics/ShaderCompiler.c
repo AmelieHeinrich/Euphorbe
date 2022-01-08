@@ -11,12 +11,14 @@ shaderc_shader_kind E_ShaderKindToShaderC(E_ShaderType type)
 	{
 	case E_ShaderTypeVertex:
 		return shaderc_vertex_shader;
-	case E_ShaderTypeFragment:
-		return shaderc_fragment_shader;
 	case E_ShaderTypeGeometry:
 		return shaderc_geometry_shader;
+	case E_ShaderTypeFragment:
+		return shaderc_fragment_shader;
 	case E_ShaderTypeCompute:
 		return shaderc_compute_shader;
+	case E_ShaderTypeMeshNV:
+		return shaderc_mesh_shader;
 	}
 
 	return 0;

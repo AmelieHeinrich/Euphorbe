@@ -6,10 +6,11 @@
 typedef enum E_ShaderType E_ShaderType;
 enum E_ShaderType
 {
-	E_ShaderTypeVertex,
-	E_ShaderTypeFragment,
-	E_ShaderTypeGeometry,
-	E_ShaderTypeCompute
+	E_ShaderTypeVertex = 0x00000001,
+	E_ShaderTypeGeometry = 0x00000008,
+	E_ShaderTypeFragment = 0x00000010,
+	E_ShaderTypeCompute = 0x00000020,
+	E_ShaderTypeMeshNV = 0x00000080
 };
 
 typedef struct E_Shader E_Shader;

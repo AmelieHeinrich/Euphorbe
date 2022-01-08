@@ -178,76 +178,100 @@ E_VulkanMaterial* E_Vk_CreateMaterial(E_MaterialCreateInfo* create_info)
         assert(res == VK_SUCCESS);
     }
 
-    VkShaderModule vertex_module;
-    VkShaderModule fragment_module;
+    VkPipelineShaderStageCreateInfo pipeline_shader_stages[2];
+    memset(pipeline_shader_stages, 0, sizeof(pipeline_shader_stages));
+    const i32 pipeline_shader_stage_count = 2;
 
-    E_Shader* vertex_shader = create_info->vertex_shader->as.shader;
-    E_Shader* fragment_shader = create_info->fragment_shader->as.shader;
+    SpvReflectShaderModule input_layout_reflect;
 
-    E_Vk_MakeShaderModule(&vertex_module, vertex_shader->code, vertex_shader->code_size);
-    E_Vk_MakeShaderModule(&fragment_module, fragment_shader->code, fragment_shader->code_size);
+    VkShaderModule vertex_module = VK_NULL_HANDLE;
+    VkShaderModule fragment_module = VK_NULL_HANDLE;
+    VkShaderModule mesh_module = VK_NULL_HANDLE;
 
-    SpvReflectShaderModule vs_reflect, fs_reflect;
+    if (!create_info->mesh_shader_enabled)
+    {
+        E_Shader* vertex_shader = create_info->vertex_shader->as.shader;
+        E_Shader* fragment_shader = create_info->fragment_shader->as.shader;
 
-    SpvReflectResult reflect_result = spvReflectCreateShaderModule(vertex_shader->code_size, vertex_shader->code, &vs_reflect);
-    assert(reflect_result == SPV_REFLECT_RESULT_SUCCESS);
-    
-    reflect_result = spvReflectCreateShaderModule(fragment_shader->code_size, fragment_shader->code, &fs_reflect);
-    assert(reflect_result == SPV_REFLECT_RESULT_SUCCESS);
+        E_Vk_MakeShaderModule(&vertex_module, vertex_shader->code, vertex_shader->code_size);
+        E_Vk_MakeShaderModule(&fragment_module, fragment_shader->code, fragment_shader->code_size);
 
-    VkPipelineShaderStageCreateInfo vert_shader_stage_info = {0};
-    vert_shader_stage_info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-    vert_shader_stage_info.stage = VK_SHADER_STAGE_VERTEX_BIT;
-    vert_shader_stage_info.module = vertex_module;
-    vert_shader_stage_info.pName = "main";
+        SpvReflectResult reflect_result = spvReflectCreateShaderModule(vertex_shader->code_size, vertex_shader->code, &input_layout_reflect);
+        assert(reflect_result == SPV_REFLECT_RESULT_SUCCESS);
 
-    VkPipelineShaderStageCreateInfo frag_shader_stage_info = {0};
-    frag_shader_stage_info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-    frag_shader_stage_info.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-    frag_shader_stage_info.module = fragment_module;
-    frag_shader_stage_info.pName = "main";
+        pipeline_shader_stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+        pipeline_shader_stages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
+        pipeline_shader_stages[0].module = vertex_module;
+        pipeline_shader_stages[0].pName = "main";
 
-    VkPipelineShaderStageCreateInfo shader_stages[] = { vert_shader_stage_info, frag_shader_stage_info };
+        pipeline_shader_stages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+        pipeline_shader_stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+        pipeline_shader_stages[1].module = fragment_module;
+        pipeline_shader_stages[1].pName = "main";
+    }
+    else
+    {
+        E_Shader* mesh_shader = create_info->mesh_shader->as.shader;
+        E_Shader* fragment_shader = create_info->fragment_shader->as.shader;
+
+        E_Vk_MakeShaderModule(&mesh_module, mesh_shader->code, mesh_shader->code_size);
+        E_Vk_MakeShaderModule(&fragment_module, fragment_shader->code, fragment_shader->code_size);
+
+        pipeline_shader_stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+        pipeline_shader_stages[0].stage = VK_SHADER_STAGE_MESH_BIT_NV;
+        pipeline_shader_stages[0].module = mesh_module;
+        pipeline_shader_stages[0].pName = "main";
+
+        pipeline_shader_stages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+        pipeline_shader_stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+        pipeline_shader_stages[1].module = fragment_module;
+        pipeline_shader_stages[1].pName = "main";
+    }
 
     VkVertexInputBindingDescription vertex_input_binding_desc = {0};
+    VkPipelineVertexInputStateCreateInfo vertex_input_state_info = {0};
+    VkPipelineInputAssemblyStateCreateInfo input_assembly = {0};
+    VkVertexInputAttributeDescription* attribute_descriptions = NULL;
+    SpvReflectInterfaceVariable** vs_input_vars = NULL;
+    vertex_input_state_info.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+    input_assembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
     vertex_input_binding_desc.binding = 0;
     vertex_input_binding_desc.stride = 0; 
     vertex_input_binding_desc.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
-    u32 vs_input_var_count = 0;
-    spvReflectEnumerateInputVariables(&vs_reflect, &vs_input_var_count, 0);
-    SpvReflectInterfaceVariable** vs_input_vars = calloc(vs_input_var_count, sizeof(SpvReflectInterfaceVariable*));
-    spvReflectEnumerateInputVariables(&vs_reflect, &vs_input_var_count, vs_input_vars);
-
-    VkVertexInputAttributeDescription* attribute_descriptions = malloc(sizeof(VkVertexInputAttributeDescription) * vs_input_var_count);
-
-    for (u32 i = 0; i < vs_input_var_count; i++)
+    if (!create_info->mesh_shader_enabled)
     {
-        SpvReflectInterfaceVariable* var = vs_input_vars[i];
+        u32 vs_input_var_count = 0;
+        spvReflectEnumerateInputVariables(&input_layout_reflect, &vs_input_var_count, 0);
+        vs_input_vars = calloc(vs_input_var_count, sizeof(SpvReflectInterfaceVariable*));
+        spvReflectEnumerateInputVariables(&input_layout_reflect, &vs_input_var_count, vs_input_vars);
 
-        VkVertexInputAttributeDescription attrib = { 0 };
+        attribute_descriptions = malloc(sizeof(VkVertexInputAttributeDescription) * vs_input_var_count);
 
-        attrib.location = var->location;
-        attrib.binding = 0;
-        attrib.format = (VkFormat)var->format;
-        attrib.offset = vertex_input_binding_desc.stride;
+        for (u32 i = 0; i < vs_input_var_count; i++)
+        {
+            SpvReflectInterfaceVariable* var = vs_input_vars[i];
 
-        attribute_descriptions[i] = attrib;
+            VkVertexInputAttributeDescription attrib = { 0 };
 
-        vertex_input_binding_desc.stride += E_Vk_FormatSize(attrib.format);
+            attrib.location = var->location;
+            attrib.binding = 0;
+            attrib.format = (VkFormat)var->format;
+            attrib.offset = vertex_input_binding_desc.stride;
+
+            attribute_descriptions[i] = attrib;
+
+            vertex_input_binding_desc.stride += E_Vk_FormatSize(attrib.format);
+        }
+
+        vertex_input_state_info.vertexBindingDescriptionCount = vertex_input_binding_desc.stride == 0 ? 0 : 1;
+        vertex_input_state_info.pVertexBindingDescriptions = &vertex_input_binding_desc;
+        vertex_input_state_info.vertexAttributeDescriptionCount = vs_input_var_count;
+        vertex_input_state_info.pVertexAttributeDescriptions = attribute_descriptions;
+
+        input_assembly.topology = (VkPrimitiveTopology)create_info->primitive_topology;
+        input_assembly.primitiveRestartEnable = VK_FALSE;
     }
-
-    VkPipelineVertexInputStateCreateInfo vertex_input_state_info = {0};
-    vertex_input_state_info.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-    vertex_input_state_info.vertexBindingDescriptionCount = vertex_input_binding_desc.stride == 0 ? 0 : 1;
-    vertex_input_state_info.pVertexBindingDescriptions = &vertex_input_binding_desc;
-    vertex_input_state_info.vertexAttributeDescriptionCount = vs_input_var_count;
-    vertex_input_state_info.pVertexAttributeDescriptions = attribute_descriptions;
-
-    VkPipelineInputAssemblyStateCreateInfo input_assembly = {0};
-    input_assembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-    input_assembly.topology = (VkPrimitiveTopology)create_info->primitive_topology;
-    input_assembly.primitiveRestartEnable = VK_FALSE;
 
     VkDynamicState states[] = {
         VK_DYNAMIC_STATE_VIEWPORT,
@@ -347,10 +371,8 @@ E_VulkanMaterial* E_Vk_CreateMaterial(E_MaterialCreateInfo* create_info)
 
     VkGraphicsPipelineCreateInfo pipeline_info = {0};
     pipeline_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-    pipeline_info.stageCount = 2;
-    pipeline_info.pStages = shader_stages;
-    pipeline_info.pVertexInputState = &vertex_input_state_info;
-    pipeline_info.pInputAssemblyState = &input_assembly;
+    pipeline_info.stageCount = pipeline_shader_stage_count;
+    pipeline_info.pStages = pipeline_shader_stages;
     pipeline_info.pViewportState = &viewport_state;
     pipeline_info.pRasterizationState = &rasterizer;
     pipeline_info.pMultisampleState = &multisampling;
@@ -363,16 +385,25 @@ E_VulkanMaterial* E_Vk_CreateMaterial(E_MaterialCreateInfo* create_info)
     pipeline_info.basePipelineHandle = VK_NULL_HANDLE;
     pipeline_info.pNext = &rendering_create_info;
 
+    if (!create_info->mesh_shader_enabled)
+    {
+        pipeline_info.pVertexInputState = &vertex_input_state_info;
+        pipeline_info.pInputAssemblyState = &input_assembly;
+    }
+
     res = vkCreateGraphicsPipelines(rhi.device.handle, VK_NULL_HANDLE, 1, &pipeline_info, NULL, &result->pipeline);
     assert(res == VK_SUCCESS);
 
-    free(attribute_descriptions);
-    free(vs_input_vars);
+    if (!create_info->mesh_shader_enabled)
+    {
+        free(attribute_descriptions);
+        free(vs_input_vars);
+        spvReflectDestroyShaderModule(&input_layout_reflect);
+    }
 
-    spvReflectDestroyShaderModule(&vs_reflect);
-    spvReflectDestroyShaderModule(&fs_reflect);
-    vkDestroyShaderModule(rhi.device.handle, vertex_module, NULL);
-    vkDestroyShaderModule(rhi.device.handle, fragment_module, NULL);
+    if (vertex_module) vkDestroyShaderModule(rhi.device.handle, vertex_module, NULL);
+    if (fragment_module) vkDestroyShaderModule(rhi.device.handle, fragment_module, NULL);
+    if (mesh_module) vkDestroyShaderModule(rhi.device.handle, mesh_module, NULL);
 
     return result;
 }
