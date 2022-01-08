@@ -69,7 +69,8 @@ enum E_DescriptorType
     E_DescriptorTypeCombinedImageSampler = 1,
     E_DescriptorTypeSampledImage = 2,
     E_DescriptorTypeStorageImage = 3,
-    E_DescriptorTypeUniformBuffer = 6
+    E_DescriptorTypeUniformBuffer = 6,
+    E_DescriptorTypeStorageBuffer = 7
 };
 
 typedef struct E_Descriptor E_Descriptor;
@@ -137,6 +138,7 @@ void E_FreeMaterial(E_Material* material);
 // Instances
 E_MaterialInstance* E_CreateMaterialInstance(E_Material* material, i32 set_layout_index);
 void E_MaterialInstanceWriteBuffer(E_MaterialInstance* instance, i32 binding, E_Buffer* buffer, i32 buffer_size);
+void E_MaterialInstanceWriteStorageBuffer(E_MaterialInstance* instance, i32 binding, E_Buffer* buffer, i32 buffer_size);
 void E_MaterialInstanceWriteSampler(E_MaterialInstance* instance, i32 binding, E_Sampler* sampler);
 void E_MaterialInstanceWriteSampledImage(E_MaterialInstance* instance, i32 binding, E_Image* image);
 void E_MaterialInstanceWriteImage(E_MaterialInstance* instance, i32 binding, E_Image* image, E_Sampler* sampler);

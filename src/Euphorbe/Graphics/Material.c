@@ -323,6 +323,13 @@ void E_MaterialInstanceWriteBuffer(E_MaterialInstance* instance, i32 binding, E_
 #endif
 }
 
+void E_MaterialInstanceWriteStorageBuffer(E_MaterialInstance* instance, i32 binding, E_Buffer* buffer, i32 buffer_size)
+{
+#ifdef EUPHORBE_WINDOWS
+	E_Vk_MaterialInstanceWriteStorageBuffer(instance->rhi_handle, binding, buffer->rhi_handle, buffer_size);
+#endif
+}
+
 void E_MaterialInstanceWriteSampler(E_MaterialInstance* instance, i32 binding, E_Sampler* sampler)
 {
 #ifdef EUPHORBE_WINDOWS
@@ -455,6 +462,8 @@ E_DescriptorType E_GetDescriptorTypeFromString(const char* str)
 		return E_DescriptorTypeSampledImage;
 	if (!strcmp(str, "Sampler"))
 		return E_DescriptorTypeSampler;
+	if (!strcmp(str, "StorageBuffer"))
+		return E_DescriptorTypeStorageBuffer;
 
 	return 0;
 }

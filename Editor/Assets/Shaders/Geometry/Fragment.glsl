@@ -5,11 +5,12 @@
 
 layout (location = 0) out vec4 OutColor;
 
-layout (location = 0) in vec3 OutPos;
-layout (location = 1) in vec2 OutUV;
-layout (location = 2) in vec3 OutNormals;
-layout (location = 3) in vec3 WorldPos;
-layout (location = 4) in vec3 CameraPos;
+layout (location = 0) in PerVertexData {
+	vec2 OutUV;
+	vec3 OutNormals;
+	vec3 WorldPos;
+	vec3 CameraPos;
+} FragmentIn;
 
 struct PointLight
 {
@@ -44,14 +45,14 @@ layout (binding = 6, set = 1) uniform texture2D brdfLut;
 
 vec3 GetNormalFromMap()
 {
-    vec3 tangentNormal = texture(sampler2D(NormalTexture, TextureSampler), OutUV).xyz * 2.0 - 1.0;
+    vec3 tangentNormal = texture(sampler2D(NormalTexture, TextureSampler), FragmentIn.OutUV).xyz * 2.0 - 1.0;
 
-    vec3 Q1  = dFdx(WorldPos);
-    vec3 Q2  = dFdy(WorldPos);
-    vec2 st1 = dFdx(OutUV);
-    vec2 st2 = dFdy(OutUV);
+    vec3 Q1  = dFdx(FragmentIn.WorldPos);
+    vec3 Q2  = dFdy(FragmentIn.WorldPos);
+    vec2 st1 = dFdx(FragmentIn.OutUV);
+    vec2 st2 = dFdy(FragmentIn.OutUV);
 
-    vec3 N   = normalize(OutNormals);
+    vec3 N   = normalize(FragmentIn.OutNormals);
     vec3 T  = normalize(Q1*st2.t - Q2*st1.t);
     vec3 B  = -normalize(cross(N, T));
     mat3 TBN = mat3(T, B, N);
@@ -109,27 +110,25 @@ void main()
     vec3 albedo;
 
     if (settings.has_albedo)
-        albedo = pow(texture(sampler2D(AlbedoTexture, TextureSampler), OutUV).rgb, vec3(2.2));
+        albedo = pow(texture(sampler2D(AlbedoTexture, TextureSampler), FragmentIn.OutUV).rgb, vec3(2.2));
     else
         albedo = vec3(0.0f);
 
     float metallic = 1.0f;
     float roughness = 1.0f;
     float ao = 1.0f;
-    vec3 N = normalize(OutNormals);
+    vec3 N = normalize(FragmentIn.OutNormals);
 
     if (settings.has_metallic_roughness)
     {
-        metallic = texture(sampler2D(MetallicRoughnessTexture, TextureSampler), OutUV).b;
-        roughness = texture(sampler2D(MetallicRoughnessTexture, TextureSampler), OutUV).g;
+        metallic = texture(sampler2D(MetallicRoughnessTexture, TextureSampler), FragmentIn.OutUV).b;
+        roughness = texture(sampler2D(MetallicRoughnessTexture, TextureSampler), FragmentIn.OutUV).g;
     }
     if (settings.has_normal)
         N = GetNormalFromMap();
-    if (settings.has_ao)
-        ao = texture(sampler2D(AOTexture, TextureSampler), OutUV).r;
 
     // Calculate color
-    vec3 V = normalize(CameraPos - WorldPos);
+    vec3 V = normalize(FragmentIn.CameraPos - FragmentIn.WorldPos);
     vec3 R = reflect(-V, N); 
 
     vec3 F0 = vec3(0.04); 
@@ -139,7 +138,7 @@ void main()
     for(int i = 0; i < MAX_LIGHT_COUNT; i++) 
     {
         // calculate per-light radiance
-        vec3 L = normalize(light_settings.lights[i].position.xyz - WorldPos);
+        vec3 L = normalize(light_settings.lights[i].position.xyz - FragmentIn.WorldPos);
         vec3 H = normalize(V + L);
         float distance = length(L);
         float attenuation = 1.0 / (distance * distance);
@@ -154,7 +153,7 @@ void main()
         float denominator = 4 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001; // + 0.0001 to prevent divide by zero
         vec3 specular = numerator / denominator;
         
-         // kS is equal to Fresnel
+        // kS is equal to Fresnel
         vec3 kS = F;
         // for energy conservation, the diffuse and specular light can't
         // be above 1.0 (unless the surface emits light); to preserve this

@@ -1,0 +1,28 @@
+[MaterialProperties]
+	CullMode = "Back"
+	DepthOperation = "Less"
+	FrontFace = "CCW"
+	PrimitiveTopology = "TriangleList"
+	PolygonMode = "Fill"
+
+[RenderInfo]
+	ColorAttachmentCount = 1
+	DepthFormat = "D32_Float"
+	ColorFormats = ["RGBA16"]
+
+[Shaders]
+	EnableMeshShaders = true
+	Mesh = "Assets/Shaders/Geometry/Mesh.glsl"
+	Fragment = "Assets/Shaders/Geometry/Fragment.glsl"
+
+[DescriptorLayout]
+	DescriptorSetLayouts = [
+		[ ["UniformBuffer", "StorageBuffer", "StorageBuffer"], 3],
+		[ ["UniformBuffer", "Sampler", "SampledImage", "SampledImage", "SampledImage", "SampledImage"], 6], 
+		[ ["UniformBuffer", "Sampler", "Sampler", "SampledImage", "SampledImage", "SampledImage", "SampledImage", "SampledImage"], 7]
+	]
+	DescriptorSetLayoutCount = 3
+
+[PushConstants]
+	HasPushConstants = 1
+	Size = 144

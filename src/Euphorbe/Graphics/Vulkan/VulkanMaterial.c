@@ -518,6 +518,25 @@ void E_Vk_MaterialInstanceWriteBuffer(E_VulkanMaterialInstance* instance, i32 bi
     vkUpdateDescriptorSets(rhi.device.handle, 1, &write, 0, NULL);
 }
 
+void E_Vk_MaterialInstanceWriteStorageBuffer(E_VulkanMaterialInstance* instance, i32 binding, E_VulkanBuffer* buffer, i32 buffer_size)
+{
+    VkDescriptorBufferInfo buffer_info = { 0 };
+    buffer_info.buffer = buffer->buffer;
+    buffer_info.offset = 0;
+    buffer_info.range = buffer_size;
+
+    VkWriteDescriptorSet write = { 0 };
+    write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    write.descriptorCount = 1;
+    write.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+    write.dstBinding = binding;
+    write.dstArrayElement = 0;
+    write.dstSet = instance->set;
+    write.pBufferInfo = &buffer_info;
+
+    vkUpdateDescriptorSets(rhi.device.handle, 1, &write, 0, NULL);
+}
+
 void E_Vk_MaterialInstanceWriteSampler(E_VulkanMaterialInstance* instance, i32 binding, E_VulkanSampler* sampler)
 {
     VkDescriptorImageInfo image_info = { 0 };
