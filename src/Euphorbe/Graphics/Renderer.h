@@ -47,6 +47,18 @@ struct E_PointLight
     vec4 color;
 };
 
+// Renderer stats 
+typedef struct E_RendererStats E_RendererStats;
+struct E_RendererStats
+{
+    u32 total_vertex_count;
+    u32 total_index_count;
+    u32 total_triangle_count;
+    u32 total_draw_calls;
+};
+
+extern E_RendererStats E_CurrentRendererStatistics;
+
 void E_RendererInit(E_Window* window, E_RendererInitSettings settings);
 void E_RendererShutdown();
 
@@ -54,6 +66,7 @@ void E_RendererBegin();
 void E_RendererEnd();
 void E_RendererWait();
 void E_RendererDrawMemoryUsageGUI();
+void E_RendererDrawRendererStats();
 
 E_Image* E_GetSwapchainImage();
 u32 E_GetSwapchainImageIndex();

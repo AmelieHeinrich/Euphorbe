@@ -4,6 +4,8 @@
     #include "Vulkan/VulkanRenderer.h"
 #endif
 
+E_RendererStats E_CurrentRendererStatistics;
+
 void E_RendererInit(E_Window* window, E_RendererInitSettings settings)
 {
 #ifdef EUPHORBE_WINDOWS
@@ -20,6 +22,11 @@ void E_RendererShutdown()
 
 void E_RendererBegin()
 {
+    E_CurrentRendererStatistics.total_draw_calls = 0;
+    E_CurrentRendererStatistics.total_index_count = 0;
+    E_CurrentRendererStatistics.total_vertex_count = 0;
+    E_CurrentRendererStatistics.total_triangle_count = 0;
+
 #ifdef EUPHORBE_WINDOWS
     E_Vk_Begin();
 #endif
@@ -44,6 +51,14 @@ void E_RendererDrawMemoryUsageGUI()
 #ifdef EUPHORBE_WINDOWS
     E_Vk_DrawMemoryUsageGUI();
 #endif
+}
+
+void E_RendererDrawRendererStats()
+{
+    igText("Vertices: %d", E_CurrentRendererStatistics.total_vertex_count);
+    igText("Indices: %d", E_CurrentRendererStatistics.total_index_count);
+    igText("Triangles: %d", E_CurrentRendererStatistics.total_triangle_count);
+    igText("Draw Calls: %d", E_CurrentRendererStatistics.total_draw_calls);
 }
 
 E_Image* E_GetSwapchainImage()

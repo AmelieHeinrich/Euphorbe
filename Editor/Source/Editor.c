@@ -249,9 +249,7 @@ void EditorDrawGUI()
         b32 render_stats = igTreeNodeEx_Str("Renderer Stats", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_AllowItemOverlap | ImGuiTreeNodeFlags_FramePadding);
         if (render_stats)
         {
-            igText("Triangle: %d", editor_state.mesh->as.mesh->total_tri_count);
-            igText("Vertices: %d", editor_state.mesh->as.mesh->total_vertex_count);
-            igText("Indices: %d", editor_state.mesh->as.mesh->total_index_count);
+            E_RendererDrawRendererStats();
             igTreePop();
         }
 
@@ -267,7 +265,7 @@ void EditorDrawGUI()
 
     // Render Graph Viewer
     {
-        igBegin("Render Graph Viewer", NULL, ImGuiWindowFlags_None);
+        igBegin("Scene Renderer", NULL, ImGuiWindowFlags_None);
         GeometryNodeDrawGUI(editor_state.geometry_node);
         FXAANodeDrawGUI(editor_state.fxaa_node);
         TonemappingNodeDrawGUI(editor_state.tonemapping_node);

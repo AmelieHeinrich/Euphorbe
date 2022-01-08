@@ -4,6 +4,8 @@
 	#include <Euphorbe/Graphics/Vulkan/VulkanCommandBuffer.h>
 #endif
 
+#include "Renderer.h"
+
 E_CommandBuffer* E_CreateCommandBuffer(E_CommandBufferType type)
 {
 	E_CommandBuffer* cmd_buf = malloc(sizeof(E_CommandBuffer));
@@ -90,6 +92,11 @@ void E_CommandBufferDraw(E_CommandBuffer* cmd, u32 first, u32 count)
 #ifdef EUPHORBE_WINDOWS
 	E_Vk_CommandBufferDraw(cmd->rhi_handle, first, count);
 #endif
+
+	E_CurrentRendererStatistics.total_draw_calls += 1;
+	E_CurrentRendererStatistics.total_vertex_count += count;
+	E_CurrentRendererStatistics.total_index_count += count / 6;
+	E_CurrentRendererStatistics.total_triangle_count += count / 3;
 }
 
 void E_CommandBufferDrawIndexed(E_CommandBuffer* cmd, u32 first, u32 count)
@@ -97,6 +104,11 @@ void E_CommandBufferDrawIndexed(E_CommandBuffer* cmd, u32 first, u32 count)
 #ifdef EUPHORBE_WINDOWS
 	E_Vk_CommandBufferDrawIndexed(cmd->rhi_handle, first, count);
 #endif
+
+	E_CurrentRendererStatistics.total_draw_calls += 1;
+	E_CurrentRendererStatistics.total_vertex_count += count * 6;
+	E_CurrentRendererStatistics.total_index_count += count;
+	E_CurrentRendererStatistics.total_triangle_count += count / 3;
 }
 
 void E_CommandBufferDispatch(E_CommandBuffer* cmd, u32 groupX, u32 groupY, u32 groupZ)

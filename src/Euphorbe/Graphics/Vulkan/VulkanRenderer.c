@@ -808,6 +808,7 @@ void E_Vk_DrawMemoryUsageGUI()
     igText("Used: %d mb", stats.total.usedBytes / 1024 / 1024);
     igText("Unused: %d mb", stats.total.unusedBytes / 1024 / 1024);
     igText("Allocation Count: %d", stats.total.allocationCount);
+    igText("Memory block count: %d", stats.total.blockCount);
 }
 
 void E_Vk_BeginGUI()
