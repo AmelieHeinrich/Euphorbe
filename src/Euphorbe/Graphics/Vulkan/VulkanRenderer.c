@@ -284,8 +284,16 @@ void E_Vk_MakeDevice()
             if (!strcmp(VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME, properties[i].extensionName)) {
                 rhi.device.extensions[rhi.device.extension_count++] = VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME;
             }
+
+            if (!strcmp(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME, properties[i].extensionName)) {
+                rhi.device.extensions[rhi.device.extension_count++] = VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME;
+            }
+
+            if (!strcmp(VK_NV_MESH_SHADER_EXTENSION_NAME, properties[i].extensionName)) {
+                rhi.device.extensions[rhi.device.extension_count++] = VK_NV_MESH_SHADER_EXTENSION_NAME;
+            }
         }
-        assert(rhi.device.extension_count == 3);
+        assert(rhi.device.extension_count == 5);
 
         free(properties);
     }
@@ -809,6 +817,43 @@ void E_Vk_DrawMemoryUsageGUI()
     igText("Unused: %d mb", stats.total.unusedBytes / 1024 / 1024);
     igText("Allocation Count: %d", stats.total.allocationCount);
     igText("Memory block count: %d", stats.total.blockCount);
+}
+
+void E_Vk_DrawGraphicsCardInfo()
+{
+    igText("GPU Name: %s", rhi.physical_device.handle_props.deviceName);
+
+    b32 instance_list = igTreeNodeEx_Str("Enabled Instance Extensions", ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_AllowItemOverlap | ImGuiTreeNodeFlags_FramePadding);
+    if (instance_list)
+    {
+        for (i32 i = 0; i < rhi.instance.extension_count; i++)
+            igText("- %s", rhi.instance.extensions[i]);
+
+        igTreePop();
+    }
+
+    b32 extension_list = igTreeNodeEx_Str("Enabled Device Extensions", ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_AllowItemOverlap | ImGuiTreeNodeFlags_FramePadding);
+    if (extension_list)
+    {
+        for (i32 i = 0; i < rhi.device.extension_count; i++)
+            igText("- %s", rhi.device.extensions[i]);
+
+        igTreePop();
+    }
+
+    b32 device_limits = igTreeNodeEx_Str("Device Limits", ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_AllowItemOverlap | ImGuiTreeNodeFlags_FramePadding);
+    if (device_limits)
+    {
+        igText("maxSamplerAnisotropy: %f", rhi.physical_device.handle_props.limits.maxSamplerAnisotropy);
+        igText("maxBoundDescriptorSets: %u", rhi.physical_device.handle_props.limits.maxBoundDescriptorSets);
+        igText("maxComputeWorkGroupCount: %u", rhi.physical_device.handle_props.limits.maxComputeWorkGroupCount);
+        igText("maxComputeWorkGroupInvocations: %u", rhi.physical_device.handle_props.limits.maxComputeWorkGroupInvocations);
+        igText("maxComputeWorkGroupSize: %u", rhi.physical_device.handle_props.limits.maxComputeWorkGroupSize);
+        igText("maxDrawIndirectCount: %u", rhi.physical_device.handle_props.limits.maxDrawIndirectCount);
+        igText("timestampPeriod: %f", rhi.physical_device.handle_props.limits.timestampPeriod);
+
+        igTreePop();
+    }
 }
 
 void E_Vk_BeginGUI()

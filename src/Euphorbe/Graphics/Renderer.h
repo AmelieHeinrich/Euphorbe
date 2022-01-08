@@ -65,8 +65,10 @@ void E_RendererShutdown();
 void E_RendererBegin();
 void E_RendererEnd();
 void E_RendererWait();
+
 void E_RendererDrawMemoryUsageGUI();
 void E_RendererDrawRendererStats();
+void E_RendererDrawGraphicsCardInfo();
 
 E_Image* E_GetSwapchainImage();
 u32 E_GetSwapchainImageIndex();

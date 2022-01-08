@@ -260,6 +260,13 @@ void EditorDrawGUI()
             igTreePop();
         }
 
+        b32 gpu_info = igTreeNodeEx_Str("Graphics card Info", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_AllowItemOverlap | ImGuiTreeNodeFlags_FramePadding);
+        if (gpu_info)
+        {
+            E_RendererDrawGraphicsCardInfo();
+            igTreePop();
+        }
+
         igEnd();
     }
 

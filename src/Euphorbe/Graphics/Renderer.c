@@ -61,6 +61,13 @@ void E_RendererDrawRendererStats()
     igText("Draw Calls: %d", E_CurrentRendererStatistics.total_draw_calls);
 }
 
+void E_RendererDrawGraphicsCardInfo()
+{
+#ifdef EUPHORBE_WINDOWS
+    E_Vk_DrawGraphicsCardInfo();
+#endif
+}
+
 E_Image* E_GetSwapchainImage()
 {
 #ifdef EUPHORBE_WINDOWS
