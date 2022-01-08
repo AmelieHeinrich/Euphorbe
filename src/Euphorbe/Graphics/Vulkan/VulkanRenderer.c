@@ -866,6 +866,25 @@ void E_Vk_DrawGraphicsCardInfo()
 
         igTreePop();
     }
+
+    b32 mesh_shader_limits = igTreeNodeEx_Str("Mesh Shader Limits", ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_AllowItemOverlap | ImGuiTreeNodeFlags_FramePadding);
+    if (mesh_shader_limits)
+    {
+        igText("maxDrawMeshTasksCount: %u", rhi.physical_device.mesh_shader_props.maxDrawMeshTasksCount);
+        igText("maxMeshOutputPrimitives: %u", rhi.physical_device.mesh_shader_props.maxMeshOutputPrimitives);
+        igText("maxMeshOutputVertices: %u", rhi.physical_device.mesh_shader_props.maxMeshOutputVertices);
+        igText("maxMeshTotalMemorySize: %u", rhi.physical_device.mesh_shader_props.maxMeshTotalMemorySize);
+        igText("maxMeshWorkGroupInvocations: %u", rhi.physical_device.mesh_shader_props.maxMeshWorkGroupInvocations);
+        igText("maxMeshWorkGroupSize: %u", rhi.physical_device.mesh_shader_props.maxMeshWorkGroupSize);
+        igText("maxTaskOutputCount: %u", rhi.physical_device.mesh_shader_props.maxTaskOutputCount);
+        igText("maxTaskTotalMemorySize: %u", rhi.physical_device.mesh_shader_props.maxTaskTotalMemorySize);
+        igText("maxTaskWorkGroupInvocations: %u", rhi.physical_device.mesh_shader_props.maxTaskWorkGroupInvocations);
+        igText("maxTaskWorkGroupSize: %u", rhi.physical_device.mesh_shader_props.maxTaskWorkGroupSize);
+        igText("meshOutputPerPrimitiveGranularity: %u", rhi.physical_device.mesh_shader_props.meshOutputPerPrimitiveGranularity);
+        igText("meshOutputPerVertexGranularity: %u", rhi.physical_device.mesh_shader_props.meshOutputPerVertexGranularity);
+
+        igTreePop();
+    }
 }
 
 void E_Vk_BeginGUI()

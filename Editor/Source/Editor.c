@@ -260,7 +260,7 @@ void EditorDrawGUI()
             igTreePop();
         }
 
-        b32 gpu_info = igTreeNodeEx_Str("Graphics card Info", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_AllowItemOverlap | ImGuiTreeNodeFlags_FramePadding);
+        b32 gpu_info = igTreeNodeEx_Str("Graphics Card Info", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_AllowItemOverlap | ImGuiTreeNodeFlags_FramePadding);
         if (gpu_info)
         {
             E_RendererDrawGraphicsCardInfo();
@@ -270,20 +270,20 @@ void EditorDrawGUI()
         igEnd();
     }
 
+    // Light Panel
+    {
+        igBegin("Light Manager", NULL, ImGuiWindowFlags_None);
+        igDragFloat4("Light Color", editor_state.execute_info.point_lights[0].color, 0.1f, 0.1f, 0.0f, "%.1f", ImGuiSliderFlags_None);
+        igDragFloat4("Light Position", editor_state.execute_info.point_lights[0].position, 0.1f, 0.1f, 0.0f, "%.1f", ImGuiSliderFlags_None);
+        igEnd();
+    }
+
     // Render Graph Viewer
     {
         igBegin("Scene Renderer", NULL, ImGuiWindowFlags_None);
         GeometryNodeDrawGUI(editor_state.geometry_node);
         FXAANodeDrawGUI(editor_state.fxaa_node);
         TonemappingNodeDrawGUI(editor_state.tonemapping_node);
-        igEnd();
-    }
-    
-    // Light Panel
-    {
-        igBegin("Light Manager", NULL, ImGuiWindowFlags_None);
-        igDragFloat4("Light Color", editor_state.execute_info.point_lights[0].color, 0.1f, 0.1f, 0.0f, "%.1f", ImGuiSliderFlags_None);
-        igDragFloat4("Light Position", editor_state.execute_info.point_lights[0].position, 0.1f, 0.1f, 0.0f, "%.1f", ImGuiSliderFlags_None);
         igEnd();
     }
 
