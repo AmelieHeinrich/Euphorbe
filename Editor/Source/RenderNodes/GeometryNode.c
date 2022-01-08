@@ -192,7 +192,7 @@ void GeometryNodeInit(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info)
 	data->light_material_instance = E_CreateMaterialInstance(data->geometry_material->as.material, 1);
 	E_MaterialInstanceWriteBuffer(data->light_material_instance, 0, data->light_buffer, sizeof(info->point_lights));
 	E_MaterialInstanceWriteSampler(data->light_material_instance, 1, E_CubemapSampler);
-	E_MaterialInstanceWriteSampler(data->light_material_instance, 2, E_NearestSampler);
+	E_MaterialInstanceWriteSampler(data->light_material_instance, 2, E_LinearSampler);
 	E_MaterialInstanceWriteSampledImage(data->light_material_instance, 3, data->cubemap);
 	E_MaterialInstanceWriteSampledImage(data->light_material_instance, 4, data->irradiance);
 	E_MaterialInstanceWriteSampledImage(data->light_material_instance, 5, data->prefilter);
