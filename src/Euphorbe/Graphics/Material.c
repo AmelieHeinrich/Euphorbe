@@ -414,6 +414,12 @@ E_FrontFace E_GetFrontFaceFromString(const char* str)
 
 E_PrimitiveTopology E_GetPrimitiveTopologyFromString(const char* str)
 {
+	if (!strcmp(str, "PointList"))
+		return E_PrimitiveTopologyPointList;
+	if (!strcmp(str, "LineList"))
+		return E_PrimitiveTopologyLineList;
+	if (!strcmp(str, "LineStrip"))
+		return E_PrimitiveTopologyLineStrip;
 	if (!strcmp(str, "TriangleList"))
 		return E_PrimitiveTopologyTriangleList;
 	if (!strcmp(str, "TriangleStrip"))

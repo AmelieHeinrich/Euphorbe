@@ -119,7 +119,7 @@ void EditorInitialiseTexturedMesh()
     editor_state.material_buffer[0] = 1; // Has albedo texture
     editor_state.material_buffer[1] = 1; // Has roughness texture
     editor_state.material_buffer[2] = 0; // Has normal texture
-    editor_state.material_buffer[3] = 0; // Has AO texture
+    editor_state.material_buffer[3] = 0; // Do not draw meshlets
 
     editor_state.albedo_texture = E_LoadResource("Assets/Textures/Suzanne_BaseColor.png", E_ResourceTypeTexture);
     editor_state.metallic_roughness_texture = E_LoadResource("Assets/Textures/Suzanne_MetallicRoughness.png", E_ResourceTypeTexture);
@@ -230,7 +230,7 @@ void EditorDrawGUI()
         igCheckbox("Enable Albedo", (bool*)& editor_state.material_buffer[0]);
         igCheckbox("Enable Metallic Roughness", (bool*)&editor_state.material_buffer[1]);
         igCheckbox("Enable Normal Map", (bool*)&editor_state.material_buffer[2]);
-        igCheckbox("Enable AO Map", (bool*)&editor_state.material_buffer[3]);
+        igCheckbox("Draw Meshlets", (bool*)&editor_state.material_buffer[3]);
         igEnd();
     }
 

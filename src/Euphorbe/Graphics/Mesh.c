@@ -102,7 +102,6 @@ void FreeMeshletArray(MeshletArray* a) {
     a->used = a->size = 0;
 }
 
-
 void ProcessGLTFPrimitive(E_Material* material, cgltf_primitive* primitive, u32 currentPrimitiveIndex, E_Submesh* mesh, E_Mesh* main_mesh)
 {
     cgltf_attribute* position_attribute = 0;
@@ -245,6 +244,7 @@ void ProcessGLTFPrimitive(E_Material* material, cgltf_primitive* primitive, u32 
 
     if (meshlet.index_count)
         InsertMeshlet(&meshlet_array, meshlet);
+
 
     mesh->vertex_buffer = E_CreateVertexBuffer(vertices_size);
     E_SetBufferData(mesh->vertex_buffer, vertices, vertices_size);

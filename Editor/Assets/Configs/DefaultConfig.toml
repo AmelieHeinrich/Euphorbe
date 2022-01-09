@@ -3,7 +3,7 @@
 				["BOOL", "dark_mode", true],
 				["BOOL", "enable_fxaa", true],
 				["BOOL", "gamma_correction", true],
-			  ["BOOL", "enable_skybox", false],
+			  ["BOOL", "enable_skybox", true],
 				["BOOL", "enable_mesh_shaders", true],
 				["BOOL", "log_renderer_events", true],
 				["BOOL", "log_found_layers", false],

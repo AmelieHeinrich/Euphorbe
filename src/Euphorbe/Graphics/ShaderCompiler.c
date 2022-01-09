@@ -73,7 +73,7 @@ void E_CompileShader(char* source, i32 source_size, E_Shader* shader)
 
 	shaderc_compile_options_set_source_language(options, shaderc_source_language_glsl);
 	shaderc_compile_options_set_target_spirv(options, shaderc_spirv_version_1_0);
-	shaderc_compile_options_set_target_env(options, shaderc_target_env_vulkan, 0);
+	shaderc_compile_options_set_target_env(options, shaderc_target_env_vulkan, shaderc_env_version_vulkan_1_2);
 	shaderc_compile_options_set_optimization_level(options, shaderc_optimization_level_size);
 
 	shaderc_compilation_result_t result = shaderc_compile_into_spv(compiler, source, source_size, E_ShaderKindToShaderC(shader->type), "shader", "main", options);

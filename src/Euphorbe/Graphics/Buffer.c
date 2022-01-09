@@ -40,6 +40,18 @@ E_Buffer* E_CreateUniformBuffer(i64 size)
     return buffer;
 }
 
+E_Buffer* E_CreateStorageBuffer(i64 size)
+{
+    E_Buffer* buffer = malloc(sizeof(E_Buffer));
+    buffer->usage = E_BufferUsageStorage;
+
+#ifdef EUPHORBE_WINDOWS
+    buffer->rhi_handle = E_Vk_AllocateStorageBuffer(size);
+#endif
+
+    return buffer;
+}
+
 void E_SetBufferData(E_Buffer* buffer, void* data, i64 size)
 {
 #ifdef EUPHORBE_WINDOWS

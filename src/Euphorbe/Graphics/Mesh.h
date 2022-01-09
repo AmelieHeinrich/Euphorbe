@@ -4,7 +4,7 @@
 #define EUPHORBE_MAX_SUBMESHES 128
 #define EUPHORBE_MAX_MESHLET_VERTICES 64
 #define EUPHORBE_MAX_MESHLET_INDICES 378
-#define EUPHORBE_MAX_MESHLET_TRIANGLES EUPHORBE_MAX_MESHLET_INDICES / 3
+#define EUPHORBE_MAX_MESHLET_TRIANGLES 126
 
 #include <Euphorbe/Core/Common.h>
 #include <cglm/cglm.h>
@@ -12,13 +12,21 @@
 #include "Buffer.h"
 #include "Material.h"
 
+typedef struct E_MeshVertex E_MeshVertex;
+struct E_MeshVertex
+{
+	vec3 Position;
+	vec2 UV;
+	vec3 Normals;
+};
+
 typedef struct E_Meshlet E_Meshlet;
 struct E_Meshlet
 {
-	u32 vertices[EUPHORBE_MAX_MESHLET_VERTICES];
-	u8 indices[EUPHORBE_MAX_MESHLET_INDICES]; // Up to 126 triangles
-	u8 vertex_count;
-	u8 index_count;
+	u32 vertices[EUPHORBE_MAX_MESHLET_VERTICES];    
+	u8 indices[EUPHORBE_MAX_MESHLET_INDICES];  
+	u8 vertex_count; 
+	u8 index_count;  
 };
 
 typedef struct E_Submesh E_Submesh;

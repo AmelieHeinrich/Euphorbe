@@ -12,6 +12,9 @@
 typedef enum E_PrimitiveTopology E_PrimitiveTopology;
 enum E_PrimitiveTopology
 {
+    E_PrimitiveTopologyPointList = 0,
+    E_PrimitiveTopologyLineList = 1,
+    E_PrimitiveTopologyLineStrip = 2,
     E_PrimitiveTopologyTriangleList = 3,
     E_PrimitiveTopologyTriangleStrip = 4
 };

@@ -24,7 +24,7 @@ layout (binding = 1, set = 1) uniform MaterialSettings {
     bool has_albedo;
     bool has_metallic_roughness;
     bool has_normal;
-    bool has_ao;
+    bool draw_meshlets;
 } settings;
 
 layout (binding = 2, set = 1) uniform sampler TextureSampler;
@@ -190,5 +190,9 @@ void main()
     vec3 ambient = (kD * diffuse + specular) * ao;
     vec3 color = ambient + Lo;
 
-    OutColor = vec4(FragmentIn.MeshletColor, 1.0);
+    vec4 final = vec4(color, 1.0);
+    if (settings.draw_meshlets)
+        final = vec4(FragmentIn.MeshletColor, 1.0);
+
+    OutColor = final;
 }

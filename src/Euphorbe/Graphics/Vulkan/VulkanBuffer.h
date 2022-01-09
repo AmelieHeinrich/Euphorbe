@@ -16,6 +16,7 @@ struct E_VulkanBuffer
 E_VulkanBuffer* E_Vk_AllocateVertexBuffer(i64 size);
 E_VulkanBuffer* E_Vk_AllocateIndexBuffer(i64 size);
 E_VulkanBuffer* E_Vk_AllocateUniformBuffer(i64 size);
+E_VulkanBuffer* E_Vk_AllocateStorageBuffer(i64 size);
 
 void E_Vk_SetBufferData(E_VulkanBuffer* buffer, void* data, i64 size);
 void E_Vk_FreeBuffer(E_VulkanBuffer* buffer);

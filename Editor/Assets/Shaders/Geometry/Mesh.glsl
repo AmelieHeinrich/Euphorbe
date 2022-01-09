@@ -4,6 +4,8 @@
 #extension GL_EXT_shader_8bit_storage : require
 #extension GL_EXT_shader_16bit_storage : require
 
+#define DEBUG_RECTANGLE 0
+
 layout(local_size_x = 32, local_size_y = 1, local_size_z = 1) in;
 layout(triangles, max_vertices = 64, max_primitives = 126) out;
 
@@ -14,28 +16,30 @@ layout (push_constant) uniform SceneData {
 	float padding0;
 } scene;
 
-struct MeshVertex
+struct Vertex
 {
-	vec3 Position;
-	vec2 UV;
-	vec3 Normals;
+	float px, py, pz;
+	float ux, uy;
+	float nx, ny, nz;
 };
 
-layout (binding = 0, set = 0) buffer Vertices {
-	MeshVertex vertices[];
-} VertexBuffer;
+layout (binding = 0, set = 0) readonly buffer Vertices 
+{
+	Vertex vertex_data[];
+};
 
 struct Meshlet
 {
-	uint vertices[64];
-	uint8_t indices[378]; // Up to 126 triangles
-	uint8_t vertex_count;
+	uint vertices[64];   
+    uint8_t indices[378];   
+    uint8_t vertex_count;
 	uint8_t index_count;
 };	
 
-layout (binding = 1, set = 0) buffer Meshlets {
+layout (binding = 1, set = 0) readonly buffer Meshlets 
+{
 	Meshlet meshlets[];
-} MeshletBuffer;
+};
 
 layout (binding = 0, set = 1) uniform ObjectData {
 	mat4 transform;
@@ -60,33 +64,75 @@ uint hash(uint a)
 	return a;
 }
 
+const vec3 vertices[4] = {
+  vec3(-1,-1,0), 
+  vec3(-1,1,0), 
+  vec3(1,1,0), 
+  vec3(1,-1,0)
+};
+ 
+const vec3 colors[4] = {
+  vec3(1.0,0.0,0.0), 
+  vec3(0.0,1.0,0.0), 
+  vec3(0.0,0.0,1.0), 
+  vec3(1.0,0.0,1.0)
+};
+
 void main()
 {
-	uint mi = gl_WorkGroupID.x;
+#if DEBUG_RECTANGLE
+	gl_MeshVerticesNV[0].gl_Position = scene.projection * scene.view * vec4(vertices[0], 1.0); 
+	gl_MeshVerticesNV[1].gl_Position = scene.projection * scene.view * vec4(vertices[1], 1.0); 
+	gl_MeshVerticesNV[2].gl_Position = scene.projection * scene.view * vec4(vertices[2], 1.0); 
+	gl_MeshVerticesNV[3].gl_Position = scene.projection * scene.view * vec4(vertices[3], 1.0);
+	
+	VertexOut[0].MeshletColor = colors[0];
+	VertexOut[1].MeshletColor = colors[1];
+	VertexOut[2].MeshletColor = colors[2];
+	VertexOut[3].MeshletColor = colors[3];
+	
+	gl_PrimitiveIndicesNV[0] = 0;
+	gl_PrimitiveIndicesNV[1] = 1;
+	gl_PrimitiveIndicesNV[2] = 2;
+	
+	gl_PrimitiveIndicesNV[3] = 2;
+	gl_PrimitiveIndicesNV[4] = 3;
+	gl_PrimitiveIndicesNV[5] = 0;
+	
+	gl_PrimitiveCountNV = 2;
+#else
 
+	uint mi = gl_WorkGroupID.x;
+	
 	uint mhash = hash(mi);
 	vec3 mcolor = vec3(float(mhash & 255), float((mhash >> 8) & 255), float((mhash >> 16) & 255)) / 255.0;
-
-	for (uint i = 0; i < uint(MeshletBuffer.meshlets[mi].vertex_count); ++i)
+	
+	uint vertex_count = uint(meshlets[mi].vertex_count);
+	for (uint i = 0; i < vertex_count; ++i)
 	{
-		uint vi = MeshletBuffer.meshlets[mi].vertices[i];
+		uint vi = meshlets[mi].vertices[i];
 
-		vec4 Pw = ModelTransform.transform * vec4(VertexBuffer.vertices[vi].Position, 1.0);
-		vec4 P = scene.projection * scene.view * Pw;
+		vec3 position = vec3(vertex_data[vi].px, vertex_data[vi].py, vertex_data[vi].pz);
+		vec2 uv = vec2(vertex_data[vi].ux, vertex_data[vi].uy);
+		vec3 normals = vec3(vertex_data[vi].nx, vertex_data[vi].ny, vertex_data[vi].nz);
 
-		gl_MeshVerticesNV[i].gl_Position = P;
-
-		VertexOut[i].OutUV = VertexBuffer.vertices[vi].UV;
-		VertexOut[i].OutNormals = transpose(inverse(mat3(ModelTransform.transform))) * VertexBuffer.vertices[vi].Normals;
-		VertexOut[i].WorldPos = vec3(ModelTransform.transform * vec4(VertexBuffer.vertices[vi].Position, 1.0));
+		vec4 Pw = scene.projection * scene.view * ModelTransform.transform * vec4(position, 1.0);
+	
+		VertexOut[i].OutUV = uv;
+		VertexOut[i].OutNormals = transpose(inverse(mat3(ModelTransform.transform))) * normals;
+		VertexOut[i].WorldPos = vec3(ModelTransform.transform * vec4(position, 1.0));
 		VertexOut[i].CameraPos = scene.camera_position;
 		VertexOut[i].MeshletColor = mcolor;
+
+		gl_MeshVerticesNV[i].gl_Position = Pw;
 	}
+	
+	uint index_count = uint(meshlets[mi].index_count);
+	gl_PrimitiveCountNV = index_count / 3;
 
-	gl_PrimitiveCountNV = uint(MeshletBuffer.meshlets[mi].index_count) / 3;
-
-	for (uint i = 0; i < uint(MeshletBuffer.meshlets[mi].index_count); ++i)
+	for (uint i = 0; i < index_count; ++i)
 	{
-		gl_PrimitiveIndicesNV[i] = uint(MeshletBuffer.meshlets[mi].indices[i]);
+		gl_PrimitiveIndicesNV[i] = uint(meshlets[mi].indices[i]);
 	}
+#endif
 }

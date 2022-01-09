@@ -327,18 +327,7 @@ void GeometryNodeExecute(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info
 	{
 		E_Drawable drawable = info->drawables[i];
 
-		if (data->mesh_shader_enabled)
-		{
-			E_CommandBufferBindMaterialInstance(cmd_buf, drawable.material_instance, data->geometry_material->as.material, 1);
-			E_CommandBufferBindMaterialInstance(cmd_buf, data->light_material_instance, data->geometry_material->as.material, 2);
-			for (i32 i = 0; i < drawable.mesh->submesh_count; i++)
-			{
-				E_Submesh submesh = drawable.mesh->submeshes[i];
-				E_CommandBufferBindMaterialInstance(cmd_buf, submesh.geometry_instance, data->geometry_material->as.material, 0);
-				E_CommandBufferDrawMeshlets(cmd_buf, 0, submesh.meshlet_count);
-			}
-		}
-		else
+		if (!data->mesh_shader_enabled)
 		{
 			E_CommandBufferBindMaterialInstance(cmd_buf, drawable.material_instance, data->geometry_material->as.material, 0);
 			E_CommandBufferBindMaterialInstance(cmd_buf, data->light_material_instance, data->geometry_material->as.material, 1);
@@ -348,6 +337,17 @@ void GeometryNodeExecute(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info
 				E_CommandBufferBindBuffer(cmd_buf, submesh.vertex_buffer);
 				E_CommandBufferBindBuffer(cmd_buf, submesh.index_buffer);
 				E_CommandBufferDrawIndexed(cmd_buf, 0, submesh.index_count);
+			}
+		}
+		else
+		{
+			E_CommandBufferBindMaterialInstance(cmd_buf, drawable.material_instance, data->geometry_material->as.material, 1);
+			E_CommandBufferBindMaterialInstance(cmd_buf, data->light_material_instance, data->geometry_material->as.material, 2);
+			for (i32 i = 0; i < drawable.mesh->submesh_count; i++)
+			{
+				E_Submesh submesh = drawable.mesh->submeshes[i];
+				E_CommandBufferBindMaterialInstance(cmd_buf, submesh.geometry_instance, data->geometry_material->as.material, 0);
+				E_CommandBufferDrawMeshlets(cmd_buf, 0, submesh.meshlet_count);
 			}
 		}
 	}

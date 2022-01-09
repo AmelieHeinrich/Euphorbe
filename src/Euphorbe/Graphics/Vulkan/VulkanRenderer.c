@@ -327,8 +327,12 @@ void E_Vk_MakeDevice()
             if (!strcmp(VK_KHR_8BIT_STORAGE_EXTENSION_NAME, properties[i].extensionName)) {
                 rhi.device.extensions[rhi.device.extension_count++] = VK_KHR_8BIT_STORAGE_EXTENSION_NAME;
             }
+
+            if (!strcmp(VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME, properties[i].extensionName)) {
+                rhi.device.extensions[rhi.device.extension_count++] = VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME;
+            }
         }
-        assert(rhi.device.extension_count == 7);
+        assert(rhi.device.extension_count == 8);
 
         free(properties);
     }
@@ -875,9 +879,9 @@ void E_Vk_DrawGraphicsCardInfo()
     {
         igText("maxSamplerAnisotropy: %f", rhi.physical_device.handle_props.properties.limits.maxSamplerAnisotropy);
         igText("maxBoundDescriptorSets: %u", rhi.physical_device.handle_props.properties.limits.maxBoundDescriptorSets);
-        igText("maxComputeWorkGroupCount: %u", rhi.physical_device.handle_props.properties.limits.maxComputeWorkGroupCount);
+        igText("maxComputeWorkGroupCount: [%u ; %u ; %u]", rhi.physical_device.handle_props.properties.limits.maxComputeWorkGroupCount[0], rhi.physical_device.handle_props.properties.limits.maxComputeWorkGroupCount[1], rhi.physical_device.handle_props.properties.limits.maxComputeWorkGroupCount[2]);
         igText("maxComputeWorkGroupInvocations: %u", rhi.physical_device.handle_props.properties.limits.maxComputeWorkGroupInvocations);
-        igText("maxComputeWorkGroupSize: %u", rhi.physical_device.handle_props.properties.limits.maxComputeWorkGroupSize);
+        igText("maxComputeWorkGroupSize: [%u ; %u ; %u]", rhi.physical_device.handle_props.properties.limits.maxComputeWorkGroupSize[0], rhi.physical_device.handle_props.properties.limits.maxComputeWorkGroupSize[1], rhi.physical_device.handle_props.properties.limits.maxComputeWorkGroupSize[2]);
         igText("maxDrawIndirectCount: %u", rhi.physical_device.handle_props.properties.limits.maxDrawIndirectCount);
         igText("timestampPeriod: %f", rhi.physical_device.handle_props.properties.limits.timestampPeriod);
 
@@ -892,11 +896,11 @@ void E_Vk_DrawGraphicsCardInfo()
         igText("maxMeshOutputVertices: %u", rhi.physical_device.mesh_shader_props.maxMeshOutputVertices);
         igText("maxMeshTotalMemorySize: %u", rhi.physical_device.mesh_shader_props.maxMeshTotalMemorySize);
         igText("maxMeshWorkGroupInvocations: %u", rhi.physical_device.mesh_shader_props.maxMeshWorkGroupInvocations);
-        igText("maxMeshWorkGroupSize: %u", rhi.physical_device.mesh_shader_props.maxMeshWorkGroupSize);
+        igText("maxMeshWorkGroupSize: [%u ; %u ; %u]", rhi.physical_device.mesh_shader_props.maxMeshWorkGroupSize[0], rhi.physical_device.mesh_shader_props.maxMeshWorkGroupSize[1], rhi.physical_device.mesh_shader_props.maxMeshWorkGroupSize[2]);
         igText("maxTaskOutputCount: %u", rhi.physical_device.mesh_shader_props.maxTaskOutputCount);
         igText("maxTaskTotalMemorySize: %u", rhi.physical_device.mesh_shader_props.maxTaskTotalMemorySize);
         igText("maxTaskWorkGroupInvocations: %u", rhi.physical_device.mesh_shader_props.maxTaskWorkGroupInvocations);
-        igText("maxTaskWorkGroupSize: %u", rhi.physical_device.mesh_shader_props.maxTaskWorkGroupSize);
+        igText("maxTaskWorkGroupSize: [%u ; %u ; %u]", rhi.physical_device.mesh_shader_props.maxTaskWorkGroupSize[0], rhi.physical_device.mesh_shader_props.maxTaskWorkGroupSize[1], rhi.physical_device.mesh_shader_props.maxTaskWorkGroupSize[2]);
         igText("meshOutputPerPrimitiveGranularity: %u", rhi.physical_device.mesh_shader_props.meshOutputPerPrimitiveGranularity);
         igText("meshOutputPerVertexGranularity: %u", rhi.physical_device.mesh_shader_props.meshOutputPerVertexGranularity);
 
