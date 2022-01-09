@@ -26,6 +26,7 @@ void E_RendererBegin()
     E_CurrentRendererStatistics.total_index_count = 0;
     E_CurrentRendererStatistics.total_vertex_count = 0;
     E_CurrentRendererStatistics.total_triangle_count = 0;
+    E_CurrentRendererStatistics.total_meshlet_count = 0;
 
 #ifdef EUPHORBE_WINDOWS
     E_Vk_Begin();
@@ -58,7 +59,15 @@ void E_RendererDrawRendererStats()
     igText("Vertices: %d", E_CurrentRendererStatistics.total_vertex_count);
     igText("Indices: %d", E_CurrentRendererStatistics.total_index_count);
     igText("Triangles: %d", E_CurrentRendererStatistics.total_triangle_count);
+    igText("Meshlets: %d", E_CurrentRendererStatistics.total_meshlet_count);
     igText("Draw Calls: %d", E_CurrentRendererStatistics.total_draw_calls);
+}
+
+void E_RendererDrawGraphicsCardInfo()
+{
+#ifdef EUPHORBE_WINDOWS
+    E_Vk_DrawGraphicsCardInfo();
+#endif
 }
 
 E_Image* E_GetSwapchainImage()

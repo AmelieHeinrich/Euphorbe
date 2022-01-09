@@ -11,16 +11,17 @@
 	ColorFormats = ["RGBA16"]
 
 [Shaders]
-	EnableMeshShaders = false
-	Vertex = "Assets/Shaders/Geometry/Vertex.glsl"
-	Fragment = "Assets/Shaders/Geometry/Fragment.glsl"
+	EnableMeshShaders = true
+	Mesh = "Assets/Shaders/Geometry/Mesh.glsl"
+	Fragment = "Assets/Shaders/Geometry/MeshFragment.glsl"
 
 [DescriptorLayout]
 	DescriptorSetLayouts = [
+		[ ["StorageBuffer", "StorageBuffer"], 2],
 		[ ["UniformBuffer", "UniformBuffer", "Sampler", "SampledImage", "SampledImage", "SampledImage", "SampledImage"], 7], 
 		[ ["UniformBuffer", "Sampler", "Sampler", "SampledImage", "SampledImage", "SampledImage", "SampledImage", "SampledImage"], 7]
 	]
-	DescriptorSetLayoutCount = 2
+	DescriptorSetLayoutCount = 3
 
 [PushConstants]
 	HasPushConstants = 1

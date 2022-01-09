@@ -10,6 +10,7 @@ layout (location = 0) in PerVertexData {
 	vec3 OutNormals;
 	vec3 WorldPos;
 	vec3 CameraPos;
+    vec3 MeshletColor;
 } FragmentIn;
 
 struct PointLight
@@ -19,29 +20,29 @@ struct PointLight
 };
 
 // Uniforms
-layout (binding = 1, set = 0) uniform MaterialSettings {
+layout (binding = 1, set = 1) uniform MaterialSettings {
     bool has_albedo;
     bool has_metallic_roughness;
     bool has_normal;
-    bool has_ao;
+    bool draw_meshlets;
 } settings;
 
-layout (binding = 2, set = 0) uniform sampler TextureSampler;
-layout (binding = 3, set = 0) uniform texture2D AlbedoTexture;
-layout (binding = 4, set = 0) uniform texture2D MetallicRoughnessTexture;
-layout (binding = 5, set = 0) uniform texture2D NormalTexture;
-layout (binding = 6, set = 0) uniform texture2D AOTexture;
+layout (binding = 2, set = 1) uniform sampler TextureSampler;
+layout (binding = 3, set = 1) uniform texture2D AlbedoTexture;
+layout (binding = 4, set = 1) uniform texture2D MetallicRoughnessTexture;
+layout (binding = 5, set = 1) uniform texture2D NormalTexture;
+layout (binding = 6, set = 1) uniform texture2D AOTexture;
 
-layout (binding = 0, set = 1) uniform Lights {
+layout (binding = 0, set = 2) uniform Lights {
     PointLight lights[MAX_LIGHT_COUNT];
 } light_settings;
 
-layout (binding = 1, set = 1) uniform sampler cubemap_sampler;
-layout (binding = 2, set = 1) uniform sampler brdf_sampler;
-layout (binding = 3, set = 1) uniform textureCube Skybox;
-layout (binding = 4, set = 1) uniform textureCube irradianceMap;
-layout (binding = 5, set = 1) uniform textureCube prefilterMap;
-layout (binding = 6, set = 1) uniform texture2D brdfLut;
+layout (binding = 1, set = 2) uniform sampler cubemap_sampler;
+layout (binding = 2, set = 2) uniform sampler brdf_sampler;
+layout (binding = 3, set = 2) uniform textureCube Skybox;
+layout (binding = 4, set = 2) uniform textureCube irradianceMap;
+layout (binding = 5, set = 2) uniform textureCube prefilterMap;
+layout (binding = 6, set = 2) uniform texture2D brdfLut;
 
 vec3 GetNormalFromMap()
 {
@@ -189,5 +190,9 @@ void main()
     vec3 ambient = (kD * diffuse + specular) * ao;
     vec3 color = ambient + Lo;
 
-    OutColor = vec4(color, 1.0);
+    vec4 final = vec4(color, 1.0);
+    if (settings.draw_meshlets)
+        final = vec4(FragmentIn.MeshletColor, 1.0);
+
+    OutColor = final;
 }

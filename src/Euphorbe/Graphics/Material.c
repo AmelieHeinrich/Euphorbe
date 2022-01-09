@@ -125,17 +125,37 @@ E_Material* E_CreateMaterialFromFile(const char* path)
 
 	// Shaders
 
-	toml_datum_t vertex_path = toml_string_in(shaders, "Vertex");
-	toml_datum_t fragment_path = toml_string_in(shaders, "Fragment");
+	toml_datum_t mesh_shader_enabled = toml_bool_in(shaders, "EnableMeshShaders");
+	assert(mesh_shader_enabled.ok);
+	material->material_create_info->mesh_shader_enabled = mesh_shader_enabled.u.b;
+	
+	if (!mesh_shader_enabled.u.b)
+	{
+		toml_datum_t vertex_path = toml_string_in(shaders, "Vertex");
+		toml_datum_t fragment_path = toml_string_in(shaders, "Fragment");
 
-	assert(vertex_path.ok);
-	assert(fragment_path.ok);
+		assert(vertex_path.ok);
+		assert(fragment_path.ok);
 
-	material->material_create_info->vertex_shader = E_LoadResource(vertex_path.u.s, E_ResourceTypeVertexShader);
-	material->material_create_info->fragment_shader = E_LoadResource(fragment_path.u.s, E_ResourceTypeFragmentShader);
+		material->material_create_info->vertex_shader = E_LoadResource(vertex_path.u.s, E_ResourceTypeVertexShader);
+		material->material_create_info->fragment_shader = E_LoadResource(fragment_path.u.s, E_ResourceTypeFragmentShader);
 
-	free(vertex_path.u.s);
-	free(fragment_path.u.s);
+		free(vertex_path.u.s);
+		free(fragment_path.u.s);
+	}
+	else
+	{
+		toml_datum_t mesh_path = toml_string_in(shaders, "Mesh");
+		toml_datum_t fragment_path = toml_string_in(shaders, "Fragment");
+
+		assert(mesh_path.ok && fragment_path.ok);
+
+		material->material_create_info->mesh_shader = E_LoadResource(mesh_path.u.s, E_ResourceTypeMeshShader);
+		material->material_create_info->fragment_shader = E_LoadResource(fragment_path.u.s, E_ResourceTypeFragmentShader);
+
+		free(mesh_path.u.s);
+		free(fragment_path.u.s);
+	}
 
 	// Descriptor layout
 
@@ -278,6 +298,7 @@ void E_FreeMaterial(E_Material* material)
 		if (material->material_create_info->vertex_shader) E_FreeResource(material->material_create_info->vertex_shader);
 		if (material->material_create_info->fragment_shader) E_FreeResource(material->material_create_info->fragment_shader);
 		if (material->material_create_info->compute_shader) E_FreeResource(material->material_create_info->compute_shader);
+		if (material->material_create_info->mesh_shader) E_FreeResource(material->material_create_info->mesh_shader);
 		free(material->material_create_info);
 	}
 	free(material);
@@ -295,10 +316,17 @@ E_MaterialInstance* E_CreateMaterialInstance(E_Material* material, i32 set_layou
 	return instance;
 }
 
-void E_MaterialInstanceWriteBuffer(E_MaterialInstance* instance, i32 binding, E_Buffer* buffer, i32 buffer_size)
+void E_MaterialInstanceWriteBuffer(E_MaterialInstance* instance, i32 binding, E_Buffer* buffer, i64 buffer_size)
 {
 #ifdef EUPHORBE_WINDOWS
 	E_Vk_MaterialInstanceWriteBuffer((E_VulkanMaterialInstance*)instance->rhi_handle, binding, (E_VulkanBuffer*)buffer->rhi_handle, buffer_size);
+#endif
+}
+
+void E_MaterialInstanceWriteStorageBuffer(E_MaterialInstance* instance, i32 binding, E_Buffer* buffer, i64 buffer_size)
+{
+#ifdef EUPHORBE_WINDOWS
+	E_Vk_MaterialInstanceWriteStorageBuffer(instance->rhi_handle, binding, buffer->rhi_handle, buffer_size);
 #endif
 }
 
@@ -386,6 +414,12 @@ E_FrontFace E_GetFrontFaceFromString(const char* str)
 
 E_PrimitiveTopology E_GetPrimitiveTopologyFromString(const char* str)
 {
+	if (!strcmp(str, "PointList"))
+		return E_PrimitiveTopologyPointList;
+	if (!strcmp(str, "LineList"))
+		return E_PrimitiveTopologyLineList;
+	if (!strcmp(str, "LineStrip"))
+		return E_PrimitiveTopologyLineStrip;
 	if (!strcmp(str, "TriangleList"))
 		return E_PrimitiveTopologyTriangleList;
 	if (!strcmp(str, "TriangleStrip"))
@@ -434,6 +468,8 @@ E_DescriptorType E_GetDescriptorTypeFromString(const char* str)
 		return E_DescriptorTypeSampledImage;
 	if (!strcmp(str, "Sampler"))
 		return E_DescriptorTypeSampler;
+	if (!strcmp(str, "StorageBuffer"))
+		return E_DescriptorTypeStorageBuffer;
 
 	return 0;
 }

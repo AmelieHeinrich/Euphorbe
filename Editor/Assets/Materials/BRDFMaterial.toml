@@ -1,4 +1,5 @@
 [Shaders]
+	EnableMeshShaders = false
 	Compute = "Assets/Shaders/BRDF/Compute.glsl"
 
 [DescriptorLayout]

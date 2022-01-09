@@ -11,6 +11,7 @@
 	DepthFormat = "D32_Float"
 
 [Shaders]
+	EnableMeshShaders = false
 	Vertex = "Assets/Shaders/Tonemapping/Vertex.glsl"
 	Fragment = "Assets/Shaders/Tonemapping/Fragment.glsl"
 

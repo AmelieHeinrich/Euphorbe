@@ -33,7 +33,9 @@ struct E_Vk_Data
         VkPhysicalDevice handle;
         u32 graphics_family;
         u32 compute_family;
-        VkPhysicalDeviceProperties handle_props;
+        VkPhysicalDeviceMeshShaderPropertiesNV mesh_shader_props;
+        VkPhysicalDeviceProperties2 handle_props;
+        VkPhysicalDeviceFeatures2 features;
     } physical_device;
 
     // Device data
@@ -99,6 +101,7 @@ void E_Vk_Begin();
 void E_Vk_End();
 void E_Vk_DeviceWait();
 void E_Vk_DrawMemoryUsageGUI();
+void E_Vk_DrawGraphicsCardInfo();
 
 void E_Vk_Resize(i32 width, i32 height);
 

@@ -28,6 +28,7 @@ typedef double f64;
 #define GIGABYTES(bytes) MEGABYTES(bytes) * 1024
 #define OFFSET_PTR_BYTES(type, ptr, offset) ((type*)((u8*)ptr + (offset)))
 #define FRAMES_IN_FLIGHT 3
+#define PAD_SIZE_16(s) ( ((s) + 15) & ~15 )
 
 // Platform detection
 #ifdef _WIN32

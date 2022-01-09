@@ -16,7 +16,7 @@ void EditorCleanup()
 
     E_FreeMaterialInstance(editor_state.material_instance);
 
-    E_FreeResource(editor_state.mesh);
+    E_FreeMesh(editor_state.mesh);
     E_FreeResource(editor_state.ao_texture);
     E_FreeResource(editor_state.normal_texture);
     E_FreeResource(editor_state.metallic_roughness_texture);
@@ -76,6 +76,7 @@ void EditorInitialiseWindow()
 
     editor_state.running = 1;
     editor_state.execute_info.cvar_table_ptr = &editor_state.cvar_sys;
+    editor_state.mesh_shader_enabled = E_GetCVar(&editor_state.cvar_sys, "enable_mesh_shaders").u.b;
 
     // Initialise Euphorbe
     E_RendererInitSettings settings = { 0 };
@@ -118,19 +119,22 @@ void EditorInitialiseTexturedMesh()
     editor_state.material_buffer[0] = 1; // Has albedo texture
     editor_state.material_buffer[1] = 1; // Has roughness texture
     editor_state.material_buffer[2] = 0; // Has normal texture
-    editor_state.material_buffer[3] = 0; // Has AO texture
+    editor_state.material_buffer[3] = 0; // Do not draw meshlets
 
     editor_state.albedo_texture = E_LoadResource("Assets/Textures/Suzanne_BaseColor.png", E_ResourceTypeTexture);
     editor_state.metallic_roughness_texture = E_LoadResource("Assets/Textures/Suzanne_MetallicRoughness.png", E_ResourceTypeTexture);
     editor_state.normal_texture = E_LoadResource("Assets/Textures/paving.png", E_ResourceTypeTexture); // No normal maps for suzanne
     editor_state.ao_texture = E_LoadResource("Assets/Textures/paving2.png", E_ResourceTypeTexture); // No AO for suzanne
 
-    // End upload
-    editor_state.mesh = E_LoadResource("Assets/Models/Suzanne.gltf", E_ResourceTypeMesh);
-    editor_state.material_instance = E_CreateMaterialInstance(GetGeometryNodeMaterial(editor_state.geometry_node)->as.material, 0);
+    editor_state.mesh = E_LoadMesh(GetGeometryNodeMaterial(editor_state.geometry_node)->as.material, "Assets/Models/Suzanne.gltf");
 
     editor_state.transform_buffer = E_CreateUniformBuffer(sizeof(editor_state.execute_info.drawables[0].transform));
     E_SetBufferData(editor_state.transform_buffer, &editor_state.execute_info.drawables[0].transform, sizeof(editor_state.execute_info.drawables[0].transform));
+
+    if (editor_state.mesh_shader_enabled)
+        editor_state.material_instance = E_CreateMaterialInstance(GetGeometryNodeMaterial(editor_state.geometry_node)->as.material, 1);
+    else
+        editor_state.material_instance = E_CreateMaterialInstance(GetGeometryNodeMaterial(editor_state.geometry_node)->as.material, 0);
 
     editor_state.material_settings = E_CreateUniformBuffer(sizeof(vec4));
     E_SetBufferData(editor_state.material_settings, &editor_state.material_buffer, sizeof(vec4));
@@ -143,7 +147,7 @@ void EditorInitialiseTexturedMesh()
     E_MaterialInstanceWriteSampledImage(editor_state.material_instance, 5, editor_state.normal_texture->as.image);
     E_MaterialInstanceWriteSampledImage(editor_state.material_instance, 6, editor_state.ao_texture->as.image);
 
-    editor_state.execute_info.drawables[0].mesh = editor_state.mesh->as.mesh;
+    editor_state.execute_info.drawables[0].mesh = editor_state.mesh;
     editor_state.execute_info.drawables[0].material_instance = editor_state.material_instance;
     glm_mat4_identity(editor_state.execute_info.drawables[0].transform);
     editor_state.execute_info.drawable_count++;
@@ -226,7 +230,7 @@ void EditorDrawGUI()
         igCheckbox("Enable Albedo", (bool*)& editor_state.material_buffer[0]);
         igCheckbox("Enable Metallic Roughness", (bool*)&editor_state.material_buffer[1]);
         igCheckbox("Enable Normal Map", (bool*)&editor_state.material_buffer[2]);
-        igCheckbox("Enable AO Map", (bool*)&editor_state.material_buffer[3]);
+        igCheckbox("Draw Meshlets", (bool*)&editor_state.material_buffer[3]);
         igEnd();
     }
 
@@ -260,6 +264,21 @@ void EditorDrawGUI()
             igTreePop();
         }
 
+        b32 gpu_info = igTreeNodeEx_Str("Graphics Card Info", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_AllowItemOverlap | ImGuiTreeNodeFlags_FramePadding);
+        if (gpu_info)
+        {
+            E_RendererDrawGraphicsCardInfo();
+            igTreePop();
+        }
+
+        igEnd();
+    }
+
+    // Light Panel
+    {
+        igBegin("Light Manager", NULL, ImGuiWindowFlags_None);
+        igDragFloat4("Light Color", editor_state.execute_info.point_lights[0].color, 0.1f, 0.1f, 0.0f, "%.1f", ImGuiSliderFlags_None);
+        igDragFloat4("Light Position", editor_state.execute_info.point_lights[0].position, 0.1f, 0.1f, 0.0f, "%.1f", ImGuiSliderFlags_None);
         igEnd();
     }
 
@@ -269,14 +288,6 @@ void EditorDrawGUI()
         GeometryNodeDrawGUI(editor_state.geometry_node);
         FXAANodeDrawGUI(editor_state.fxaa_node);
         TonemappingNodeDrawGUI(editor_state.tonemapping_node);
-        igEnd();
-    }
-    
-    // Light Panel
-    {
-        igBegin("Light Manager", NULL, ImGuiWindowFlags_None);
-        igDragFloat4("Light Color", editor_state.execute_info.point_lights[0].color, 0.1f, 0.1f, 0.0f, "%.1f", ImGuiSliderFlags_None);
-        igDragFloat4("Light Position", editor_state.execute_info.point_lights[0].position, 0.1f, 0.1f, 0.0f, "%.1f", ImGuiSliderFlags_None);
         igEnd();
     }
 

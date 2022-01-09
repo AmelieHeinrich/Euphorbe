@@ -18,6 +18,7 @@ struct GeometryData
 	b32 first_render;
 	b32 skybox_should_layout;
 	b32 skybox_enabled;
+	b32 mesh_shader_enabled;
 
 	E_Buffer* light_buffer;
 
@@ -35,7 +36,7 @@ struct GeometryData
 	E_MaterialInstance* brdf_instance;
 	E_MaterialInstance* light_material_instance;
 
-	E_ResourceFile* skybox_mesh;
+	E_Mesh* skybox_mesh;
 
 	E_Image* hdr_skybox_texture;
 	E_Image* cubemap;
@@ -45,23 +46,6 @@ struct GeometryData
 
 	GeometryUniforms uniforms;
 };
-
-f32 Halton(i32 index, i32 base)
-{
-	i32 i = index % 1024;
-	i32 b = base;
-	f32 f = 1.0f;
-	f32 r = 0.0f;
-
-	while (i > 0)
-	{
-		f = f / (f32)b;
-		r = r + f * (i % b);
-		i = i / b;
-	}
-
-	return r;
-}
 
 void GeometryNodeInit(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info)
 {
@@ -74,15 +58,20 @@ void GeometryNodeInit(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info)
 	data->first_render = 1;
 	data->skybox_should_layout = 1;
 
-	data->skybox_mesh = E_LoadResource("Assets/Models/Cube.gltf", E_ResourceTypeMesh);
 	data->skybox_enabled = E_GetCVar(info->cvar_table_ptr, "enable_skybox").u.b;
+	data->mesh_shader_enabled = E_GetCVar(info->cvar_table_ptr, "enable_mesh_shaders").u.b;
 
-	data->geometry_material = E_LoadResource("Assets/Materials/GeometryMaterial.toml", E_ResourceTypeMaterial);
+	if (data->mesh_shader_enabled)
+		data->geometry_material = E_LoadResource("Assets/Materials/MeshGeometryMaterial.toml", E_ResourceTypeMaterial);
+	else
+		data->geometry_material = E_LoadResource("Assets/Materials/GeometryMaterial.toml", E_ResourceTypeMaterial);
+
 	data->skybox_material = E_LoadResource("Assets/Materials/SkyboxMaterial.toml", E_ResourceTypeMaterial);
 	data->equirectangular_cubemap_material = E_LoadResource("Assets/Materials/EquirectangularCubemapMaterial.toml", E_ResourceTypeComputeMaterial);
 	data->irradiance_material = E_LoadResource("Assets/Materials/IrradianceMaterial.toml", E_ResourceTypeComputeMaterial);
 	data->prefilter_material = E_LoadResource("Assets/Materials/PrefilterMaterial.toml", E_ResourceTypeComputeMaterial);
 	data->brdf_material = E_LoadResource("Assets/Materials/BRDFMaterial.toml", E_ResourceTypeComputeMaterial);
+	data->skybox_mesh = E_LoadMesh(data->skybox_material->as.material, "Assets/Models/Cube.gltf");
 
 	data->skybox_instance = E_CreateMaterialInstance(data->skybox_material->as.material, 0);
 	data->equirectangular_cubemap_instance = E_CreateMaterialInstance(data->equirectangular_cubemap_material->as.material, 0);
@@ -189,7 +178,10 @@ void GeometryNodeInit(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info)
 	E_MaterialInstanceWriteSampledImage(data->skybox_instance, 1, data->cubemap);
 
 	data->light_buffer = E_CreateUniformBuffer(sizeof(info->point_lights));
-	data->light_material_instance = E_CreateMaterialInstance(data->geometry_material->as.material, 1);
+	if (data->mesh_shader_enabled)
+		data->light_material_instance = E_CreateMaterialInstance(data->geometry_material->as.material, 2);
+	else
+		data->light_material_instance = E_CreateMaterialInstance(data->geometry_material->as.material, 1);
 	E_MaterialInstanceWriteBuffer(data->light_material_instance, 0, data->light_buffer, sizeof(info->point_lights));
 	E_MaterialInstanceWriteSampler(data->light_material_instance, 1, E_CubemapSampler);
 	E_MaterialInstanceWriteSampler(data->light_material_instance, 2, E_LinearSampler);
@@ -204,7 +196,7 @@ void GeometryNodeClean(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info)
 	GeometryData* data = (GeometryData*)node->node_data;
 
 	E_FreeBuffer(data->light_buffer);
-	E_FreeResource(data->skybox_mesh);
+	E_FreeMesh(data->skybox_mesh);
 	
 	E_FreeMaterialInstance(data->light_material_instance);
 	E_FreeMaterialInstance(data->brdf_instance);
@@ -316,9 +308,9 @@ void GeometryNodeExecute(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info
 
 		E_CommandBufferPushConstants(cmd_buf, data->skybox_material->as.material, &output_matrix, sizeof(output_matrix));
 		E_CommandBufferBindMaterialInstance(cmd_buf, data->skybox_instance, data->skybox_material->as.material, 0);
-		for (i32 i = 0; i < data->skybox_mesh->as.mesh->submesh_count; i++)
+		for (i32 i = 0; i < data->skybox_mesh->submesh_count; i++)
 		{
-			E_Submesh submesh = data->skybox_mesh->as.mesh->submeshes[i];
+			E_Submesh submesh = data->skybox_mesh->submeshes[i];
 
 			E_CommandBufferBindBuffer(cmd_buf, submesh.vertex_buffer);
 			E_CommandBufferBindBuffer(cmd_buf, submesh.index_buffer);
@@ -335,14 +327,28 @@ void GeometryNodeExecute(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info
 	{
 		E_Drawable drawable = info->drawables[i];
 
-		E_CommandBufferBindMaterialInstance(cmd_buf, drawable.material_instance, data->geometry_material->as.material, 0);
-		E_CommandBufferBindMaterialInstance(cmd_buf, data->light_material_instance, data->geometry_material->as.material, 1);
-		for (i32 i = 0; i < drawable.mesh->submesh_count; i++)
+		if (!data->mesh_shader_enabled)
 		{
-			E_Submesh submesh = drawable.mesh->submeshes[i];
-			E_CommandBufferBindBuffer(cmd_buf, submesh.vertex_buffer);
-			E_CommandBufferBindBuffer(cmd_buf, submesh.index_buffer);
-			E_CommandBufferDrawIndexed(cmd_buf, 0, submesh.index_count);
+			E_CommandBufferBindMaterialInstance(cmd_buf, drawable.material_instance, data->geometry_material->as.material, 0);
+			E_CommandBufferBindMaterialInstance(cmd_buf, data->light_material_instance, data->geometry_material->as.material, 1);
+			for (i32 i = 0; i < drawable.mesh->submesh_count; i++)
+			{
+				E_Submesh submesh = drawable.mesh->submeshes[i];
+				E_CommandBufferBindBuffer(cmd_buf, submesh.vertex_buffer);
+				E_CommandBufferBindBuffer(cmd_buf, submesh.index_buffer);
+				E_CommandBufferDrawIndexed(cmd_buf, 0, submesh.index_count);
+			}
+		}
+		else
+		{
+			E_CommandBufferBindMaterialInstance(cmd_buf, drawable.material_instance, data->geometry_material->as.material, 1);
+			E_CommandBufferBindMaterialInstance(cmd_buf, data->light_material_instance, data->geometry_material->as.material, 2);
+			for (i32 i = 0; i < drawable.mesh->submesh_count; i++)
+			{
+				E_Submesh submesh = drawable.mesh->submeshes[i];
+				E_CommandBufferBindMaterialInstance(cmd_buf, submesh.geometry_instance, data->geometry_material->as.material, 0);
+				E_CommandBufferDrawMeshlets(cmd_buf, 0, submesh.meshlet_count);
+			}
 		}
 	}
 

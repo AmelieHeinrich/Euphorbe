@@ -54,6 +54,7 @@ struct E_RendererStats
     u32 total_vertex_count;
     u32 total_index_count;
     u32 total_triangle_count;
+    u32 total_meshlet_count;
     u32 total_draw_calls;
 };
 
@@ -65,8 +66,10 @@ void E_RendererShutdown();
 void E_RendererBegin();
 void E_RendererEnd();
 void E_RendererWait();
+
 void E_RendererDrawMemoryUsageGUI();
 void E_RendererDrawRendererStats();
+void E_RendererDrawGraphicsCardInfo();
 
 E_Image* E_GetSwapchainImage();
 u32 E_GetSwapchainImageIndex();

@@ -199,7 +199,14 @@ void E_Vk_MakePhysicalDevice()
         free(devices);
     }
 
-    vkGetPhysicalDeviceProperties(rhi.physical_device.handle, &rhi.physical_device.handle_props);
+    rhi.physical_device.handle_props.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+    rhi.physical_device.mesh_shader_props.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_PROPERTIES_NV;
+
+    rhi.physical_device.handle_props.pNext = &rhi.physical_device.mesh_shader_props;
+    vkGetPhysicalDeviceProperties2(rhi.physical_device.handle, &rhi.physical_device.handle_props);
+
+    rhi.physical_device.features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+    vkGetPhysicalDeviceFeatures2(rhi.physical_device.handle, &rhi.physical_device.features);
 
     // Find queue families
     u32 queue_family_count = 0;
@@ -256,10 +263,30 @@ void E_Vk_MakeDevice()
     features.samplerAnisotropy = 1;
     features.fillModeNonSolid = 1;
     features.geometryShader = 1;
+    features.pipelineStatisticsQuery = 1;
+
+    rhi.physical_device.features.features = features;
+
+    VkPhysicalDevice16BitStorageFeatures features16 = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_16BIT_STORAGE_FEATURES };
+    features16.storageBuffer16BitAccess = true;
+
+    VkPhysicalDevice8BitStorageFeaturesKHR features8 = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_8BIT_STORAGE_FEATURES_KHR };
+    features8.storageBuffer8BitAccess = true;
+    features8.uniformAndStorageBuffer8BitAccess = true;
+    features8.pNext = &features16;
+
+    VkPhysicalDeviceMeshShaderFeaturesNV mesh_shader_features = { 0 };
+    mesh_shader_features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_NV;
+    mesh_shader_features.taskShader = VK_TRUE;
+    mesh_shader_features.meshShader = VK_TRUE;
+    mesh_shader_features.pNext = &features8;
 
     VkPhysicalDeviceDynamicRenderingFeaturesKHR dynamic_features = { 0 };
     dynamic_features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES_KHR;
     dynamic_features.dynamicRendering = 1;
+    dynamic_features.pNext = &mesh_shader_features;
+
+    rhi.physical_device.features.pNext = &dynamic_features;
 
     u32 extension_count = 0;
     vkEnumerateDeviceExtensionProperties(rhi.physical_device.handle, NULL, &extension_count, NULL);
@@ -284,15 +311,31 @@ void E_Vk_MakeDevice()
             if (!strcmp(VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME, properties[i].extensionName)) {
                 rhi.device.extensions[rhi.device.extension_count++] = VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME;
             }
+
+            if (!strcmp(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME, properties[i].extensionName)) {
+                rhi.device.extensions[rhi.device.extension_count++] = VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME;
+            }
+
+            if (!strcmp(VK_NV_MESH_SHADER_EXTENSION_NAME, properties[i].extensionName)) {
+                rhi.device.extensions[rhi.device.extension_count++] = VK_NV_MESH_SHADER_EXTENSION_NAME;
+            }
+
+            if (!strcmp(VK_KHR_16BIT_STORAGE_EXTENSION_NAME, properties[i].extensionName)) {
+                rhi.device.extensions[rhi.device.extension_count++] = VK_KHR_16BIT_STORAGE_EXTENSION_NAME;
+            }
+
+            if (!strcmp(VK_KHR_8BIT_STORAGE_EXTENSION_NAME, properties[i].extensionName)) {
+                rhi.device.extensions[rhi.device.extension_count++] = VK_KHR_8BIT_STORAGE_EXTENSION_NAME;
+            }
+
+            if (!strcmp(VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME, properties[i].extensionName)) {
+                rhi.device.extensions[rhi.device.extension_count++] = VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME;
+            }
         }
-        assert(rhi.device.extension_count == 3);
+        assert(rhi.device.extension_count == 8);
 
         free(properties);
     }
-
-    VkPhysicalDeviceDynamicRenderingFeaturesKHR dynamic_rendering_features = { 0 };
-    dynamic_rendering_features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES_KHR;
-    dynamic_rendering_features.dynamicRendering = VK_TRUE;
 
     VkDeviceQueueCreateInfo queue_create_infos[2] = {graphics_queue_create_info, compute_queue_create_info};
     i32 queue_create_info_count = 2;
@@ -301,10 +344,9 @@ void E_Vk_MakeDevice()
     create_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
     create_info.queueCreateInfoCount = 2;
     create_info.pQueueCreateInfos = queue_create_infos;
-    create_info.pEnabledFeatures = &features;
     create_info.enabledExtensionCount = rhi.device.extension_count;
     create_info.ppEnabledExtensionNames = (const char* const*)rhi.device.extensions;
-
+    create_info.pNext = &rhi.physical_device.features;
     if (rhi_settings.enable_debug)
     {
         create_info.enabledLayerCount = rhi.instance.layer_count;
@@ -315,7 +357,6 @@ void E_Vk_MakeDevice()
         create_info.enabledLayerCount = 0;
         create_info.ppEnabledLayerNames = NULL;
     }
-    create_info.pNext = &dynamic_rendering_features;
 
     VkResult result = vkCreateDevice(rhi.physical_device.handle, &create_info, NULL, &rhi.device.handle);
     assert(result == VK_SUCCESS);
@@ -809,6 +850,62 @@ void E_Vk_DrawMemoryUsageGUI()
     igText("Unused: %d mb", stats.total.unusedBytes / 1024 / 1024);
     igText("Allocation Count: %d", stats.total.allocationCount);
     igText("Memory block count: %d", stats.total.blockCount);
+}
+
+void E_Vk_DrawGraphicsCardInfo()
+{
+    igText("GPU Name: %s", rhi.physical_device.handle_props.properties.deviceName);
+
+    b32 instance_list = igTreeNodeEx_Str("Enabled Instance Extensions", ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_AllowItemOverlap | ImGuiTreeNodeFlags_FramePadding);
+    if (instance_list)
+    {
+        for (i32 i = 0; i < rhi.instance.extension_count; i++)
+            igText("- %s", rhi.instance.extensions[i]);
+
+        igTreePop();
+    }
+
+    b32 extension_list = igTreeNodeEx_Str("Enabled Device Extensions", ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_AllowItemOverlap | ImGuiTreeNodeFlags_FramePadding);
+    if (extension_list)
+    {
+        for (i32 i = 0; i < rhi.device.extension_count; i++)
+            igText("- %s", rhi.device.extensions[i]);
+
+        igTreePop();
+    }
+
+    b32 device_limits = igTreeNodeEx_Str("Device Limits", ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_AllowItemOverlap | ImGuiTreeNodeFlags_FramePadding);
+    if (device_limits)
+    {
+        igText("maxSamplerAnisotropy: %f", rhi.physical_device.handle_props.properties.limits.maxSamplerAnisotropy);
+        igText("maxBoundDescriptorSets: %u", rhi.physical_device.handle_props.properties.limits.maxBoundDescriptorSets);
+        igText("maxComputeWorkGroupCount: [%u ; %u ; %u]", rhi.physical_device.handle_props.properties.limits.maxComputeWorkGroupCount[0], rhi.physical_device.handle_props.properties.limits.maxComputeWorkGroupCount[1], rhi.physical_device.handle_props.properties.limits.maxComputeWorkGroupCount[2]);
+        igText("maxComputeWorkGroupInvocations: %u", rhi.physical_device.handle_props.properties.limits.maxComputeWorkGroupInvocations);
+        igText("maxComputeWorkGroupSize: [%u ; %u ; %u]", rhi.physical_device.handle_props.properties.limits.maxComputeWorkGroupSize[0], rhi.physical_device.handle_props.properties.limits.maxComputeWorkGroupSize[1], rhi.physical_device.handle_props.properties.limits.maxComputeWorkGroupSize[2]);
+        igText("maxDrawIndirectCount: %u", rhi.physical_device.handle_props.properties.limits.maxDrawIndirectCount);
+        igText("timestampPeriod: %f", rhi.physical_device.handle_props.properties.limits.timestampPeriod);
+
+        igTreePop();
+    }
+
+    b32 mesh_shader_limits = igTreeNodeEx_Str("Mesh Shader Limits", ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_AllowItemOverlap | ImGuiTreeNodeFlags_FramePadding);
+    if (mesh_shader_limits)
+    {
+        igText("maxDrawMeshTasksCount: %u", rhi.physical_device.mesh_shader_props.maxDrawMeshTasksCount);
+        igText("maxMeshOutputPrimitives: %u", rhi.physical_device.mesh_shader_props.maxMeshOutputPrimitives);
+        igText("maxMeshOutputVertices: %u", rhi.physical_device.mesh_shader_props.maxMeshOutputVertices);
+        igText("maxMeshTotalMemorySize: %u", rhi.physical_device.mesh_shader_props.maxMeshTotalMemorySize);
+        igText("maxMeshWorkGroupInvocations: %u", rhi.physical_device.mesh_shader_props.maxMeshWorkGroupInvocations);
+        igText("maxMeshWorkGroupSize: [%u ; %u ; %u]", rhi.physical_device.mesh_shader_props.maxMeshWorkGroupSize[0], rhi.physical_device.mesh_shader_props.maxMeshWorkGroupSize[1], rhi.physical_device.mesh_shader_props.maxMeshWorkGroupSize[2]);
+        igText("maxTaskOutputCount: %u", rhi.physical_device.mesh_shader_props.maxTaskOutputCount);
+        igText("maxTaskTotalMemorySize: %u", rhi.physical_device.mesh_shader_props.maxTaskTotalMemorySize);
+        igText("maxTaskWorkGroupInvocations: %u", rhi.physical_device.mesh_shader_props.maxTaskWorkGroupInvocations);
+        igText("maxTaskWorkGroupSize: [%u ; %u ; %u]", rhi.physical_device.mesh_shader_props.maxTaskWorkGroupSize[0], rhi.physical_device.mesh_shader_props.maxTaskWorkGroupSize[1], rhi.physical_device.mesh_shader_props.maxTaskWorkGroupSize[2]);
+        igText("meshOutputPerPrimitiveGranularity: %u", rhi.physical_device.mesh_shader_props.meshOutputPerPrimitiveGranularity);
+        igText("meshOutputPerVertexGranularity: %u", rhi.physical_device.mesh_shader_props.meshOutputPerVertexGranularity);
+
+        igTreePop();
+    }
 }
 
 void E_Vk_BeginGUI()

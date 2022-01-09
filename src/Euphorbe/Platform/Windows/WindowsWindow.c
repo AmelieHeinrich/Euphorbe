@@ -104,7 +104,7 @@ E_WindowsWindow* E_CreateWindowsWindow(i32* width, i32* height, const char* titl
         igCreateContext(NULL);
 
         ImGuiIO* io = igGetIO();
-        io->FontDefault = ImFontAtlas_AddFontFromFileTTF(io->Fonts, "Assets/Fonts/Consolas.ttf", 16.0f, NULL, NULL);
+        //io->FontDefault = ImFontAtlas_AddFontFromFileTTF(io->Fonts, "Assets/Fonts/Consolas.ttf", 16.0f, NULL, NULL);
 
         ImGuiStyle* style = igGetStyle();
         io->ConfigFlags |= ImGuiConfigFlags_DockingEnable;

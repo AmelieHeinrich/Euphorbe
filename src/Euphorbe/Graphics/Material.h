@@ -12,6 +12,9 @@
 typedef enum E_PrimitiveTopology E_PrimitiveTopology;
 enum E_PrimitiveTopology
 {
+    E_PrimitiveTopologyPointList = 0,
+    E_PrimitiveTopologyLineList = 1,
+    E_PrimitiveTopologyLineStrip = 2,
     E_PrimitiveTopologyTriangleList = 3,
     E_PrimitiveTopologyTriangleStrip = 4
 };
@@ -69,7 +72,8 @@ enum E_DescriptorType
     E_DescriptorTypeCombinedImageSampler = 1,
     E_DescriptorTypeSampledImage = 2,
     E_DescriptorTypeStorageImage = 3,
-    E_DescriptorTypeUniformBuffer = 6
+    E_DescriptorTypeUniformBuffer = 6,
+    E_DescriptorTypeStorageBuffer = 7
 };
 
 typedef struct E_Descriptor E_Descriptor;
@@ -98,9 +102,11 @@ struct E_MaterialCreateInfo
     E_MaterialRenderInfo render_info;
 
     // Shaders
+    b32 mesh_shader_enabled;
     E_ResourceFile* vertex_shader;
     E_ResourceFile* fragment_shader;
     E_ResourceFile* compute_shader;
+    E_ResourceFile* mesh_shader;
 
     // Descriptors
     E_DescriptorSetLayout descriptor_set_layouts[EUPHORBE_MAX_DESCRIPTORS];
@@ -134,7 +140,8 @@ void E_FreeMaterial(E_Material* material);
 
 // Instances
 E_MaterialInstance* E_CreateMaterialInstance(E_Material* material, i32 set_layout_index);
-void E_MaterialInstanceWriteBuffer(E_MaterialInstance* instance, i32 binding, E_Buffer* buffer, i32 buffer_size);
+void E_MaterialInstanceWriteBuffer(E_MaterialInstance* instance, i32 binding, E_Buffer* buffer, i64 buffer_size);
+void E_MaterialInstanceWriteStorageBuffer(E_MaterialInstance* instance, i32 binding, E_Buffer* buffer, i64 buffer_size);
 void E_MaterialInstanceWriteSampler(E_MaterialInstance* instance, i32 binding, E_Sampler* sampler);
 void E_MaterialInstanceWriteSampledImage(E_MaterialInstance* instance, i32 binding, E_Image* image);
 void E_MaterialInstanceWriteImage(E_MaterialInstance* instance, i32 binding, E_Image* image, E_Sampler* sampler);

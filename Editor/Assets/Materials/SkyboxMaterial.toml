@@ -11,6 +11,7 @@
 	ColorFormats = ["RGBA16", "RG16"]
 
 [Shaders]
+	EnableMeshShaders = false
 	Vertex = "Assets/Shaders/Skybox/Vertex.glsl"
 	Fragment = "Assets/Shaders/Skybox/Fragment.glsl"
 
