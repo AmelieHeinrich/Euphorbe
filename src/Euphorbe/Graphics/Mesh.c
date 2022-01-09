@@ -2,6 +2,7 @@
 
 #include <cgltf.h>
 #include <Euphorbe/Core/Log.h>
+#include <Euphorbe/Core/Vector.h>
 
 #define cgltf_call(call) do { cgltf_result _result = (call); assert(_result == cgltf_result_success); } while(0)
 
@@ -73,34 +74,7 @@ void* QueryAccessorData(cgltf_accessor* accessor, u32* component_size, u32* comp
     return OFFSET_PTR_BYTES(void, view->buffer->data, view->offset);
 }
 
-// Meshlet utils
-typedef struct MeshletArray MeshletArray;
-struct MeshletArray
-{
-    E_Meshlet* array;
-    u64 used;
-    u64 size;
-};
-
-void InitMeshletArray(MeshletArray* a, u64 size) {
-    a->array = calloc(size, size * sizeof(E_Meshlet));
-    a->used = 0;
-    a->size = size;
-}
-
-void InsertMeshlet(MeshletArray* a, E_Meshlet element) {
-    if (a->used == a->size) {
-        a->size *= 2;
-        a->array = realloc(a->array, a->size * sizeof(E_Meshlet));
-    }
-    a->array[a->used++] = element;
-}
-
-void FreeMeshletArray(MeshletArray* a) {
-    free(a->array);
-    a->array = NULL;
-    a->used = a->size = 0;
-}
+E_DEFINE_VECTOR(Meshlet, E_Meshlet);
 
 void ProcessGLTFPrimitive(E_Material* material, cgltf_primitive* primitive, u32 currentPrimitiveIndex, E_Submesh* mesh, E_Mesh* main_mesh)
 {
@@ -192,8 +166,9 @@ void ProcessGLTFPrimitive(E_Material* material, cgltf_primitive* primitive, u32 
         }
     }
 
-    MeshletArray meshlet_array;
-    InitMeshletArray(&meshlet_array, 256);
+    E_VectorMeshlet meshlet_array;
+    E_INIT_VECTOR(meshlet_array, 256);
+
     u8* meshlet_vertices = (u8*)malloc(sizeof(u8) * vertex_count);
     memset(meshlet_vertices, 0xff, sizeof(u8) * vertex_count);
 
@@ -214,7 +189,7 @@ void ProcessGLTFPrimitive(E_Material* material, cgltf_primitive* primitive, u32 
 
         if (meshlet.vertex_count + used_extra > EUPHORBE_MAX_MESHLET_VERTICES || meshlet.index_count + 3 > EUPHORBE_MAX_MESHLET_INDICES)
         {
-            InsertMeshlet(&meshlet_array, meshlet);
+            E_PUSH_BACK_VECTOR(meshlet_array, meshlet);
             memset(meshlet_vertices, 0xff, vertex_count);
             memset(&meshlet, 0, sizeof(E_Meshlet));
         }
@@ -243,7 +218,7 @@ void ProcessGLTFPrimitive(E_Material* material, cgltf_primitive* primitive, u32 
     }
 
     if (meshlet.index_count)
-        InsertMeshlet(&meshlet_array, meshlet);
+        E_PUSH_BACK_VECTOR(meshlet_array, meshlet);
 
 
     mesh->vertex_buffer = E_CreateVertexBuffer(vertices_size);
@@ -253,7 +228,7 @@ void ProcessGLTFPrimitive(E_Material* material, cgltf_primitive* primitive, u32 
     E_SetBufferData(mesh->index_buffer, indices, index_count * sizeof(u32));
 
     mesh->meshlet_buffer = E_CreateVertexBuffer(meshlet_array.used * sizeof(E_Meshlet));
-    E_SetBufferData(mesh->meshlet_buffer, meshlet_array.array, meshlet_array.used * sizeof(E_Meshlet));
+    E_SetBufferData(mesh->meshlet_buffer, meshlet_array.data, meshlet_array.used * sizeof(E_Meshlet));
 
     if (material)
     {
@@ -277,7 +252,7 @@ void ProcessGLTFPrimitive(E_Material* material, cgltf_primitive* primitive, u32 
     main_mesh->total_tri_count += mesh->tri_count;
     main_mesh->total_meshlet_count += mesh->meshlet_count;
 
-    FreeMeshletArray(&meshlet_array);
+    E_FREE_VECTOR(meshlet_array);
     free(meshlet_vertices);
     free(vertices);
     free(indices);
