@@ -24,7 +24,23 @@ install.bat
 cmake -G "Visual Studio 17 2022" -B build
 ```
 
-## Dependencies
+# Requirements
+
+## Vulkan Extensions
+- VK_KHR_dynamic_rendering
+- VK_KHR_16bit_storage
+- VK_KHR_8bit_storage
+- VK_KHR_swapchain
+- VK_KHR_synchronisation2
+- VK_KHR_shader_non_semantic_info
+- VK_NV_mesh_shader
+
+## Instance Extensions
+- VK_KHR_surface
+- VK_KHR_win32_surface
+- VK_EXT_debug_utils
+
+# Dependencies
 
 - [volk](https://github.com/zeux/volk)
 - [Vulkan-Headers](https://github.com/KhronosGroup/Vulkan-Headers)
@@ -67,6 +83,7 @@ cmake -G "Visual Studio 17 2022" -B build
 - Timer
 - FXAA anti-aliasing
 - PBR pipeline with IBL
+- Turing mesh shaders
 
 ## Additional information
 
