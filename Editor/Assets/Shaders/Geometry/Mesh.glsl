@@ -5,7 +5,7 @@
 #extension GL_EXT_shader_16bit_storage : require
 
 layout(local_size_x = 32, local_size_y = 1, local_size_z = 1) in;
-layout(triangles, max_vertices = 64, max_primitives = 126) out;
+layout(triangles, max_vertices = 64, max_primitives = 124) out;
 
 layout (push_constant) uniform SceneData {
 	mat4 projection;
@@ -30,7 +30,7 @@ struct Meshlet
 {
 	vec4 cone;
 	uint vertices[64];   
-    uint8_t indices[378];   
+    uint indices_packed[124*3/4];   
     uint8_t vertex_count;
 	uint8_t triangle_count;
 };	
@@ -106,8 +106,10 @@ void main()
 		gl_MeshVerticesNV[i].gl_Position = Pw;
 	}
 	
-	for (uint i = ti; i < indexCount; i += 32)
-		gl_PrimitiveIndicesNV[i] = uint(meshlets[mi].indices[i]);
+	uint indexGroupCount = (indexCount + 3) / 4;
+
+	for (uint i = ti; i < indexGroupCount; i += 32)
+		writePackedPrimitiveIndices4x8NV(i * 4, meshlets[mi].indices_packed[i]);
 
 	if (ti == 0)
 		gl_PrimitiveCountNV = triangleCount;
