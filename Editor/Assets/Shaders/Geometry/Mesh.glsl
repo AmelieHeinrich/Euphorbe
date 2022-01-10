@@ -4,8 +4,6 @@
 #extension GL_EXT_shader_8bit_storage : require
 #extension GL_EXT_shader_16bit_storage : require
 
-#define DEBUG_RECTANGLE 0
-
 layout(local_size_x = 32, local_size_y = 1, local_size_z = 1) in;
 layout(triangles, max_vertices = 64, max_primitives = 126) out;
 
@@ -30,10 +28,11 @@ layout (binding = 0, set = 0) readonly buffer Vertices
 
 struct Meshlet
 {
+	vec4 cone;
 	uint vertices[64];   
     uint8_t indices[378];   
     uint8_t vertex_count;
-	uint8_t index_count;
+	uint8_t triangle_count;
 };	
 
 layout (binding = 1, set = 0) readonly buffer Meshlets 
@@ -64,51 +63,31 @@ uint hash(uint a)
 	return a;
 }
 
-const vec3 vertices[4] = {
-  vec3(-1,-1,0), 
-  vec3(-1,1,0), 
-  vec3(1,1,0), 
-  vec3(1,-1,0)
-};
- 
-const vec3 colors[4] = {
-  vec3(1.0,0.0,0.0), 
-  vec3(0.0,1.0,0.0), 
-  vec3(0.0,0.0,1.0), 
-  vec3(1.0,0.0,1.0)
-};
+bool ConeCull(vec4 cone, vec3 view)
+{
+	return dot(cone.xyz, view) > cone.w;
+}
 
 void main()
 {
-#if DEBUG_RECTANGLE
-	gl_MeshVerticesNV[0].gl_Position = scene.projection * scene.view * vec4(vertices[0], 1.0); 
-	gl_MeshVerticesNV[1].gl_Position = scene.projection * scene.view * vec4(vertices[1], 1.0); 
-	gl_MeshVerticesNV[2].gl_Position = scene.projection * scene.view * vec4(vertices[2], 1.0); 
-	gl_MeshVerticesNV[3].gl_Position = scene.projection * scene.view * vec4(vertices[3], 1.0);
-	
-	VertexOut[0].MeshletColor = colors[0];
-	VertexOut[1].MeshletColor = colors[1];
-	VertexOut[2].MeshletColor = colors[2];
-	VertexOut[3].MeshletColor = colors[3];
-	
-	gl_PrimitiveIndicesNV[0] = 0;
-	gl_PrimitiveIndicesNV[1] = 1;
-	gl_PrimitiveIndicesNV[2] = 2;
-	
-	gl_PrimitiveIndicesNV[3] = 2;
-	gl_PrimitiveIndicesNV[4] = 3;
-	gl_PrimitiveIndicesNV[5] = 0;
-	
-	gl_PrimitiveCountNV = 2;
-#else
-
 	uint mi = gl_WorkGroupID.x;
+	uint ti = gl_LocalInvocationID.x;
+
+	if (ConeCull(meshlets[mi].cone, vec3(0, 0, 1)))
+	{
+		if (ti == 0)
+			gl_PrimitiveCountNV = 0;
+		return;
+	}
 	
 	uint mhash = hash(mi);
 	vec3 mcolor = vec3(float(mhash & 255), float((mhash >> 8) & 255), float((mhash >> 16) & 255)) / 255.0;
-	
-	uint vertex_count = uint(meshlets[mi].vertex_count);
-	for (uint i = 0; i < vertex_count; ++i)
+
+	uint vertexCount = uint(meshlets[mi].vertex_count);
+	uint indexCount = uint(meshlets[mi].triangle_count) * 3;
+	uint triangleCount = uint(meshlets[mi].triangle_count);
+
+	for (uint i = ti; i < vertexCount; i += 32)
 	{
 		uint vi = meshlets[mi].vertices[i];
 
@@ -127,12 +106,9 @@ void main()
 		gl_MeshVerticesNV[i].gl_Position = Pw;
 	}
 	
-	uint index_count = uint(meshlets[mi].index_count);
-	gl_PrimitiveCountNV = index_count / 3;
-
-	for (uint i = 0; i < index_count; ++i)
-	{
+	for (uint i = ti; i < indexCount; i += 32)
 		gl_PrimitiveIndicesNV[i] = uint(meshlets[mi].indices[i]);
-	}
-#endif
+
+	if (ti == 0)
+		gl_PrimitiveCountNV = triangleCount;
 }

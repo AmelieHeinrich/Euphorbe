@@ -76,6 +76,26 @@ void* QueryAccessorData(cgltf_accessor* accessor, u32* component_size, u32* comp
 
 E_DEFINE_VECTOR(Meshlet, E_Meshlet);
 
+float halfToFloat(uint16_t v)
+{
+    uint16_t sign = v >> 15;
+    uint16_t exp = (v >> 10) & 31;
+    uint16_t mant = v & 1023;
+
+    assert(exp != 31);
+
+    if (exp == 0)
+    {
+        assert(mant == 0);
+        return 0.f;
+    }
+    else
+    {
+        return (sign ? -1.f : 1.f) * ldexpf((f32)(mant + 1024) / 1024.f, exp - 15);
+    }
+}
+
+
 void ProcessGLTFPrimitive(E_Material* material, cgltf_primitive* primitive, u32 currentPrimitiveIndex, E_Submesh* mesh, E_Mesh* main_mesh)
 {
     cgltf_attribute* position_attribute = 0;
@@ -94,10 +114,9 @@ void ProcessGLTFPrimitive(E_Material* material, cgltf_primitive* primitive, u32 
     assert(position_attribute && texcoord_attribute && normal_attribute);
 
     u32 vertex_stride_count = 8;
-    u32 vertex_stride_bytes = vertex_stride_count * sizeof(f32);
     u32 vertex_count = (u32)position_attribute->data->count;
-    u32 vertices_size = vertex_count * vertex_stride_bytes;
-    f32* vertices = (f32*)malloc(vertices_size);
+    u32 vertices_size = vertex_count * sizeof(E_MeshVertex);
+    E_MeshVertex* vertices = (E_MeshVertex*)malloc(vertices_size);
 
     {
         u32 component_size, component_count;
@@ -106,10 +125,9 @@ void ProcessGLTFPrimitive(E_Material* material, cgltf_primitive* primitive, u32 
 
         for (u32 vertex_index = 0; vertex_index < vertex_count; vertex_index++)
         {
-            u32 internal_index = vertex_index * vertex_stride_count;
-            vertices[internal_index + 0] = src[vertex_index * component_count + 0];
-            vertices[internal_index + 1] = src[vertex_index * component_count + 1];
-            vertices[internal_index + 2] = src[vertex_index * component_count + 2];
+            vertices[vertex_index].Position[0] = src[vertex_index * component_count + 0];
+            vertices[vertex_index].Position[1] = src[vertex_index * component_count + 1];
+            vertices[vertex_index].Position[2] = src[vertex_index * component_count + 2];
         }
     }
 
@@ -120,9 +138,8 @@ void ProcessGLTFPrimitive(E_Material* material, cgltf_primitive* primitive, u32 
 
         for (u32 vertex_index = 0; vertex_index < vertex_count; vertex_index++)
         {
-            u32 internal_index = vertex_index * vertex_stride_count;
-            vertices[internal_index + 3] = src[vertex_index * component_count + 0];
-            vertices[internal_index + 4] = src[vertex_index * component_count + 1];
+            vertices[vertex_index].UV[0] = src[vertex_index * component_count + 0];
+            vertices[vertex_index].UV[1] = src[vertex_index * component_count + 1];
         }
     }
 
@@ -133,10 +150,9 @@ void ProcessGLTFPrimitive(E_Material* material, cgltf_primitive* primitive, u32 
 
         for (u32 vertex_index = 0; vertex_index < vertex_count; vertex_index++)
         {
-            u32 internal_index = vertex_index * vertex_stride_count;
-            vertices[internal_index + 5] = src[vertex_index * component_count + 0];
-            vertices[internal_index + 6] = src[vertex_index * component_count + 1];
-            vertices[internal_index + 7] = src[vertex_index * component_count + 2];
+            vertices[vertex_index].Normals[0] = src[vertex_index * component_count + 0];
+            vertices[vertex_index].Normals[1] = src[vertex_index * component_count + 1];
+            vertices[vertex_index].Normals[2] = src[vertex_index * component_count + 2];
         }
     }
 
@@ -166,6 +182,14 @@ void ProcessGLTFPrimitive(E_Material* material, cgltf_primitive* primitive, u32 
         }
     }
 
+    mesh->vertex_buffer = E_CreateVertexBuffer(vertices_size);
+    E_SetBufferData(mesh->vertex_buffer, vertices, vertices_size);
+
+    mesh->index_buffer = E_CreateIndexBuffer(index_count * sizeof(u32));
+    E_SetBufferData(mesh->index_buffer, indices, index_count * sizeof(u32));
+
+    // Generate meshlets
+
     E_VectorMeshlet meshlet_array;
     E_INIT_VECTOR(meshlet_array, 256);
 
@@ -187,10 +211,13 @@ void ProcessGLTFPrimitive(E_Material* material, cgltf_primitive* primitive, u32 
 
         u32 used_extra = (av == 0xff) + (bv == 0xff) + (cv == 0xff);
 
-        if (meshlet.vertex_count + used_extra > EUPHORBE_MAX_MESHLET_VERTICES || meshlet.index_count + 3 > EUPHORBE_MAX_MESHLET_INDICES)
+        if (meshlet.vertex_count + used_extra > EUPHORBE_MAX_MESHLET_VERTICES || meshlet.triangle_count >= EUPHORBE_MAX_MESHLET_TRIANGLES)
         {
             E_PUSH_BACK_VECTOR(meshlet_array, meshlet);
-            memset(meshlet_vertices, 0xff, vertex_count);
+            
+            for (size_t j = 0; j < meshlet.vertex_count; ++j)
+                meshlet_vertices[meshlet.vertices[j]] = 0xff;
+
             memset(&meshlet, 0, sizeof(E_Meshlet));
         }
 
@@ -212,20 +239,91 @@ void ProcessGLTFPrimitive(E_Material* material, cgltf_primitive* primitive, u32 
             meshlet.vertices[meshlet.vertex_count++] = c;
         }
 
-        meshlet.indices[meshlet.index_count++] = av;
-        meshlet.indices[meshlet.index_count++] = bv;
-        meshlet.indices[meshlet.index_count++] = cv;
+        meshlet.indices[meshlet.triangle_count * 3 + 0] = av;
+        meshlet.indices[meshlet.triangle_count * 3 + 1] = bv;
+        meshlet.indices[meshlet.triangle_count * 3 + 2] = cv;
+        meshlet.triangle_count++;
     }
 
-    if (meshlet.index_count)
+    if (meshlet.triangle_count)
         E_PUSH_BACK_VECTOR(meshlet_array, meshlet);
 
+    // Process cones
+    {
+        for (i32 meshlet_idx = 0; meshlet_idx < meshlet_array.used; meshlet_idx++)
+        {
+            f32 normals[126][3] = {0};
 
-    mesh->vertex_buffer = E_CreateVertexBuffer(vertices_size);
-    E_SetBufferData(mesh->vertex_buffer, vertices, vertices_size);
+            for (u32 j = 0; j < meshlet_array.data[meshlet_idx].triangle_count; ++j)
+            {
+                u32 a = meshlet_array.data[meshlet_idx].indices[j * 3 + 0];
+                u32 b = meshlet_array.data[meshlet_idx].indices[j * 3 + 1];
+                u32 c = meshlet_array.data[meshlet_idx].indices[j * 3 + 2];
 
-    mesh->index_buffer = E_CreateIndexBuffer(index_count * sizeof(u32));
-    E_SetBufferData(mesh->index_buffer, indices, index_count * sizeof(u32));
+                const E_MeshVertex va = vertices[meshlet_array.data[meshlet_idx].vertices[a]];
+                const E_MeshVertex vb = vertices[meshlet_array.data[meshlet_idx].vertices[b]];
+                const E_MeshVertex vc = vertices[meshlet_array.data[meshlet_idx].vertices[c]];
+
+                f32 p0[3] = { halfToFloat(va.Position[0]), halfToFloat(va.Position[1]), halfToFloat(va.Position[2])};
+                f32 p1[3] = { halfToFloat(vb.Position[0]), halfToFloat(vb.Position[1]), halfToFloat(vb.Position[2]) };
+                f32 p2[3] = { halfToFloat(vc.Position[0]), halfToFloat(vc.Position[1]), halfToFloat(vc.Position[2]) };
+
+                f32 p10[3] = { p1[0] - p0[0], p1[1] - p0[1], p1[2] - p0[2] };
+                f32 p20[3] = { p2[0] - p0[0], p2[1] - p0[1], p2[2] - p0[2] };
+
+                f32 normalx = p10[1] * p20[2] - p10[2] * p20[1];
+                f32 normaly = p10[2] * p20[0] - p10[0] * p20[2];
+                f32 normalz = p10[0] * p20[1] - p10[1] * p20[0];
+
+                f32 area = sqrtf(normalx * normalx + normaly * normaly + normalz * normalz);
+                f32 invarea = area == 0.f ? 0.f : 1 / area;
+
+                normals[j][0] = normalx * invarea;
+                normals[j][1] = normaly * invarea;
+                normals[j][2] = normalz * invarea;
+            }
+
+            f32 avgnormal[3] = { 0 };
+
+            for (u32 j = 0; j < meshlet_array.data[meshlet_idx].triangle_count; ++j)
+            {
+                avgnormal[0] += normals[j][0];
+                avgnormal[1] += normals[j][1];
+                avgnormal[2] += normals[j][2];
+            }
+
+            f32 avglength = sqrtf(avgnormal[0] * avgnormal[0] + avgnormal[1] * avgnormal[1] + avgnormal[2] * avgnormal[2]);
+
+            if (avglength == 0.f)
+            {
+                avgnormal[0] = 1.f;
+                avgnormal[1] = 0.f;
+                avgnormal[2] = 0.f;
+            }
+            else
+            {
+                avgnormal[0] /= avglength;
+                avgnormal[1] /= avglength;
+                avgnormal[2] /= avglength;
+            }
+
+            f32 mindp = 1.f;
+
+            for (u32 j = 0; j < meshlet_array.data[j].triangle_count; ++j)
+            {
+                f32 dp = normals[j][0] * avgnormal[0] + normals[j][1] * avgnormal[1] + normals[j][2] * avgnormal[2];
+
+                mindp = min(mindp, dp);
+            }
+
+            f32 conew = mindp <= 0.f ? 1 : sqrtf(1 - mindp * mindp);
+
+            meshlet_array.data[meshlet_idx].cone[0] = avgnormal[0];
+            meshlet_array.data[meshlet_idx].cone[1] = avgnormal[1];
+            meshlet_array.data[meshlet_idx].cone[2] = avgnormal[2];
+            meshlet_array.data[meshlet_idx].cone[3] = conew;
+        }
+    }
 
     mesh->meshlet_buffer = E_CreateVertexBuffer(meshlet_array.used * sizeof(E_Meshlet));
     E_SetBufferData(mesh->meshlet_buffer, meshlet_array.data, meshlet_array.used * sizeof(E_Meshlet));
@@ -240,7 +338,7 @@ void ProcessGLTFPrimitive(E_Material* material, cgltf_primitive* primitive, u32 
         }
     }
 
-    mesh->vertex_count = vertices_size / sizeof(vertices[0]);
+    mesh->vertex_count = vertex_count;
     mesh->index_count = index_count;
     mesh->tri_count = mesh->index_count / 3;
     mesh->vertices_size = vertices_size;

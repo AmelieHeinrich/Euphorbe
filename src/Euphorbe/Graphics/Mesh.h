@@ -22,10 +22,11 @@ struct E_MeshVertex
 typedef struct E_Meshlet E_Meshlet;
 struct E_Meshlet
 {
+	vec4 cone;
 	u32 vertices[EUPHORBE_MAX_MESHLET_VERTICES];    
 	u8 indices[EUPHORBE_MAX_MESHLET_INDICES];  
 	u8 vertex_count; 
-	u8 index_count;  
+	u8 triangle_count;  
 };
 
 typedef struct E_Submesh E_Submesh;
