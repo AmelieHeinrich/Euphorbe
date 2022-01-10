@@ -3,6 +3,7 @@
 #include <Euphorbe/Graphics/Renderer.h>
 #include <Euphorbe/Graphics/CommandBuffer.h>
 #include <Euphorbe/Resource/Resource.h>
+#include <Euphorbe/Platform/Timer.h>
 
 typedef struct FXAAPushConstants FXAAPushConstants;
 struct FXAAPushConstants
@@ -33,7 +34,11 @@ void FXAANodeInit(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info)
 {
 	FXAANodeData* data = (FXAANodeData*)node->node_data;
 
+	f64 start = E_TimerGetTime();
 	data->fxaa_material = E_LoadResource("Assets/Materials/FXAAMaterial.toml", E_ResourceTypeMaterial);
+	f64 end = E_TimerGetTime();
+	E_LogInfo("FXAA NODE: Compiled shaders in %f seconds", end - start);
+
 	data->material_instance = E_CreateMaterialInstance(data->fxaa_material->as.material, 0);
 	
 	E_Image* color_input = E_GetRenderGraphNodeInputImage(&node->inputs[0]);

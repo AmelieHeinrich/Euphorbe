@@ -15,6 +15,7 @@ enum E_ResourceType
     E_ResourceTypeGeometryShader,
     E_ResourceTypeFragmentShader,
     E_ResourceTypeComputeShader,
+    E_ResourceTypeTaskShader,
     E_ResourceTypeMeshShader,
     E_ResourceTypeTexture,
     E_ResourceTypeMaterial,

@@ -94,6 +94,25 @@ E_ResourceFile* E_LoadResource(const char* path, E_ResourceType type)
 			return NULL;
 		}
 		break;
+	case E_ResourceTypeTaskShader:
+		resource->as.shader = malloc(sizeof(E_Shader));
+		if (resource->as.shader != NULL)
+		{
+			char* source = E_ReadFile(path, &resource->resource_size);
+
+			resource->as.shader->type = E_ShaderTypeTaskNV;
+			E_CompileShader(source, resource->resource_size, resource->as.shader);
+
+			free(source);
+			break;
+		}
+		else
+		{
+			E_LogError("RESOURCE SHADER ALLOCATION: Failed to allocate resource shader!");
+			assert(0);
+			return NULL;
+		}
+		break;
 	case E_ResourceTypeMeshShader:
 		resource->as.shader = malloc(sizeof(E_Shader));
 		if (resource->as.shader != NULL)
@@ -135,6 +154,7 @@ void E_FreeResource(E_ResourceFile* file)
 	case E_ResourceTypeGeometryShader:
 	case E_ResourceTypeFragmentShader:
 	case E_ResourceTypeComputeShader:
+	case E_ResourceTypeTaskShader:
 	case E_ResourceTypeMeshShader:
 		free(file->as.shader);
 		break;

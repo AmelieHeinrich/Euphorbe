@@ -89,8 +89,6 @@ void E_BuildRenderGraph(E_RenderGraph* graph, E_RenderGraphExecuteInfo* info, E_
 	{
 		E_RenderGraphNode* node = graph->node_vector.nodes[i];
 		node->init_func(node, info);
-
-		E_LogInfo("RENDER GRAPH BUILD: Initialised node at index %d with name %s", i, node->name);
 	}
 
 	E_LogInfo("RENDER GRAPH BUILD: Built render graph with %d nodes", graph->node_vector.node_count);

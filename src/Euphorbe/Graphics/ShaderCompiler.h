@@ -9,7 +9,8 @@ enum E_ShaderType
 	E_ShaderTypeGeometry = 0x00000008,
 	E_ShaderTypeFragment = 0x00000010,
 	E_ShaderTypeCompute = 0x00000020,
-	E_ShaderTypeMeshNV = 0x00000080
+	E_ShaderTypeTaskNV = 0x00000040,
+	E_ShaderTypeMeshNV = 0x00000080,
 };
 
 typedef struct E_Shader E_Shader;

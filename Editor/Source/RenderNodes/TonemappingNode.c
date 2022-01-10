@@ -3,6 +3,7 @@
 #include <Euphorbe/Graphics/Renderer.h>
 #include <Euphorbe/Graphics/CommandBuffer.h>
 #include <Euphorbe/Resource/Resource.h>
+#include <Euphorbe/Platform/Timer.h>
 
 typedef struct TonemappingConstants TonemappingConstants;
 struct TonemappingConstants
@@ -37,7 +38,11 @@ void TonemappingNodeInit(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info
 	E_Image* color_buffer = E_GetRenderGraphNodeInputImage(&node->inputs[0]);
 	assert(color_buffer && color_buffer->rhi_handle);
 
+	f64 start = E_TimerGetTime();
 	data->screen_shader = E_LoadResource("Assets/Materials/TonemappingMaterial.toml", E_ResourceTypeMaterial);
+	f64 end = E_TimerGetTime();
+	E_LogInfo("TONEMAPPING NODE: Compiled shaders in %f seconds", end - start);
+
 	data->material_instance = E_CreateMaterialInstance(data->screen_shader->as.material, 0);
 	E_MaterialInstanceWriteSampler(data->material_instance, 0, E_LinearSampler);
 	E_MaterialInstanceWriteSampledImage(data->material_instance, 1, color_buffer);

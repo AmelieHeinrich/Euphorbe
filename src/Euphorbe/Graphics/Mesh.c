@@ -252,17 +252,19 @@ void ProcessGLTFPrimitive(E_Material* material, cgltf_primitive* primitive, u32 
     {
         for (i32 meshlet_idx = 0; meshlet_idx < meshlet_array.used; meshlet_idx++)
         {
+            E_Meshlet meshlet = meshlet_array.data[meshlet_idx];
+
             f32 normals[126][3] = {0};
 
-            for (u32 j = 0; j < meshlet_array.data[meshlet_idx].triangle_count; ++j)
+            for (u32 j = 0; j < meshlet.triangle_count; ++j)
             {
-                u32 a = meshlet_array.data[meshlet_idx].indices[j * 3 + 0];
-                u32 b = meshlet_array.data[meshlet_idx].indices[j * 3 + 1];
-                u32 c = meshlet_array.data[meshlet_idx].indices[j * 3 + 2];
+                u32 a = meshlet.indices[j * 3 + 0];
+                u32 b = meshlet.indices[j * 3 + 1];
+                u32 c = meshlet.indices[j * 3 + 2];
 
-                const E_MeshVertex va = vertices[meshlet_array.data[meshlet_idx].vertices[a]];
-                const E_MeshVertex vb = vertices[meshlet_array.data[meshlet_idx].vertices[b]];
-                const E_MeshVertex vc = vertices[meshlet_array.data[meshlet_idx].vertices[c]];
+                const E_MeshVertex va = vertices[meshlet.vertices[a]];
+                const E_MeshVertex vb = vertices[meshlet.vertices[b]];
+                const E_MeshVertex vc = vertices[meshlet.vertices[c]];
 
                 f32 p0[3] = { halfToFloat(va.Position[0]), halfToFloat(va.Position[1]), halfToFloat(va.Position[2])};
                 f32 p1[3] = { halfToFloat(vb.Position[0]), halfToFloat(vb.Position[1]), halfToFloat(vb.Position[2]) };
@@ -285,7 +287,7 @@ void ProcessGLTFPrimitive(E_Material* material, cgltf_primitive* primitive, u32 
 
             f32 avgnormal[3] = { 0 };
 
-            for (u32 j = 0; j < meshlet_array.data[meshlet_idx].triangle_count; ++j)
+            for (u32 j = 0; j < meshlet.triangle_count; ++j)
             {
                 avgnormal[0] += normals[j][0];
                 avgnormal[1] += normals[j][1];
@@ -309,7 +311,7 @@ void ProcessGLTFPrimitive(E_Material* material, cgltf_primitive* primitive, u32 
 
             f32 mindp = 1.f;
 
-            for (u32 j = 0; j < meshlet_array.data[j].triangle_count; ++j)
+            for (u32 j = 0; j < meshlet.triangle_count; ++j)
             {
                 f32 dp = normals[j][0] * avgnormal[0] + normals[j][1] * avgnormal[1] + normals[j][2] * avgnormal[2];
 
@@ -318,10 +320,10 @@ void ProcessGLTFPrimitive(E_Material* material, cgltf_primitive* primitive, u32 
 
             f32 conew = mindp <= 0.f ? 1 : sqrtf(1 - mindp * mindp);
 
-            meshlet_array.data[meshlet_idx].cone[0] = avgnormal[0];
-            meshlet_array.data[meshlet_idx].cone[1] = avgnormal[1];
-            meshlet_array.data[meshlet_idx].cone[2] = avgnormal[2];
-            meshlet_array.data[meshlet_idx].cone[3] = conew;
+            meshlet.cone[0] = avgnormal[0];
+            meshlet.cone[1] = avgnormal[1];
+            meshlet.cone[2] = avgnormal[2];
+            meshlet.cone[3] = conew;
         }
     }
 

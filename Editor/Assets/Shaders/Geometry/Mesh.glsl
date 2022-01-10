@@ -40,6 +40,11 @@ layout (binding = 1, set = 0) readonly buffer Meshlets
 	Meshlet meshlets[];
 };
 
+in taskNV block
+{
+	uint meshletIndices[32];
+};
+
 layout (binding = 0, set = 1) uniform ObjectData {
 	mat4 transform;
 } ModelTransform;
@@ -70,8 +75,8 @@ bool ConeCull(vec4 cone, vec3 view)
 
 void main()
 {
-	uint mi = gl_WorkGroupID.x;
 	uint ti = gl_LocalInvocationID.x;
+	uint mi = meshletIndices[gl_WorkGroupID.x];
 
 	if (ConeCull(meshlets[mi].cone, vec3(0, 0, 1)))
 	{

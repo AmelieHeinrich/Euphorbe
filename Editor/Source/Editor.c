@@ -84,8 +84,9 @@ void EditorInitialiseWindow()
     settings.log_renderer_events = E_GetCVar(&editor_state.cvar_sys, "log_renderer_events").u.b;
     settings.enable_debug = E_GetCVar(&editor_state.cvar_sys, "enable_debug").u.b;
     settings.gui_should_clear = E_GetCVar(&editor_state.cvar_sys, "gui_should_clear").u.b;
+    settings.enable_vsync = E_GetCVar(&editor_state.cvar_sys, "enable_vsync").u.b;
 
-    editor_state.window = E_CreateWindow(1280, 720, "Euphorbe Editor", E_GetCVar(&editor_state.cvar_sys, "dark_mode").u.b);
+    editor_state.window = E_CreateWindow(1280, 720, "Euphorbe Engine | Renderer: <Vulkan>", E_GetCVar(&editor_state.cvar_sys, "dark_mode").u.b);
     E_RendererInit(editor_state.window, settings);
     E_InitDefaultSamplers();
 

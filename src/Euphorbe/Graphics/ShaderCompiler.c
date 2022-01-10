@@ -4,6 +4,7 @@
 #include <shaderc/shaderc.h>
 
 #include <Euphorbe/Core/Log.h>
+#include <Euphorbe/platform/Timer.h>
 
 shaderc_shader_kind E_ShaderKindToShaderC(E_ShaderType type)
 {
@@ -17,6 +18,8 @@ shaderc_shader_kind E_ShaderKindToShaderC(E_ShaderType type)
 		return shaderc_fragment_shader;
 	case E_ShaderTypeCompute:
 		return shaderc_compute_shader;
+	case E_ShaderTypeTaskNV:
+		return shaderc_task_shader;
 	case E_ShaderTypeMeshNV:
 		return shaderc_mesh_shader;
 	}
@@ -65,14 +68,13 @@ char* E_ReadFile(const char* path, i32* output_size)
 	return NULL;
 }
 
-#pragma optimize("", off)
 void E_CompileShader(char* source, i32 source_size, E_Shader* shader)
 {
 	shaderc_compiler_t compiler = shaderc_compiler_initialize();
 	shaderc_compile_options_t options = shaderc_compile_options_initialize();
 
 	shaderc_compile_options_set_source_language(options, shaderc_source_language_glsl);
-	shaderc_compile_options_set_target_spirv(options, shaderc_spirv_version_1_0);
+	shaderc_compile_options_set_target_spirv(options, shaderc_spirv_version_1_4);
 	shaderc_compile_options_set_target_env(options, shaderc_target_env_vulkan, shaderc_env_version_vulkan_1_2);
 	shaderc_compile_options_set_optimization_level(options, shaderc_optimization_level_size);
 
@@ -90,4 +92,3 @@ void E_CompileShader(char* source, i32 source_size, E_Shader* shader)
 
 	shaderc_compiler_release(compiler);
 }
-#pragma optimize("", on)

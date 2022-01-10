@@ -30,7 +30,7 @@ void LogInfo(const char* message)
     time_t now;
     time(&now);
     printf(RESET);
-    printf(GREEN);
+    printf(CYAN);
     char* time_string = ctime(&now);
     time_string[strcspn(time_string, "\n")] = 0;
     char final_string[255] = { 0 };

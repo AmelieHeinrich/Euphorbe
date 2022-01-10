@@ -17,6 +17,7 @@ struct E_RendererInitSettings
     b32 log_renderer_events; // Default: true
     b32 enable_debug; // Default: false
     b32 gui_should_clear; // If viewport is in a gui window
+    b32 enable_vsync; // Enable vsync
 };
 
 typedef struct E_ClearValue E_ClearValue;

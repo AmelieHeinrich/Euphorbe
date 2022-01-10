@@ -12,6 +12,7 @@
 
 [Shaders]
 	EnableMeshShaders = true
+	Task = "Assets/Shaders/Geometry/Task.glsl"
 	Mesh = "Assets/Shaders/Geometry/Mesh.glsl"
 	Fragment = "Assets/Shaders/Geometry/MeshFragment.glsl"
 

@@ -2,6 +2,7 @@
 
 #include <Euphorbe/Graphics/Renderer.h>
 #include <Euphorbe/Resource/Resource.h>
+#include <Euphorbe/Platform/Timer.h>
 
 typedef struct GeometryUniforms GeometryUniforms;
 struct GeometryUniforms
@@ -66,11 +67,17 @@ void GeometryNodeInit(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info)
 	else
 		data->geometry_material = E_LoadResource("Assets/Materials/GeometryMaterial.toml", E_ResourceTypeMaterial);
 
+	f64 start = E_TimerGetTime();
+
 	data->skybox_material = E_LoadResource("Assets/Materials/SkyboxMaterial.toml", E_ResourceTypeMaterial);
 	data->equirectangular_cubemap_material = E_LoadResource("Assets/Materials/EquirectangularCubemapMaterial.toml", E_ResourceTypeComputeMaterial);
 	data->irradiance_material = E_LoadResource("Assets/Materials/IrradianceMaterial.toml", E_ResourceTypeComputeMaterial);
 	data->prefilter_material = E_LoadResource("Assets/Materials/PrefilterMaterial.toml", E_ResourceTypeComputeMaterial);
 	data->brdf_material = E_LoadResource("Assets/Materials/BRDFMaterial.toml", E_ResourceTypeComputeMaterial);
+
+	f64 end = E_TimerGetTime();
+	E_LogInfo("GEOMETRY NODE: Compiled shaders in %f seconds", end - start);
+
 	data->skybox_mesh = E_LoadMesh(data->skybox_material->as.material, "Assets/Models/Cube.gltf");
 
 	data->skybox_instance = E_CreateMaterialInstance(data->skybox_material->as.material, 0);
@@ -86,6 +93,8 @@ void GeometryNodeInit(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info)
 	data->brdf = E_MakeImage(512, 512, E_ImageFormatRG16, E_ImageUsageStorage | E_ImageUsageSampled);
 
 	// Begin compute shader
+
+	start = E_TimerGetTime();
 
 	E_CommandBuffer* compute_cmd_buf = E_CreateCommandBuffer(E_CommandBufferTypeCompute);
 	E_BeginCommandBuffer(compute_cmd_buf);
@@ -171,6 +180,9 @@ void GeometryNodeInit(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info)
 	//
 
 	E_FreeImage(data->hdr_skybox_texture);
+
+	end = E_TimerGetTime();
+	E_LogInfo("GEOMETRY NODE: Environment Map Compute took %f seconds to execute", end - start);
 
 	//
 

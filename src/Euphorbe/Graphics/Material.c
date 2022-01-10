@@ -145,14 +145,17 @@ E_Material* E_CreateMaterialFromFile(const char* path)
 	}
 	else
 	{
+		toml_datum_t task_path = toml_string_in(shaders, "Task");
 		toml_datum_t mesh_path = toml_string_in(shaders, "Mesh");
 		toml_datum_t fragment_path = toml_string_in(shaders, "Fragment");
 
-		assert(mesh_path.ok && fragment_path.ok);
+		assert(task_path.ok && mesh_path.ok && fragment_path.ok);
 
+		material->material_create_info->task_shader = E_LoadResource(task_path.u.s, E_ResourceTypeTaskShader);
 		material->material_create_info->mesh_shader = E_LoadResource(mesh_path.u.s, E_ResourceTypeMeshShader);
 		material->material_create_info->fragment_shader = E_LoadResource(fragment_path.u.s, E_ResourceTypeFragmentShader);
 
+		free(task_path.u.s);
 		free(mesh_path.u.s);
 		free(fragment_path.u.s);
 	}
@@ -299,6 +302,7 @@ void E_FreeMaterial(E_Material* material)
 		if (material->material_create_info->fragment_shader) E_FreeResource(material->material_create_info->fragment_shader);
 		if (material->material_create_info->compute_shader) E_FreeResource(material->material_create_info->compute_shader);
 		if (material->material_create_info->mesh_shader) E_FreeResource(material->material_create_info->mesh_shader);
+		if (material->material_create_info->task_shader) E_FreeResource(material->material_create_info->task_shader);
 		free(material->material_create_info);
 	}
 	free(material);

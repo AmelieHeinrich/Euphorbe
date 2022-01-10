@@ -105,6 +105,7 @@ struct E_MaterialCreateInfo
     E_ResourceFile* vertex_shader;
     E_ResourceFile* fragment_shader;
     E_ResourceFile* compute_shader;
+    E_ResourceFile* task_shader;
     E_ResourceFile* mesh_shader;
 
     // Descriptors

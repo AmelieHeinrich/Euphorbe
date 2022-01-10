@@ -178,15 +178,16 @@ E_VulkanMaterial* E_Vk_CreateMaterial(E_MaterialCreateInfo* create_info)
         assert(res == VK_SUCCESS);
     }
 
-    VkPipelineShaderStageCreateInfo pipeline_shader_stages[2];
+    VkPipelineShaderStageCreateInfo pipeline_shader_stages[3];
     memset(pipeline_shader_stages, 0, sizeof(pipeline_shader_stages));
-    const i32 pipeline_shader_stage_count = 2;
+    i32 pipeline_shader_stage_count = 2;
 
     SpvReflectShaderModule input_layout_reflect;
 
     VkShaderModule vertex_module = VK_NULL_HANDLE;
     VkShaderModule fragment_module = VK_NULL_HANDLE;
     VkShaderModule mesh_module = VK_NULL_HANDLE;
+    VkShaderModule task_module = VK_NULL_HANDLE;
 
     if (!create_info->mesh_shader_enabled)
     {
@@ -211,21 +212,30 @@ E_VulkanMaterial* E_Vk_CreateMaterial(E_MaterialCreateInfo* create_info)
     }
     else
     {
+        E_Shader* task_shader = create_info->task_shader->as.shader;
         E_Shader* mesh_shader = create_info->mesh_shader->as.shader;
         E_Shader* fragment_shader = create_info->fragment_shader->as.shader;
 
+        E_Vk_MakeShaderModule(&task_module, task_shader->code, task_shader->code_size);
         E_Vk_MakeShaderModule(&mesh_module, mesh_shader->code, mesh_shader->code_size);
         E_Vk_MakeShaderModule(&fragment_module, fragment_shader->code, fragment_shader->code_size);
 
         pipeline_shader_stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-        pipeline_shader_stages[0].stage = VK_SHADER_STAGE_MESH_BIT_NV;
-        pipeline_shader_stages[0].module = mesh_module;
+        pipeline_shader_stages[0].stage = VK_SHADER_STAGE_TASK_BIT_NV;
+        pipeline_shader_stages[0].module = task_module;
         pipeline_shader_stages[0].pName = "main";
 
         pipeline_shader_stages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-        pipeline_shader_stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-        pipeline_shader_stages[1].module = fragment_module;
+        pipeline_shader_stages[1].stage = VK_SHADER_STAGE_MESH_BIT_NV;
+        pipeline_shader_stages[1].module = mesh_module;
         pipeline_shader_stages[1].pName = "main";
+
+        pipeline_shader_stages[2].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+        pipeline_shader_stages[2].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+        pipeline_shader_stages[2].module = fragment_module;
+        pipeline_shader_stages[2].pName = "main";
+
+        pipeline_shader_stage_count = 3;
     }
 
     VkVertexInputBindingDescription vertex_input_binding_desc = {0};
@@ -404,6 +414,7 @@ E_VulkanMaterial* E_Vk_CreateMaterial(E_MaterialCreateInfo* create_info)
     if (vertex_module) vkDestroyShaderModule(rhi.device.handle, vertex_module, NULL);
     if (fragment_module) vkDestroyShaderModule(rhi.device.handle, fragment_module, NULL);
     if (mesh_module) vkDestroyShaderModule(rhi.device.handle, mesh_module, NULL);
+    if (task_module) vkDestroyShaderModule(rhi.device.handle, task_module, NULL);
 
     return result;
 }
