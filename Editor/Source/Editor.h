@@ -50,7 +50,6 @@ struct EditorData
 	E_ResourceFile* albedo_texture;
 	E_ResourceFile* metallic_roughness_texture;
 	E_ResourceFile* normal_texture;
-	E_ResourceFile* ao_texture;
 
 	E_Buffer* transform_buffer;
 	E_Buffer* material_settings;

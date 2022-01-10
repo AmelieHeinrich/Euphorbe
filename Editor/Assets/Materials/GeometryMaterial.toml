@@ -17,7 +17,7 @@
 
 [DescriptorLayout]
 	DescriptorSetLayouts = [
-		[ ["UniformBuffer", "UniformBuffer", "Sampler", "SampledImage", "SampledImage", "SampledImage", "SampledImage"], 7], 
+		[ ["UniformBuffer", "UniformBuffer", "Sampler", "SampledImage", "SampledImage", "SampledImage"], 6], 
 		[ ["UniformBuffer", "Sampler", "Sampler", "SampledImage", "SampledImage", "SampledImage", "SampledImage", "SampledImage"], 7]
 	]
 	DescriptorSetLayoutCount = 2

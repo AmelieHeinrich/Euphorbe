@@ -31,7 +31,6 @@ layout (binding = 2, set = 1) uniform sampler TextureSampler;
 layout (binding = 3, set = 1) uniform texture2D AlbedoTexture;
 layout (binding = 4, set = 1) uniform texture2D MetallicRoughnessTexture;
 layout (binding = 5, set = 1) uniform texture2D NormalTexture;
-layout (binding = 6, set = 1) uniform texture2D AOTexture;
 
 layout (binding = 0, set = 2) uniform Lights {
     PointLight lights[MAX_LIGHT_COUNT];
