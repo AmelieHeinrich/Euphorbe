@@ -79,7 +79,7 @@ void GeometryNodeInit(E_RenderGraphNode* node, E_RenderGraphExecuteInfo* info)
 	data->prefilter_instance = E_CreateMaterialInstance(data->prefilter_material->as.material, 0);
 	data->brdf_instance = E_CreateMaterialInstance(data->brdf_material->as.material, 0);
 
-	data->hdr_skybox_texture = E_MakeHDRImageFromFile("Assets/EnvMaps/SnowyField/4k.hdr");
+	data->hdr_skybox_texture = E_MakeHDRImageFromFile("Assets/EnvMaps/QuattroCanti/4k.hdr");
 	data->cubemap = E_MakeCubeMap(512, 512, E_ImageFormatRGBA16_Unorm, E_ImageUsageStorage | E_ImageUsageSampled);
 	data->irradiance = E_MakeCubeMap(128, 128, E_ImageFormatRGBA16_Unorm, E_ImageUsageStorage | E_ImageUsageSampled);
 	data->prefilter = E_MakeCubeMap(512, 512, E_ImageFormatRGBA16_Unorm, E_ImageUsageStorage | E_ImageUsageSampled);
