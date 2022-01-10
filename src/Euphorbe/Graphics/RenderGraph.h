@@ -1,5 +1,4 @@
-#ifndef EUPHORBE_RENDER_GRAPH_H
-#define EUPHORBE_RENDER_GRAPH_H
+#pragma once
 
 #include <Euphorbe/Core/Common.h>
 #include <Euphorbe/Core/CVar.h>
@@ -101,5 +100,3 @@ void E_BuildRenderGraph(E_RenderGraph* graph, E_RenderGraphExecuteInfo* info, E_
 void E_CleanRenderGraph(E_RenderGraph* graph, E_RenderGraphExecuteInfo* info);
 void E_ResizeRenderGraph(E_RenderGraph* graph, E_RenderGraphExecuteInfo* info);
 void E_ExecuteRenderGraph(E_RenderGraph* graph, E_RenderGraphExecuteInfo* info);
-
-#endif

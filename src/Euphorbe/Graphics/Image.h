@@ -1,5 +1,4 @@
-#ifndef EUPHORBE_IMAGE_H
-#define EUPHORBE_IMAGE_H
+#pragma once
 
 #include <Euphorbe/Core/Common.h>
 
@@ -124,5 +123,3 @@ extern E_Sampler* E_CubemapSampler;
 
 E_Sampler* E_CreateSampler(E_ImageAddressMode mode, E_ImageFilter filter);
 void E_FreeSampler(E_Sampler* sampler);
-
-#endif

@@ -1,5 +1,4 @@
-#ifndef EUPHORBE_CVAR_H
-#define EUPHORBE_CVAR_H
+#pragma once
 
 #include "Map.h"
 
@@ -36,5 +35,3 @@ E_CVar E_GetCVar(E_CVarSystem* sys, char* cvar_name);
 void E_SetCVar_Double(E_CVarSystem* sys, char* cvar_name, f64 value);
 void E_SetCVar_Bool(E_CVarSystem* sys, char* cvar_name, b32 value);
 void E_SetCVar_Int(E_CVarSystem* sys, char* cvar_name, i64 value);
-
-#endif

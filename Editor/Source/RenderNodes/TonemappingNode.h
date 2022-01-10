@@ -1,5 +1,4 @@
-#ifndef EDITOR_TONEMAPPING_NODE_H
-#define EDITOR_TONEMAPPING_NODE_H
+#pragma once
 
 #include <Euphorbe/Graphics/RenderGraph.h>
 
@@ -15,5 +14,3 @@ enum TonemappingNodeOutput
 
 E_RenderGraphNode* CreateTonemappingNode();
 void TonemappingNodeDrawGUI(E_RenderGraphNode* node);
-
-#endif

@@ -1,5 +1,4 @@
-#ifndef EUPHORBE_WINDOWS_TIMER_H
-#define EUPHORBE_WINDOWS_TIMER_H
+#pragma once
 
 #include <Euphorbe/Platform/Timer.h>
 
@@ -12,5 +11,3 @@ struct E_WindowsTimer
 
 void E_WindowsTimerInit();
 f32 E_WindowsTimerGetTime();
-
-#endif

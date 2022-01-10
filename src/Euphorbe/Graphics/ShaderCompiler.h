@@ -1,5 +1,4 @@
-#ifndef EUPHORBE_SHADER_COMPILER_H
-#define EUPHORBE_SHADER_COMPILER_H
+#pragma once
 
 #include <Euphorbe/Core/Common.h>
 
@@ -23,5 +22,3 @@ struct E_Shader
 
 char* E_ReadFile(const char* path, i32* output_size);
 void E_CompileShader(char* source, i32 source_size, E_Shader* shader);
-
-#endif

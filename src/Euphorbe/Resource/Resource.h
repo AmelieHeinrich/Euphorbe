@@ -1,5 +1,4 @@
-#ifndef EUPHORBE_RESOURCE_H
-#define EUPHORBE_RESOURCE_H
+#pragma once
 
 #include <Euphorbe/Graphics/ShaderCompiler.h>
 #include <Euphorbe/Graphics/Image.h>
@@ -38,5 +37,3 @@ struct E_ResourceFile
 
 E_ResourceFile* E_LoadResource(const char* path, E_ResourceType type);
 void E_FreeResource(E_ResourceFile* file);
-
-#endif

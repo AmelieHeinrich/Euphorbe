@@ -1,5 +1,4 @@
-#ifndef EUPHORBE_INPUT_H
-#define EUPHORBE_INPUT_H
+#pragma once
 
 #include <Euphorbe/Core/Common.h>
 #include <cglm/cglm.h>
@@ -123,6 +122,3 @@ b32 E_IsKeyPressed(u16 key);
 b32 E_IsMouseButtonPressed(u16 button);
 f32 E_GetMousePosX();
 f32 E_GetMousePosY();
-
-
-#endif

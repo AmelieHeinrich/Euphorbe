@@ -1,5 +1,4 @@
-#ifndef EUPHORBE_EDITOR_CAMERA_H
-#define EUPHORBE_EDITOR_CAMERA_H
+#pragma once
 
 #include <Euphorbe/Core/Common.h>
 #include <Euphorbe/Platform/Input.h>
@@ -47,5 +46,3 @@ void EditorCameraProcessInput(EditorCamera* camera, f32 dt);
 void EditorCameraProcessMouse(EditorCamera* camera, f32 dt);
 void EditorCameraOnMouseScroll(EditorCamera* camera, f32 scroll);
 void EditorCameraResize(EditorCamera* camera, i32 width, i32 height);
-
-#endif

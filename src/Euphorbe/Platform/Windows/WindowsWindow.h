@@ -1,5 +1,4 @@
-#ifndef EUPHORBE_WINDOWS_WINDOW_H
-#define EUPHORBE_WINDOWS_WINDOW_H
+#pragma once
 
 #include <Euphorbe/Platform/Window.h>
 
@@ -20,5 +19,3 @@ E_WindowsWindow* E_CreateWindowsWindow(i32* width, i32* height, const char* titl
 void E_LaunchWindowsWindow(E_WindowsWindow* window);
 void E_FreeWindowsWindow(E_WindowsWindow* window);
 void E_UpdateWindowsWindow(E_WindowsWindow* window);
-
-#endif

@@ -26,6 +26,7 @@ void EditorCleanup()
     E_FreeBuffer(editor_state.transform_buffer);
   
     E_CleanRenderGraph(editor_state.graph, &editor_state.execute_info);
+    E_FreePipelineStatistics(editor_state.stats);
 
     E_FreeDefaultSamplers();
 
@@ -90,6 +91,7 @@ void EditorInitialiseWindow()
     E_InitDefaultSamplers();
 
     E_TimerInit();
+    editor_state.stats = E_CreatePipelineStatistics();
 
     EditorCameraInit(&editor_state.camera);
 }
@@ -187,6 +189,9 @@ void EditorBeginRender()
     f64 start = EditorBeginProfiling();
 
     E_RendererBegin();
+    E_CommandBuffer* cmd_buf = E_GetSwapchainCommandBuffer();
+    E_ResetPipelineQuery(cmd_buf, editor_state.stats);
+    E_BeginPipelineQuery(cmd_buf, editor_state.stats);
 
     editor_state.perf.begin_render = EditorEndProfiling(start);
 }
@@ -195,8 +200,13 @@ void EditorEndRender()
 {
     f64 start = EditorBeginProfiling();
 
+    E_CommandBuffer* cmd_buf = E_GetSwapchainCommandBuffer();
+    E_EndPipelineQuery(cmd_buf, editor_state.stats);
+
     E_RendererEnd();
-    
+    E_GetQueryResults(editor_state.stats);
+    E_RendererPresent();
+
     editor_state.perf.end_render = EditorEndProfiling(start);
 }
 
@@ -254,6 +264,7 @@ void EditorDrawGUI()
         if (render_stats)
         {
             E_RendererDrawRendererStats();
+            E_DrawPipelineStatisticsGUI(editor_state.stats);
             igTreePop();
         }
 

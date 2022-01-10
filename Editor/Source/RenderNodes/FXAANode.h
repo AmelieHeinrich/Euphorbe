@@ -1,5 +1,4 @@
-#ifndef EDITOR_FXAA_NODE_H
-#define EDITOR_FXAA_NODE_H
+#pragma once
 
 #include <Euphorbe/Graphics/RenderGraph.h>
 
@@ -15,5 +14,3 @@ enum FXAANodeOutput
 
 E_RenderGraphNode* CreateFXAANode();
 void FXAANodeDrawGUI(E_RenderGraphNode* node);
-
-#endif

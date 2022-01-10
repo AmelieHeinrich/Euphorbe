@@ -1,5 +1,4 @@
-#ifndef EUPHORBE_VULKAN_IMAGE_H
-#define EUPHORBE_VULKAN_IMAGE_H
+#pragma once
 
 #include <Euphorbe/Graphics/Image.h>
 #include <vulkan/vulkan.h>
@@ -48,5 +47,3 @@ extern E_VulkanSampler* E_Vk_CubemapSampler;
 
 E_VulkanSampler* E_Vk_CreateSampler(E_ImageAddressMode mode, E_ImageFilter filter);
 void E_Vk_FreeSampler(E_VulkanSampler* sampler);
-
-#endif

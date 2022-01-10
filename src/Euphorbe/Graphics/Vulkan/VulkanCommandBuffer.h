@@ -1,5 +1,4 @@
-#ifndef EUPHORBE_VULKAN_COMMAND_BUFFER
-#define EUPHORBE_VULKAN_COMMAND_BUFFER
+#pragma once
 
 #include <Euphorbe/Graphics/CommandBuffer.h>
 #include <Euphorbe/Graphics/Renderer.h>
@@ -7,6 +6,7 @@
 
 #include "VulkanMaterial.h"
 #include "VulkanBuffer.h"
+#include "VulkanGPUProfiler.h"
 
 typedef struct E_VulkanCommandBuffer E_VulkanCommandBuffer;
 struct E_VulkanCommandBuffer
@@ -40,5 +40,6 @@ void E_Vk_CommandBufferEndRender(E_VulkanCommandBuffer* cmd);
 void E_Vk_CommandBufferPushConstants(E_VulkanCommandBuffer* cmd_buf, E_VulkanMaterial* material, void* data, i64 size);
 void E_Vk_CommandBufferBlitImage(E_VulkanCommandBuffer* cmd_buf, E_VulkanImage* src, E_VulkanImage* dst, E_ImageLayout src_layout, E_ImageLayout dst_layout);
 void E_Vk_CommandBufferImageTransitionLayout(E_VulkanCommandBuffer* cmd_buf, E_VulkanImage* image, E_ImageAccess srcAccess, E_ImageAccess dstAccess, E_ImageLayout old, E_ImageLayout new, E_ImagePipelineStage srcStage, E_ImagePipelineStage dstStage, u32 layer);
-
-#endif
+void E_Vk_ResetPipelineQuery(E_VulkanCommandBuffer* cmd_buf, E_VulkanPipelineStatistics* stats);
+void E_Vk_BeginPipelineQuery(E_VulkanCommandBuffer* cmd_buf, E_VulkanPipelineStatistics* stats);
+void E_Vk_EndPipelineQuery(E_VulkanCommandBuffer* cmd_buf, E_VulkanPipelineStatistics* stats);

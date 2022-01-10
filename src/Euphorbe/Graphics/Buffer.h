@@ -1,5 +1,4 @@
-#ifndef EUPHORBE_BUFFER_H
-#define EUPHORBE_BUFFER_H
+#pragma once
 
 #include <Euphorbe/Core/Common.h>
 
@@ -26,5 +25,3 @@ E_Buffer* E_CreateStorageBuffer(i64 size);
 
 void E_SetBufferData(E_Buffer* buffer, void* data, i64 size);
 void E_FreeBuffer(E_Buffer* buffer);
-
-#endif

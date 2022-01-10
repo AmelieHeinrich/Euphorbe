@@ -1,5 +1,4 @@
-#ifndef EUPHORBE_RENDERER_H
-#define EUPHORBE_RENDERER_H
+#pragma once
 
 #include <Euphorbe/Core/Log.h>
 #include <Euphorbe/Platform/Window.h>
@@ -65,6 +64,7 @@ void E_RendererShutdown();
 
 void E_RendererBegin();
 void E_RendererEnd();
+void E_RendererPresent();
 void E_RendererWait();
 
 void E_RendererDrawMemoryUsageGUI();
@@ -80,5 +80,3 @@ void E_BeginGUI();
 void E_EndGUI();
 
 void E_RendererResize(i32 width, i32 height);
-
-#endif

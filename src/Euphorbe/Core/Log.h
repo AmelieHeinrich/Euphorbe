@@ -1,5 +1,4 @@
-#ifndef EUPHORBE_LOG_H
-#define EUPHORBE_LOG_H
+#pragma once
 
 #include <cimgui.h>
 #include <Euphorbe/Core/Common.h>
@@ -24,5 +23,3 @@ void E_LogError(const char* message, ...);
 
 // Draw the Log GUI
 void E_LogDraw();
-
-#endif

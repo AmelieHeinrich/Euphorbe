@@ -1,5 +1,4 @@
-#ifndef EUPHORBE_VULKAN_MATERIAL_H
-#define EUPHORBE_VULKAN_MATERIAL_H
+#pragma once
 
 #include <Euphorbe/Graphics/Material.h>
 #include <vulkan/vulkan.h>
@@ -35,5 +34,3 @@ void E_Vk_MaterialInstanceWriteSampledImage(E_VulkanMaterialInstance* instance, 
 void E_Vk_MaterialInstanceWriteImage(E_VulkanMaterialInstance* instance, i32 binding, E_VulkanImage* image, E_VulkanSampler* sampler);
 void E_Vk_MaterialInstanceWriteStorageImage(E_VulkanMaterialInstance* instance, i32 binding, E_VulkanImage* image, E_VulkanSampler* sampler);
 void E_Vk_FreeMaterialInstance(E_VulkanMaterialInstance* instance);
-
-#endif

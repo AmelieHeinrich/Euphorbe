@@ -1,5 +1,4 @@
-#ifndef EUPHORBE_H
-#define EUPHORBE_H
+#pragma once
 
 // Core
 #include "Core/Common.h"
@@ -21,8 +20,7 @@
 #include "Graphics/Mesh.h"
 #include "Graphics/RenderGraph.h"
 #include "Graphics/CommandBuffer.h"
+#include "Graphics/GPUProfiler.h"
 
 // Resource
 #include "Resource/Resource.h"
-
-#endif

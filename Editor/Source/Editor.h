@@ -1,5 +1,4 @@
-#ifndef EUPHORBE_EDITOR_H
-#define EUPHORBE_EDITOR_H
+#pragma once
 
 #include <Euphorbe/Euphorbe.h>
 #include <cimgui.h>
@@ -61,6 +60,7 @@ struct EditorData
 
 	// Performance
 	EditorPerformance perf;
+	E_PipelineStatistics* stats;
 
 	// Editor Camera
 	EditorCamera camera;
@@ -89,5 +89,3 @@ void EditorDrawGUI();
 void EditorUpdateCameraInput(f32 dt);
 f64 EditorBeginProfiling();
 f64 EditorEndProfiling(f64 start);
-
-#endif

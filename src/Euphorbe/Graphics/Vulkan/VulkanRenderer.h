@@ -1,5 +1,4 @@
-#ifndef EUPHORBE_VULKAN_RENDERER_H
-#define EUPHORBE_VULKAN_RENDERER_H
+#pragma once
 
 #pragma warning(disable: 28251)
 #include <Euphorbe/Graphics/Renderer.h>
@@ -99,6 +98,7 @@ void E_Vk_RendererShutdown();
 
 void E_Vk_Begin();
 void E_Vk_End();
+void E_Vk_Present();
 void E_Vk_DeviceWait();
 void E_Vk_DrawMemoryUsageGUI();
 void E_Vk_DrawGraphicsCardInfo();
@@ -122,5 +122,3 @@ void E_Vk_Image_Memory_Barrier(VkCommandBuffer command_buffer,
                                VkPipelineStageFlags src_stage_mask,
                                VkPipelineStageFlags dst_stage_mask,
                                VkImageSubresourceRange subresource_range);
-
-#endif

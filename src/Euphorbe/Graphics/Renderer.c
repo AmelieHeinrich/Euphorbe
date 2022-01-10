@@ -40,6 +40,13 @@ void E_RendererEnd()
 #endif
 }
 
+void E_RendererPresent()
+{
+#ifdef EUPHORBE_WINDOWS
+    E_Vk_Present();
+#endif
+}
+
 void E_RendererWait()
 {
 #ifdef EUPHORBE_WINDOWS

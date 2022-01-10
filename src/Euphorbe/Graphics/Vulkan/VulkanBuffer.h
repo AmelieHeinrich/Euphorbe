@@ -1,6 +1,4 @@
-#ifndef EUPHORBE_VULKAN_BUFFER_H
-#define EUPHORBE_VULKAN_BUFFER_H
-
+#pragma once
 #include <Euphorbe/Graphics/Buffer.h>
 #include <vulkan/vulkan.h>
 #include <vk_mem_alloc.h>
@@ -20,5 +18,3 @@ E_VulkanBuffer* E_Vk_AllocateStorageBuffer(i64 size);
 
 void E_Vk_SetBufferData(E_VulkanBuffer* buffer, void* data, i64 size);
 void E_Vk_FreeBuffer(E_VulkanBuffer* buffer);
-
-#endif

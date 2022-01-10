@@ -1,5 +1,4 @@
-#ifndef EUPHORBE_MATERIAL_H
-#define EUPHORBE_MATERIAL_H
+#pragma once
 
 #include <Euphorbe/Resource/Resource.h>
 
@@ -147,5 +146,3 @@ void E_MaterialInstanceWriteSampledImage(E_MaterialInstance* instance, i32 bindi
 void E_MaterialInstanceWriteImage(E_MaterialInstance* instance, i32 binding, E_Image* image, E_Sampler* sampler);
 void E_MaterialInstanceWriteStorageImage(E_MaterialInstance* instance, i32 binding, E_Image* image, E_Sampler* sampler);
 void E_FreeMaterialInstance(E_MaterialInstance* instance);
-
-#endif

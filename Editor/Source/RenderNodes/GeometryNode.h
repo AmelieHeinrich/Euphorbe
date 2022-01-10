@@ -1,5 +1,4 @@
-#ifndef EDITOR_GEOMETRY_NODE_H
-#define EDITOR_GEOMETRY_NODE_H
+#pragma once
 
 #include <Euphorbe/Graphics/RenderGraph.h>
 #include <Euphorbe/Resource/Resource.h>
@@ -14,5 +13,3 @@ enum GeometryNodeOutput
 E_RenderGraphNode* CreateGeometryNode();
 E_ResourceFile* GetGeometryNodeMaterial(E_RenderGraphNode* node);
 void GeometryNodeDrawGUI(E_RenderGraphNode* node);
-
-#endif

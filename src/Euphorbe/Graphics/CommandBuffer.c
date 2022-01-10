@@ -162,3 +162,24 @@ void E_CommandBufferImageTransitionLayout(E_CommandBuffer* cmd_buf, E_Image* ima
 	E_Vk_CommandBufferImageTransitionLayout(cmd_buf->rhi_handle, image->rhi_handle, srcAccess, dstAccess, old, new, srcStage, dstStage, layer);
 #endif
 }
+
+void E_ResetPipelineQuery(E_CommandBuffer* cmd_buf, E_PipelineStatistics* stats)
+{
+#ifdef EUPHORBE_WINDOWS
+	E_Vk_ResetPipelineQuery(cmd_buf->rhi_handle, stats->rhi_handle);
+#endif
+}
+
+void E_BeginPipelineQuery(E_CommandBuffer* cmd_buf, E_PipelineStatistics* stats)
+{
+#ifdef EUPHORBE_WINDOWS
+	E_Vk_BeginPipelineQuery(cmd_buf->rhi_handle, stats->rhi_handle);
+#endif
+}
+
+void E_EndPipelineQuery(E_CommandBuffer* cmd_buf, E_PipelineStatistics* stats)
+{
+#ifdef EUPHORBE_WINDOWS
+	E_Vk_EndPipelineQuery(cmd_buf->rhi_handle, stats->rhi_handle);
+#endif
+}

@@ -822,7 +822,11 @@ void E_Vk_End()
 
     VkResult result = vkQueueSubmit(rhi.device.graphics_queue, 1, &submit_info, rhi.sync.fences[rhi.sync.image_index]);
     assert(result == VK_SUCCESS);
+}
 
+void E_Vk_Present()
+{
+    VkSemaphore signal_semaphores[] = { rhi.sync.image_rendered_semaphore };
     VkPresentInfoKHR present_info = { 0 };
     present_info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
     present_info.waitSemaphoreCount = 1;

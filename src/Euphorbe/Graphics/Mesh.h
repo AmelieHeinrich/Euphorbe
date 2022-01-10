@@ -1,5 +1,4 @@
-#ifndef EUPHORBE_MESH_H
-#define EUPHORBE_MESH_H
+#pragma once
 
 #define EUPHORBE_MAX_SUBMESHES 128
 #define EUPHORBE_MAX_MESHLET_VERTICES 64
@@ -61,5 +60,3 @@ struct E_Mesh
 
 E_Mesh* E_LoadMesh(E_Material* material, const char* path);
 void E_FreeMesh(E_Mesh* mesh);
-
-#endif

@@ -1,9 +1,9 @@
-#ifndef EUPHORBE_COMMAND_BUFFER_H
-#define EUPHORBE_COMMAND_BUFFER_H
+#pragma once
 
 #include "Buffer.h"
 #include "Material.h"
 #include "Renderer.h"
+#include "GPUProfiler.h"
 
 typedef enum E_CommandBufferType E_CommandBufferType;
 enum E_CommandBufferType
@@ -43,5 +43,6 @@ void E_CommandBufferEndRender(E_CommandBuffer* cmd);
 void E_CommandBufferPushConstants(E_CommandBuffer* cmd_buf, E_Material* material, void* data, i64 size);
 void E_CommandBufferBlitImage(E_CommandBuffer* cmd_buf, E_Image* src, E_Image* dst, E_ImageLayout src_layout, E_ImageLayout dst_layout);
 void E_CommandBufferImageTransitionLayout(E_CommandBuffer* cmd_buf, E_Image* image, E_ImageAccess srcAccess, E_ImageAccess dstAccess, E_ImageLayout old, E_ImageLayout new, E_ImagePipelineStage srcStage, E_ImagePipelineStage dstStage, u32 layer);
-
-#endif
+void E_ResetPipelineQuery(E_CommandBuffer* cmd_buf, E_PipelineStatistics* stats);
+void E_BeginPipelineQuery(E_CommandBuffer* cmd_buf, E_PipelineStatistics* stats);
+void E_EndPipelineQuery(E_CommandBuffer* cmd_buf, E_PipelineStatistics* stats);

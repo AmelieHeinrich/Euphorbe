@@ -306,3 +306,18 @@ void E_Vk_CommandBufferImageTransitionLayout(E_VulkanCommandBuffer* cmd_buf, E_V
 
     vkCmdPipelineBarrier(cmd_buf->handle, srcStage, dstStage, 0, 0, NULL, 0, NULL, 1, &barrier);
 }
+
+void E_Vk_ResetPipelineQuery(E_VulkanCommandBuffer* cmd_buf, E_VulkanPipelineStatistics* stats)
+{
+    vkCmdResetQueryPool(cmd_buf->handle, stats->query_pool, 0, 9);
+}
+
+void E_Vk_BeginPipelineQuery(E_VulkanCommandBuffer* cmd_buf, E_VulkanPipelineStatistics* stats)
+{
+    vkCmdBeginQuery(cmd_buf->handle, stats->query_pool, 0, 0);
+}
+
+void E_Vk_EndPipelineQuery(E_VulkanCommandBuffer* cmd_buf, E_VulkanPipelineStatistics* stats)
+{
+    vkCmdEndQuery(cmd_buf->handle, stats->query_pool, 0);
+}

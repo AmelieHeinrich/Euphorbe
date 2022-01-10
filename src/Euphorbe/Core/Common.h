@@ -1,5 +1,4 @@
-#ifndef EUPHORBE_COMMON_H
-#define EUPHORBE_COMMON_H
+#pragma once
 
 #include <stdint.h>
 #include <memory.h>
@@ -43,6 +42,4 @@ typedef double f64;
     #pragma warning(disable: 5105)
     #define WIN32_LEAN_AND_MEAN
     #include <Windows.h>
-#endif
-
 #endif

@@ -1,5 +1,4 @@
-#ifndef EUPHORBE_VECTOR_H
-#define EUPHORBE_VECTOR_H
+#pragma once
 
 #include <Euphorbe/Core/Common.h>
 
@@ -18,5 +17,3 @@
 #define E_POP_BACK_VECTOR(vec) memset(&vec.data[vec.used], 0, sizeof(vec.size_check)); vec.used--
 #define E_SIZE_VECTOR(vec) vec.size
 #define E_CAPACITY_VECTOR(vec) vec.size
-
-#endif

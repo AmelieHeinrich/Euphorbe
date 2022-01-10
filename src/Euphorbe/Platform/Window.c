@@ -4,8 +4,12 @@
     #include "Windows/WindowsWindow.h"
 #endif
 
+#include <time.h>
+
 E_Window* E_CreateWindow(i32 width, i32 height, const char* title, b32 dark_mode)
 {
+    srand(time(NULL));
+
     assert(width != 0 && height != 0);
 
     E_Window* window = malloc(sizeof(E_Window));

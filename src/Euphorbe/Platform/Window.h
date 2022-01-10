@@ -1,5 +1,4 @@
-#ifndef EUPHORBE_WINDOW_H
-#define EUPHORBE_WINDOW_H
+#pragma once
 
 #include <Euphorbe/Core/Common.h>
 
@@ -25,5 +24,3 @@ void E_WindowUpdate(E_Window* window);
 // Callbacks
 void E_WindowSetResizeCallback(E_Window* window, E_WindowResizeCallback callback);
 void E_WindowSetScrollCallback(E_Window* window, E_WindowScrollCallback callback);
-
-#endif
