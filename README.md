@@ -6,9 +6,6 @@ Euphorbe is a fresh early-stage game engine written entirely in C.
 It's purpose is mainly to try and build an efficient yet developped Vulkan renderer, and this with the usage of the **VK_KHR_dynamic_rendering** extension.
 ***
 
-# Discord server
-[**Euphorbe now has a discord community!**](https://discord.gg/5nhx2DcTc3)
-
 # Getting started
 
 Note that only MSVC is supported to build Euphorbe!
